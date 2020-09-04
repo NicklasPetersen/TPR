@@ -19,14 +19,14 @@ class HomeController extends Controller {
 
 	public function login() {
 		$_SESSION['logged_in'] = true;
-		$this->view('home/login');
+		$this->view('login/login');
 	}
 
 	public function logout() {
 
 		if($this->post()) {
 			session_unset();
-			header('Location: /TPR_HMI-v1.0.5/public/home/loggedout');
+			header('Location: /public/home/loggedout');
 		} else {
 			echo 'You can only log out with a post method';
 		}
