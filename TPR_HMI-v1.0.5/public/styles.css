@@ -77,25 +77,52 @@ text{
   line-height:1.5;
   padding:5px 5px 8px;
   border-radius:3px;
-  border:1px solid #cbcbcb;
+  border:1px solid #FF8C00;
   font:13px Tahoma, cursive;
   transition:box-shadow 0.5s ease;
   box-shadow:0 4px 6px rgba(0,0,0,0.1);
   font-smoothing:subpixel-antialiased;
 }
 header{
-    background: #235885;
+    background: #FFA500;
     /*background: #fff;*/
-    margin-bottom: 20px;
+    /*margin-bottom: 20px;*/
     overflow: hidden;
 }
 
+
+
+.dropdown button {
+  background: #FF8C00;
+}
+
+.dropdown button:focus {
+  background: #FF8C00;
+}
+
+.dropdown button:active {
+  background: #FF8C00;
+}
+
+.dropdown button:hover {
+  background: #FFA500;
+}
+
+.dropdown button:link {
+  background: #FF8C00;
+}
+
+.dropdown button:visited {
+  background: #FF8C00;
+}
+
+
 .logo{
     float: left;
-    margin-top: 25px;
+    /*margin-top: 25px;*/
 }
 .logo img {
-  height: 100px;
+  height: 110px;
 }
 nav{
     float: right;
@@ -112,7 +139,7 @@ nav li{
 }
 
 nav li a{
-  color: #151515;
+  color: #FFA500;
   padding: 12px 30px;
   text-decoration: none;
   text-transform: uppercase;

@@ -1,33 +1,5 @@
 <?php
-
-class User extends Database {
-
-	public $name;
-
-	public function login($username, $password) {
-		$sql											= "SELECT * FROM tpr_db.user WHERE username = :username";
-		$stmt 										= $this->conn->prepare($sql);
-		$stmt->execute(
-			array(
-				'username' => $username,
-			)
-		);
-		$result = $stmt->fetchAll();
-		if (isset($result[0]) && sizeof($result) >= 1 && $result[0]['username'] == $username) {
-			// Hashing password in order to check if the password is correct
-
-			$verification = password_verify();
-			if (password_verify($password, $result[0]['password'])) {
-				$_SESSION['logged_in'] 	= true;
-				$_SESSION['username'] 	= $result[0]['username'];
-
-				return true;
-			} else {
-				$_SESSION['msg'] = "Incorrect login";
-			}
-		}
-		return false;
-	}
+class Signup extends Database {
 
   public function register($username, $password, $password, $password2, $access) {
     $_SESSION['count'] = 0;
@@ -75,8 +47,6 @@ class User extends Database {
     // Failed to create user
     $_SESSION['message'] 				= "Please enter all fields!";
   }
-  }
-
-
-
 }
+
+?>

@@ -1,7 +1,7 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link rel="stylesheet" href="../../public/styles.css">
+    <link rel="stylesheet" href="../../../public/styles.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
     <script src="/mvc/public/script.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
@@ -11,8 +11,8 @@
   <header>
       <div class="container">
         <div class="logo">
-          <a href="/mvc/public/picture/upload">
-            <img src="..\..\app\views\partials\logo.png" href="pictures.php" height="50" alt="logo" title="">
+          <a href="/public/user/login">
+            <img src="..\partials\logo.png" href="pictures.php" height="50" alt="logo" title="">
           </a>
         </div>
           <nav>

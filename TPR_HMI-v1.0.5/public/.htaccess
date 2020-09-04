@@ -2,7 +2,7 @@ Options -MultiViews
 RewriteEngine On
 Options -Indexes
 
-RewriteBase TPR_HMI-v1.0.5/public
+RewriteBase /TPR_HMI-v1.0.5/public
 
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f

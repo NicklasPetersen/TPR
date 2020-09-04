@@ -39,7 +39,7 @@ class Router {
 		// Removes all illigal characters from URL
 		$url = filter_var($_SERVER['REQUEST_URI'], FILTER_SANITIZE_URL);
 		$url = explode('/', $url);
-		return array_slice($url, 4);
+		return array_slice($url, 1);
 	}
 
 }
