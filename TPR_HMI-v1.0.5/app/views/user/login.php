@@ -1,4 +1,6 @@
-<?php include '/app/views/partials/menu.php';
+<?php
+include '../app/views/partials/menu.php';
+
 ?>
 
 <br><br><br>
@@ -36,4 +38,4 @@
     </form>
 
 
-<?php include '../partials/foot.php'; ?>
+<?php include '../app/views/partials/foot.php'; ?>

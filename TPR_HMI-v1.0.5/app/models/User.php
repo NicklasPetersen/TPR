@@ -16,7 +16,7 @@ class User extends Database {
 		if (isset($result[0]) && sizeof($result) >= 1 && $result[0]['username'] == $username) {
 			// Hashing password in order to check if the password is correct
 
-			$verification = password_verify();
+			//$verification = password_verify();
 			if (password_verify($password, $result[0]['password'])) {
 				$_SESSION['logged_in'] 	= true;
 				$_SESSION['username'] 	= $result[0]['username'];
@@ -26,6 +26,7 @@ class User extends Database {
 				$_SESSION['msg'] = "Incorrect login";
 			}
 		}
+
 		return false;
 	}
 

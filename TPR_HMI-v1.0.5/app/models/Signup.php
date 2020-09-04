@@ -3,6 +3,7 @@ class Signup extends Database {
 
   public function register($username, $password, $password2, $access) {
     $_SESSION['count'] = 0;
+    echo "Hello";
     if (isset($username) && isset($access) && isset($password) && isset($password2)) {
           // Check username: checks if the username is empty and nothing else.
           $username 					= htmlentities(filter_var($username),FILTER_SANITIZE_STRING);

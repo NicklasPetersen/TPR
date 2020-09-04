@@ -50,7 +50,7 @@ text{
 
 /* selected link */
 .container a:active {
-  color: blue;
+  color: #FF8C00;
 }
 
 .container a:focus {
@@ -70,14 +70,19 @@ text{
 
 }
 /*-------------HEADER-----------*/
-.container .dropdown .dropdown input {
+
+header .container {
+  width: 100% !important;
+}
+
+.container .dropdown input {
   width:100%;
   display:block;
   max-width:100%;
   line-height:1.5;
   padding:5px 5px 8px;
   border-radius:3px;
-  border:1px solid #FF8C00;
+  border:1px solid #FF8C00 !important;
   font:13px Tahoma, cursive;
   transition:box-shadow 0.5s ease;
   box-shadow:0 4px 6px rgba(0,0,0,0.1);

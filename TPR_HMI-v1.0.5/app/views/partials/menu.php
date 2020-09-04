@@ -11,8 +11,8 @@
   <header>
       <div class="container">
         <div class="logo">
-          <a href="/public/user/login">
-            <img src="..\partials\logo.png" href="pictures.php" height="50" alt="logo" title="">
+          <a href="/public/user/">
+            <img src="..\..\app\views\partials\logo.png" href="pictures.php" alt="logo" title="">
           </a>
         </div>
           <nav>
@@ -22,7 +22,7 @@
               Users
             <span class="caret"></span></button>
             <ul class="dropdown-menu">
-              <li><a href="/mvc/public/user/all">All</a></li>
+              <li><a href="/public/user/all">All</a></li>
               <li><a href="#">One</a></li>
             </ul>
           </div>
@@ -32,7 +32,7 @@
              logout
            <span class="caret"></span></button>
            <ul class="dropdown-menu">
-             <li><a href="/mvc/public/user/logout">Logout</a></li>
+             <li><a href="/public/user/logout">Logout</a></li>
            </ul>
          </div>
 

@@ -11,16 +11,20 @@ class UserController extends Controller {
 	}
 
 	public function login () {
-		if($this->model('User')->login($_POST["username"], $_POST["password"])){
-			header('Location: /TPR_HMI-v1.0.5/public/home/');
+		if($this->model('User')->login($_POST['username'], $_POST['password'])){
+			echo "hi";
+			$this->view('/TPR_HMI-v1.0.5/public/home/');
+
+			//header('Location: /TPR_HMI-v1.0.5/public/home/');
 		} else {
+			echo "Hello";
 			$this->view('user/login');
 		}
 	}
 
 	public function logout() {
 		session_unset();
-		header('Location: /TPR_HMI-v1.0.5/public/user/');
+		$this->view('user/login');
 	}
 
 	/*public function all() {

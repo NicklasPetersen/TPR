@@ -1,10 +1,10 @@
-<?php include '../partials/menu.php';
+<?php include '../app/views/partials/menu.php';
 ?>
 
 <br><br><br>
 
 		<main>
-			<form class="fifty" method="post" action="/public/user/login">
+			<form class="fifty" method="post" action="/public/signup/register">
 				<?php
 					if ($_SESSION['count'] > 0) {
 						echo "<h2>".$_SESSION['message']."</h2><br>";
@@ -41,4 +41,4 @@
 	</body>
 
 <?php
-include '../partials/foot.php';
+include '../app/views/partials/foot.php';
