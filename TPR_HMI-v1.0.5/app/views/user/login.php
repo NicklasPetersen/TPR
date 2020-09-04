@@ -1,4 +1,4 @@
-<?php include '../partials/menu.php';
+<?php include '/app/views/partials/menu.php';
 ?>
 
 <br><br><br>
@@ -31,7 +31,7 @@
         <button type="submit">Submit</button>
         <br/>
         <br/>
-        <a href="/TPR_HMI-v1.0.5/public/signup/">Haven't got any account?</a>
+        <a href="/public/signup/">Haven't got any account?</a>
       </fieldset>
     </form>
 

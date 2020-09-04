@@ -11,16 +11,16 @@
 					}
 				?>
 				<fieldset>
-				<legend><h3>Sign up</h3></legend>
+				<legend><h3>Create user</h3></legend>
 					<label for="username" id="luser">Username</label>
 					<br>
 					<input type="username" name="username" id="username" placeholder="Username here.."/>
-					<br>
+					<br><br>
 
 					<label for="password" id="lpassword">Password</label>
 					<br>
 					<input type="password" name="password" id="password" placeholder="Password here.."/>
-					<br>
+					<br><br>
 
 					<label for="password2" id="lpassword2">Verify password</label>
 					<br>
@@ -30,7 +30,7 @@
 					<label for="access" id="laccess">Access level</label>
 					<br>
 					<input type="number" name="access" id="access"/>
-					<br>
+					<br><br>
 
 					<input type="submit" name="submit_btn" id="submit"/>
 					<br><br>

@@ -3,7 +3,7 @@
 function restricted ($controller, $method) {
 
 	$restricted_urls = array(	'HomeController' 		=> array('restricted'),
-														'UserController' 		=> array('login'),
+														'UserController' 		=> array(''),
 														'SignupController'	=> array('')
 													);
 

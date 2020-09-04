@@ -1,9 +1,9 @@
 <?php
 class Signup extends Database {
 
-  public function register($username, $password, $password, $password2, $access) {
+  public function register($username, $password, $password2, $access) {
     $_SESSION['count'] = 0;
-    if (isset($username) && isset($access) && isset($password) && isset($password2) {
+    if (isset($username) && isset($access) && isset($password) && isset($password2)) {
           // Check username: checks if the username is empty and nothing else.
           $username 					= htmlentities(filter_var($username),FILTER_SANITIZE_STRING);
           $password 					= htmlentities(filter_var($password),FILTER_SANITIZE_STRING);
@@ -48,5 +48,4 @@ class Signup extends Database {
     $_SESSION['message'] 				= "Please enter all fields!";
   }
 }
-
-?>
+}
