@@ -3,7 +3,9 @@
 class HomeController extends Controller {
 
 	public function index () {
-
+		$user = $this->model('User');
+		$viewbag['username'] = $user->name;
+		$this->view('home/index', $viewbag);
 	}
 
 	public function other ($param1 = 'first parameter', $param2 = 'second parameter') {

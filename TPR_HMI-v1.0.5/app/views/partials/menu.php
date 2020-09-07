@@ -19,10 +19,18 @@
 
            <div class="dropdown">
             <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">
-              Users
+              Menu
             <span class="caret"></span></button>
             <ul class="dropdown-menu">
-              <li><a href="/public/user/all">All</a></li>
+              <li><a href="/public/auto/main">      Main</a></li>
+              <li><a href="/public/adjust/">        Adjustments</a></li>
+              <li><a href="/public/alarm/">         Alarms</a></li>
+              <li><a href="/public/manual/">        Manual</a></li>
+              <li><a href="/public/log/">           Log</a></li>
+              <li><a href="/public/info/contact">   Information</a></li>
+              <li><a href="/public/vision/control"> Vision control</a></li>
+              <li><a href="/public/tool/control">   Tool control</a></li>
+              <li><a href="/public/robot/connect">  Robot connection</a></li>
               <li><a href="#">One</a></li>
             </ul>
           </div>

@@ -25,7 +25,10 @@ class User extends Database {
 			} else {
 				$_SESSION['msg'] = "Incorrect login";
 			}
+		} else {
+			$_SESSION['msg'] = "Incorrect login";
 		}
+
 
 		return false;
 	}

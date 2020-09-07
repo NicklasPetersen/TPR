@@ -14,7 +14,7 @@ class UserController extends Controller {
 		if($this->model('User')->login($_POST['username'], $_POST['password'])){
 			echo "hi";
 			//$this->view('home/index');
-			header('Location: /TPR_HMI-v1.0.5/public/home/');
+			header('Location: /public/home/');
 			//header('Location: /public/home');
 		} else {
 			$this->view('user/login');
