@@ -5,7 +5,8 @@ function restricted ($controller, $method) {
 	$restricted_urls = array(	'MainController' 		=> array('restricted', 'index'),
 														'UserController' 		=> array(''),
 														'SignupController'	=> array(''),
-														'InfoController'		=> array('')
+														'InfoController'		=> array(''),
+														'ToolController'		=> array('')
 													);
 
 	if(isset($_SESSION['logged_in']) && $_SESSION['logged_in'] == true) {

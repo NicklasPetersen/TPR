@@ -17,7 +17,7 @@
         </div>
 
         <div class="infobar">
-          <h1> Infobar here! </h1>
+          <iframe src="..\..\app\views\partials\infobar.php" scrolling="no" title="infobar"></iframe>
         </div>
         <div class="menuClass">
           <nav>
