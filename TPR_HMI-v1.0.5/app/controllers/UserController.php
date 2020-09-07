@@ -4,7 +4,8 @@ class UserController extends Controller {
 
 	public function index () {
 		if(isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
-			$this->view('home/');
+			header('Location: /public/main/');
+			//$this->view('home/index');
 		} else {
 			$this->view('user/login');
 		}
@@ -12,9 +13,8 @@ class UserController extends Controller {
 
 	public function login () {
 		if($this->model('User')->login($_POST['username'], $_POST['password'])){
-			echo "hi";
 			//$this->view('home/index');
-			header('Location: /public/home/');
+			header('Location: /public/main/');
 			//header('Location: /public/home');
 		} else {
 			$this->view('user/login');

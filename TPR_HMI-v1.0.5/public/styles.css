@@ -1,3 +1,10 @@
+@media screen and (min-width: 1024px) {
+		#menu {
+			display: none;
+		}
+	}
+
+
 body{
     margin: 0;
     padding: 0;
@@ -30,6 +37,7 @@ text{
 
 /* The container centered in the middle */
 .container{
+
     max-width: 960;
     width: 96%;
     margin: auto;
@@ -69,78 +77,124 @@ text{
   /*background-color: #c0c0c0;*/
 
 }
-/*-------------HEADER-----------*/
+
+
+/**********************HEADER*******************/
+header{
+  background: #FFA500;
+  overflow: hidden;
+  height: 15%;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+
+}
+.caret {
+  display: inline-block;
+  border: 5px solid transparent;
+}
 
 header .container {
   width: 100% !important;
 }
+/*  ------ Logo ------ */
+.logo{
+    position: absolute;
+    width: 20%;
+    margin-top: .8em;
+    left: 0%;
+
+}
+
+.logo img {
+  width:20em;
+}
+
+
+.infobar {
+  position: absolute;
+  width: 50%;
+  height: 13%;
+  left: 20%;
+  display:inline-block;
+  vertical-align: middle;
+  background: #f0f0f0;
+  margin: 5px auto 0;
+  padding:5px 5px 10px;
+  border-radius: 2px;
+  border:1px solid #cbcbcb;
+  transition:box-shadow 0.5s ease;
+  box-shadow:0 4px 6px rgba(0,0,0,0.1);
+  font-smoothing:subpixel-antialiased;
+
+}
+
+/* ----------- Menu ------------ */
+.menuClass {
+  position: absolute;
+  width:15%;
+  height: 15%;
+  left: 70%;
+  display:inline-block;
+  line-height:1.5;
+  padding:5px 5px 8px;
+
+
+}
+
+.dropdown {
+  position: absolute;
+  display: block;
+  margin-top: 0.25em;
+  height: 50%;
+  right: 20%;
+  background: red;
+}
+
+nav{
+    z-index: 999;
+    max-height: 100%;
+    margin-left: 1.5em;
+    float: left;
+
+}
+
+.dropdown button {
+  position: absolute;
+  height: 2.4em;
+  width: 10em;
+  border:1px solid #FF8C00;
+  font-size: 1.25em;
+  background: #FF8C00;
+}
+
+.dropdown button:hover {
+  border:1px solid #FF8C00;
+  background: #FFA500;
+}
 
 .container .dropdown input {
   width:100%;
-  display:block;
+  display:inline-block;
   max-width:100%;
   line-height:1.5;
   padding:5px 5px 8px;
   border-radius:3px;
   border:1px solid #FF8C00 !important;
   font:13px Tahoma, cursive;
-  transition:box-shadow 0.5s ease;
+  transition: box-shadow 0.5s ease;
   box-shadow:0 4px 6px rgba(0,0,0,0.1);
-  font-smoothing:subpixel-antialiased;
+  font-smoothing: subpixel-antialiased;
 }
-header{
-    background: #FFA500;
-    /*background: #fff;*/
-    /*margin-bottom: 20px;*/
-    overflow: hidden;
-}
-
-
-
-.dropdown button {
-  background: #FF8C00;
-}
-
-.dropdown button:focus {
-  background: #FF8C00;
-}
-
-.dropdown button:active {
-  background: #FF8C00;
-}
-
-.dropdown button:hover {
-  background: #FFA500;
-}
-
-.dropdown button:link {
-  background: #FF8C00;
-}
-
-.dropdown button:visited {
-  background: #FF8C00;
-}
-
-
-.logo{
-    float: left;
-    /*margin-top: 25px;*/
-}
-.logo img {
-  height: 110px;
-}
-nav{
-    float: right;
-    line-height: 70px;
-    list-style: none;
+.dropdown-menu {
+  position: relative;
 }
 
 nav li{
+    max-height: 100%;
     display: inline-block;
-    padding: 5px 20px;
+    padding: 3px 20px;
     margin-left: 10px;
-
-    line-height: normal;
 }
 
 nav li a{
@@ -150,6 +204,26 @@ nav li a{
   text-transform: uppercase;
   transition: .3s;
 }
+
+
+header .state {
+  position: absolute;
+  right: 0%;
+  width:  15%;
+  height: 15%;
+  border:.075em solid #cbcbcb;
+  font-smoothing:subpixel-antialiased;
+  padding:2px 15px 5px;
+  display: inline-block;
+  background: #f0f0f0;
+}
+
+.state label {
+  float: left;
+}
+
+
+/***************************** MAIN ***************************/
 
 main form{
   text-align: left;
@@ -162,23 +236,33 @@ main section p{
 }
 
 /*----------Picture-------- */
-#content{
-  width: 50%;
-  text-align: left;
-  margin: 20px auto;
-  display:block;
-  max-width:100%;
-  line-height:1.5;
-  padding:15px 15px 30px;
-  border-radius:3px;
-  border:1px solid #cbcbcb;
-  transition:box-shadow 0.5s ease;
-  box-shadow:0 4px 6px rgba(0,0,0,0.1);
-  font-smoothing:subpixel-antialiased;
-}
+
 #content p, h4, h3, h2 {
   margin: 20px 50px;
 }
+
+ .content h1 {
+  color: #363435;
+  float: left;
+  text-align: left !important;
+  margin: auto;
+  padding: 5px 50px
+}
+
+hr {
+  width:30%;
+  position: absolute;
+  left: 3%;
+  float:left;
+  display: block;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  margin-left: auto;
+  margin-right: auto;
+  border-style: inset;
+  border-width: 1px;
+}
+
 #content textarea {
   width:100%;
   display:block;
@@ -264,42 +348,34 @@ form div{
 #img_div img {
   width: inherit;
 }
-/*----------Users---------- */
-#users {
-  width: 80%;
-  padding: 5px;
-  margin: 15px auto;
-  border: 1px solid #cbcbcb;
-  padding: 20px 50px;
-}
 
-#users h3{
-    color: #363435;
-    text-align: left;
-    margin: auto;
-    padding: 5px 50px
-}
 
-#users p{
-    text-align: left;
-    margin: auto;
-    padding: 5px 20px
-}
 
-/* ----------Sign Up---------- */
-main form img {
-  width: 15px;
-  opacity: 0;
+
+/* --------- Information ---------- */
+.info {
+  width: 50%;
+  height:auto;
+  display:block;
+  margin: 50px auto 0;
+  padding:15px 15px 30px;
+  border-radius: 10px;
+  border:1px solid #cbcbcb;
+  transition:box-shadow 0.5s ease;
+  box-shadow:0 4px 6px rgba(0,0,0,0.1);
+  font-smoothing:subpixel-antialiased;
 }
 
 
-.btn {
-  border: none;
-  float: left !important;
-  width:200px !important;
-  position: relative !important;
-  padding: 15px 32px !important;
-  text-align: center !important;
-  display: inline-block !important;
-  font-size: 16px;
+.info h3 {
+  color: #363435;
+  text-align: center;
+  margin: auto;
+  padding: 5px 10px;
+}
+
+.info img {
+  width: 500px;
+  margin: auto;
+  padding: 5px 20px;
 }

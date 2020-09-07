@@ -1,21 +1,22 @@
 <?php
 
-class HomeController extends Controller {
+class MainController extends Controller {
 
 	public function index () {
 		$user = $this->model('User');
 		$viewbag['username'] = $user->name;
-		$this->view('home/index', $viewbag);
+		$this->view('main/index', $viewbag);
 	}
 
 	public function other ($param1 = 'first parameter', $param2 = 'second parameter') {
 		$user = $this->model('User');
 		$user->name = $param1;
 		$viewbag['username'] = $user->name;
-		$this->view('home/index', $viewbag);
+		$this->view('main/index', $viewbag);
 	}
 
 	public function restricted () {
+		header('Location:	/public/user/');
 		echo 'Welcome - you must be logged in';
 	}
 
@@ -28,14 +29,14 @@ class HomeController extends Controller {
 
 		if($this->post()) {
 			session_unset();
-			header('Location: /public/home/loggedout');
+			header('Location: /public/main/loggedout');
 		} else {
 			echo 'You can only log out with a post method';
 		}
 	}
 
 	public function loggedout() {
-		echo 'You are now logged out';
+		$_SESSION['msg'] = 'You are now logged out';
 	}
 
 }

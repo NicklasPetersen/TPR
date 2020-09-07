@@ -2,7 +2,7 @@
 
 class Router {
 
-	protected $controller = 'homeController';
+	protected $controller = 'mainController';
 	protected $method = 'index';
 	protected $params = [];
 
@@ -29,7 +29,8 @@ class Router {
 
 		require_once 'restricted.php';
 		if(restricted(get_class($this->controller), $this->method)) {
-			echo 'Access Denied';
+			header("Location: /public/user/");
+			//echo 'Access Denied';
 		} else {
 			call_user_func_array([$this->controller, $this->method], $this->params);
 		}
