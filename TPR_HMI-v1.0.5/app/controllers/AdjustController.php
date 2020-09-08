@@ -1,9 +1,9 @@
 <?php
 
-class InfoController extends Controller {
+class AdjustController extends Controller {
 
 	public function index () {
-		$this->view('info/info.view');
+		$this->view('adjust/adjust.view');
 	}
 
 	public function restricted () {
@@ -11,11 +11,16 @@ class InfoController extends Controller {
 		echo 'Welcome - you must be logged in';
 	}
 
+	public function login() {
+		$_SESSION['logged_in'] = true;
+		$this->view('login/login');
+	}
+
 	public function logout() {
 
 		if($this->post()) {
 			session_unset();
-			header('Location: /public/main/loggedout');
+			header('Location: /public/adjust/loggedout');
 		} else {
 			echo 'You can only log out with a post method';
 		}

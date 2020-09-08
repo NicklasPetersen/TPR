@@ -3,7 +3,7 @@
 class ToolController extends Controller {
 
 	public function index () {
-		$this->view('tool/control');
+		$this->view('tool/control.view');
 	}
 
 	public function restricted () {
