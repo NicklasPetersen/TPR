@@ -1,18 +1,22 @@
-@media screen and (min-width: 1024px) {
+@media only screen and (min-width: 1024px) {
 		#menu {
 			display: none;
 		}
 	}
 
 
-body{
-    margin: 0;
-    padding: 0;
-    color: darkgray;
-    background: #d4d4d4;
-    text-align: center;
-    font-family: fantasy;
+.content {
+	text-align: center;
+	width: 100vw;
+  height: 100vw;
 }
+
+body{
+    text-align: center;
+		width: 100%;
+		height: 100%;
+}
+
 h1{
   padding: 2px;
 }
@@ -26,7 +30,7 @@ h2{
 
 h3{
     color: #363435;
-    margin: auto
+    margin: auto;
 }
 
 text{
@@ -86,7 +90,6 @@ header{
   height: 15%;
   width: 100%;
   max-width: 100%;
-  overflow-x: auto;
 
 }
 .caret {
@@ -244,8 +247,8 @@ header .state {
 .content .main {
 	overflow: hidden;
 	position: relative;
-	width: 75%;
-	max-width: 75%;
+	width: 75vw;
+  height: 75vw;
   height:auto;
   display:inline-block;
   margin: 2em auto 0;
@@ -260,10 +263,8 @@ header .state {
 }
 
 .main div {
-	float: center;
 	display: inline-block;
 	overflow: hidden;
-	justify-content: center;
 }
 
 .main .buttons {
@@ -328,13 +329,125 @@ hr {
 }
 
 /**************** ADJUST ****************/
-canvas {
-  width:100vw;
-  height:100vh;
+.adjust-div {
+	overflow: hidden;
+	width: 75vw;
+	height: auto;
+  margin: 2em auto 0;
+  padding:15px 15px 30px;
+  border-radius: 2px;
+  border:1px solid #cbcbcb;
+  transition:box-shadow 0.5s ease;
+  box-shadow:0 4px 6px rgba(0,0,0,0.1);
+}
+
+.adjust-div table {
+	display: inline-block;
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 60%;
+}
+
+.adjust-div th {
+
+  text-align: left;
+  padding-top: 1em;
+	padding-left: 5em;
+}
+
+.adjust-div td {
+	margin-left: 5em;
+  text-align: left;
+  padding-left: 5em;
+}
+
+.adjust-div td input {
+	display: inline-flex;
+  width: 20%;
+}
+
+.adjust-div td input[type=range] {
+	width: 100%
+}
+
+.adjust-div td .boxDesc {
+  width: 100%;
+}
+
+.adjust-div button {
+	clear: left;
+	margin-top: 2em;
+	margin-left: 5em;
+}
+
+.adjust-div span {
+	display: inline-flex;
+	overflow: hidden;
+	width: 78%;
+
+  padding:5px 5px 5px 0;
+	border-radius: 1px;
+  border:1px solid #cbcbcb;
+  transition:box-shadow 0.5s ease;
+  box-shadow:0 2px 3px rgba(0,0,0,0.1);
+	text-align: left;
+}
+
+.adjust-div img {
+	display: inline-block;
+	float:right;
+	right: 15%;
+	width: 25%;
+	position: relative;
+	margin-left: 5em;
+	margin-top: 10%;
+}
+
+/************** Manual ******************/
+
+.content .man {
+	overflow: hidden;
+	width: 75vw;
+	height: auto;
+  margin: 2em auto 0;
+  padding:15px 15px 30px;
+  border-radius: 2px;
+  border:1px solid #cbcbcb;
+  transition:box-shadow 0.5s ease;
+  box-shadow:0 4px 6px rgba(0,0,0,0.1);
+
+}
+
+.buttons button {
+	margin-right: 2em;
+}
+
+.man div {
+  display:inline-table;
+	text-align: center;
+	max-width: 48%;
+  margin: 0 auto;
 }
 
 
-/* --------- Information ---------- */
+.man td {
+	text-align: center;
+}
+
+.man th {
+	padding-left: 2em;
+}
+
+.man td button {
+	display: inline-block;
+
+	margin-top: 1em;
+	margin-bottom: 1em;
+	margin-left:2em;
+}
+
+
+/************** Information ***************/
 .info {
   width: 50%;
   height:auto;
@@ -362,23 +475,40 @@ canvas {
   padding: 5px 20px;
 }
 
+/************************ VISION ******************/
+
+.content .control {
+	overflow: hidden;
+	width: 75vw;
+	height: auto;
+  margin: 2em auto 0;
+  padding:15px 15px 30px;
+  border-radius: 2px;
+  border:1px solid #cbcbcb;
+  transition:box-shadow 0.5s ease;
+  box-shadow:0 4px 6px rgba(0,0,0,0.1);
+}
+
+.control div {
+	position: relative;
+	display: inline-block;
+	float:left;
+	/*text-align: center;*/
+	width: 48%;
+	padding: 1.5em;
+}
+
+.control-table table {
+	margin: 0.5em;
+}
+
+.control-table th {
+	float: right;
+	margin-left: 1em;
+}
 
 /*********************** TOOLS ******************/
-.tools {
-  position: absolute;
-  display: block;
-  margin: 20px;
-  margin-top: 5em;
 
-}
-
-.tools .h2 {
-  margin: 1em;
-}
-
-.tools .h4 {
-  margin: 1em;
-}
 
 .toolcontrol {
   position:relative;
@@ -415,4 +545,53 @@ canvas {
   transition: box-shadow 0.5s ease;
   box-shadow:0 4px 6px rgba(0,0,0,0.1);
   font-smoothing: subpixel-antialiased;
+}
+
+
+
+/******************** SHARED ***********************/
+
+/* The slider itself */
+.slider {
+  -webkit-appearance: none;  /* Override default CSS styles */
+  appearance: none;
+  /*width: 30% !important; /* Full-width */
+  height: 25px; /* Specified height */
+  background: #d3d3d3; /* Grey background */
+  outline: none; /* Remove outline */
+  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+  -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+  transition: opacity .2s;
+}
+
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  width: 10px; /* Set a specific slider handle width */
+  height: 30px; /* Slider handle height */
+  background: #FF8C00; /* Orange background */
+  cursor: pointer; /* Cursor on hover */
+}
+
+.slider::-moz-range-thumb {
+  width: 25px; /* Set a specific slider handle width */
+  height: 25px; /* Slider handle height */
+  background: #FF8C00; /* Orange background */
+  cursor: pointer; /* Cursor on hover */
+}
+
+button {
+	display: inline-block;
+
+	position: relative;
+	height: 2.4em;
+  width: 10em;
+  font-size: 1.25em;
+  background: #FF8C00;
+}
+
+button:hover {
+  border:1px solid #FF8C00;
+  background: #FFA500;
 }

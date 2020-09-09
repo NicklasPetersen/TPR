@@ -1,8 +1,10 @@
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../../../public/styles.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <link rel="stylesheet" type"text/css" href="../../../public/fontawesome-free-5.14.0-web/css/all.css">
+
 
     <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script> -->
     <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> -->
@@ -33,7 +35,7 @@
               <li><a href="/public/adjust/">        Adjustments</a></li>
               <li><a href="/public/alarm/">         Alarms</a></li>
               <li><a href="/public/manual/">        Manual</a></li>
-              <li><a href="/public/setup/">         Setup</a></li>
+              <li><a href="/public/setup/">         Setup</a></li>  <!-- input dimensions + calibration + calib check -->
               <li><a href="/public/log/">           Log</a></li>
               <li><a href="/public/info/contact">   Information</a></li>
               <li><a href="/public/vision/control"> Vision control</a></li>

@@ -6,8 +6,10 @@ function restricted ($controller, $method) {
 														'UserController' 		=> array(''),
 														'SignupController'	=> array(''),
 														'InfoController'		=> array(''),
-														'ToolController'		=> array('restricted','index'),
-														'AdjustController'	=> array('restricted', 'index')
+														'ToolController'		=> array('restricted', 'index'),
+														'AdjustController'	=> array('restricted', 'index'),
+														'ManualController'	=> array('rescricted', 'index'),
+														'VisionController'	=> array('index')
 													);
 
 	if(isset($_SESSION['logged_in']) && $_SESSION['logged_in'] == true) {

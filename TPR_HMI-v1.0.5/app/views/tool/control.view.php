@@ -5,7 +5,7 @@
 <hr>
 
 <!-- Here starts the page -->
-<div class="tools">
+<div class="control">
   <div class="cuttool">
     <h2>Robot Cut tool:</h2><br>
 
