@@ -9,7 +9,10 @@ function restricted ($controller, $method) {
 														'ToolController'		=> array('restricted', 'index'),
 														'AdjustController'	=> array('restricted', 'index'),
 														'ManualController'	=> array('rescricted', 'index'),
-														'VisionController'	=> array('index')
+														'VisionController'	=> array('index'),
+														'SetupController'		=> array('index'),
+														'LogController'			=> array('index'),
+														'AlarmController'		=> array('index')
 													);
 
 	if(isset($_SESSION['logged_in']) && $_SESSION['logged_in'] == true) {

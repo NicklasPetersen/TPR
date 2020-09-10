@@ -7,9 +7,8 @@
 
 <!-- Here starts the page -->
 <div class="control">
-  <!-- Skal bruge to reset knapper, service knap, back to zero, cart movement, -->
   <div class="control-table">
-    <table>
+    <table class="vision-table">
       <tr>
         <td>
           <label>Robot Cut</label>

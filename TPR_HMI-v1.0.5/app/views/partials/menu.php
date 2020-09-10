@@ -4,10 +4,6 @@
     <link rel="stylesheet" href="../../../public/styles.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
     <link rel="stylesheet" type"text/css" href="../../../public/fontawesome-free-5.14.0-web/css/all.css">
-
-
-    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script> -->
-    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
     <script src="/public/script.js"></script>
@@ -40,7 +36,6 @@
               <li><a href="/public/info/contact">   Information</a></li>
               <li><a href="/public/vision/control"> Vision control</a></li>
               <li><a href="/public/tool/control">   Tool control</a></li>
-              <li><a href="/public/robot/connect">  Robot connection</a></li>
               <li class="divider"></li>
               <li><a href="/public/user/logout">    Logout</a></li>
             </ul>
