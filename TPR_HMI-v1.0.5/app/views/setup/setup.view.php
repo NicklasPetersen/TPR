@@ -76,7 +76,26 @@
     </tr>
   </table>
 
+  <div class="calib">
+    <table>
+      <tr>
+        <th><label>Start calibration</label></th>
+        <th>
+          <button type="button" name="calib-btn">Calibrate</button>
+        </th>
+      </tr>
 
+      <tr>
+        <th>
+          <label>Check calibration</label>
+        </th>
+
+        <th>
+          <button type="button" name="calib-check">Check</button>
+        </th>
+      </tr>
+    </table>
+  </div>
 
 
   <!-- INput: Tool elementer + work-frame +  -->

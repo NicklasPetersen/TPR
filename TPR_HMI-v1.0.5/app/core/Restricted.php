@@ -12,7 +12,8 @@ function restricted ($controller, $method) {
 														'VisionController'	=> array('index'),
 														'SetupController'		=> array('index'),
 														'LogController'			=> array('index'),
-														'AlarmController'		=> array('index')
+														'AlarmController'		=> array('index'),
+														'TestController'		=> array('')
 													);
 
 	if(isset($_SESSION['logged_in']) && $_SESSION['logged_in'] == true) {

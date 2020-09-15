@@ -1,19 +1,24 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="../../../public/styles.css">
+    <title>TPR HMI</title>
+    <link rel="icon" href="/public/img/EGATEC-icon.png">
+    <link rel="stylesheet" href="/public/styles.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
-    <link rel="stylesheet" type"text/css" href="../../../public/fontawesome-free-5.14.0-web/css/all.css">
+    <link rel="stylesheet" type"text/css" href="/public/fontawesome-free-5.14.0-web/css/all.css">
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
     <script src="/public/script.js"></script>
+    <script src="/public/TcAdsWebService.dll"></script>
+    <script src="/public/AdsComm.js"></script>
+
 </head>
 <body>
   <header>
       <div class="container">
         <div class="logo">
           <a href="/public/user/">
-            <img src="../../app/views/partials/logo.png" href="pictures.php" alt="logo" title="">
+            <img src="../../../public/img/logo.png" href="pictures.php" alt="logo" title="">
           </a>
         </div>
 

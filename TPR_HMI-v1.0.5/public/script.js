@@ -1,15 +1,16 @@
 // For showing date in header
-window.onload = function() {
-    var d = new Date();
-    var weekday = ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"];
-    var monthname = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  window.onload = function() {
+      var d = new Date();
+      var weekday = ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"];
+      var monthname = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-    // Set your output to a variable
-    var output = weekday[d.getDay()] + " " + d.getDate() + ". " + monthname[d.getMonth()] + " " + d.getFullYear();
+      // Set your output to a variable
+      var output = weekday[d.getDay()] + " " + d.getDate() + ". " + monthname[d.getMonth()] + " " + d.getFullYear();
 
-    // Target the ID of the span and update the HTML
-    document.getElementById("spanDate").innerHTML = output;
-};
+      // Target the ID of the span and update the HTML
+      document.getElementById("spanDate").innerHTML = output;
+  };
+
 
 
 $(document).ready(function(){

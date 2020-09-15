@@ -343,7 +343,7 @@ hr {
 }
 
 .setup table {
-
+	display: inline-block;
 }
 
 
