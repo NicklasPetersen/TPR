@@ -8,9 +8,9 @@
     <link rel="stylesheet" type"text/css" href="/public/fontawesome-free-5.14.0-web/css/all.css">
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
-    <script src="/public/script.js"></script>
-    <script src="/public/TcAdsWebService.dll"></script>
-    <script src="/public/AdsComm.js"></script>
+    <script type="text/javascript" src="/public/script.js"></script>
+    <script type="text/javascript" src="/public/TcAdsWebService.js"></script>
+    <script type="text/javascript" src="/public/AdsComm.js"></script>
 
 </head>
 <body>

@@ -13,7 +13,7 @@ function restricted ($controller, $method) {
 														'SetupController'		=> array('index'),
 														'LogController'			=> array('index'),
 														'AlarmController'		=> array('index'),
-														'TestController'		=> array('')
+														'TestController'		=> array('index', 'publish', 'subscribe')
 													);
 
 	if(isset($_SESSION['logged_in']) && $_SESSION['logged_in'] == true) {

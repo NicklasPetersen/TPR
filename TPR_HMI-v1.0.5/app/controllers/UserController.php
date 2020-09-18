@@ -13,9 +13,7 @@ class UserController extends Controller {
 
 	public function login () {
 		if($this->model('User')->login($_POST['username'], $_POST['password'])){
-			//$this->view('home/index');
 			header('Location: /public/main/');
-			//header('Location: /public/home');
 		} else {
 			$this->view('user/login');
 		}
@@ -24,7 +22,6 @@ class UserController extends Controller {
 	public function logout() {
 		session_unset();
 		header('Location: /public/user/');
-		//$this->view('user/login');
 	}
 
 	/*public function all() {

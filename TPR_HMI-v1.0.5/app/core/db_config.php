@@ -1,4 +1,5 @@
 <?php
+
 class DB_Config {
 
 protected $servername = 'localhost';
