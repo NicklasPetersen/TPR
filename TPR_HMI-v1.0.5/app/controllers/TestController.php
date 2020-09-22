@@ -7,12 +7,12 @@ class TestController extends Controller {
 	}
 
 	public function publish() {
-		$this->model('test')->publish($_POST['name1']);
-		header('Location: /public/test/subscribe.view');
+		//$this->model('Test')->publish($_POST['name1']);
+		//header('Location: /public/test/subscribe');
 	}
 
 	public function subscribe() {
-		$this->model('test')->subscribe();
+		$this->model('Test')->subscribe();
 		$this->view('test/subscribe.view');
 	}
 

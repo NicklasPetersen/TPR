@@ -6,8 +6,18 @@
 <hr><br>
 
 <!-- Here starts the page -->
-<div class="adjust-div" method="post">
+<div id="adjust-div" class="adjust-div" method="post">
   <table>
+    <tr>
+      <th>
+        <label for="progNo">Choose recipe</label>
+      </th>
+
+      <td>
+        <input type="number" id="recipeNo" name="recipeNo" value="1">
+        <span id="recipeName"></span>
+      </td>
+    </tr>
     <tr>
       <th>
         <label for="progNo">Choose program</label>
@@ -15,7 +25,7 @@
 
       <td>
         <input type="number" id="progNo" name="progNo" value="1">
-        <span id="progDesc">Prog Desc...</span>
+        <span id="progDesc"></span>
       </td>
     </tr>
     <tr>
@@ -23,7 +33,7 @@
         <label for="vel">Adjust velocity</label>
       </th>
       <td>
-        <input type="range" min="1" max="100" value="10" class="slider" id="vel">
+        <input type="range" min="1" max="100" value="1" class="slider" id="vel">
       </td>
     </tr>
     <tr>
@@ -31,7 +41,7 @@
         <label for="opMode">Operation mode</label><br>
       </th>
       <td>
-        <input type="number" name="opMode" value="0">
+        <input id="opNo" type="number" name="opMode" value="1">
         <span id=opDesc>Op Desc...</span>
       </td>
     </tr>
@@ -40,7 +50,7 @@
         <label for="packingNo">Packing pattern</label>
       </th>
       <td>
-        <input type="number" name="packingNo" value="0">
+        <input id="patternNo" type="number" name="packingNo" value="1">
         <span id="patternDesc">Pack desc...</span>
       </td>
     </tr>
@@ -72,23 +82,11 @@
 
   <img src="../../app/views/adjust/box-streger.png" alt="box-img">
 
-  <button type="button" class="btn" id="adjust-btn" name="adjust-btn">Adjust</button>
+  <button type="button"  class="btn" id="adjust-btn" name="adjust-btn">Adjust</button>
 
 </div>
-<!--
-<form id="adjust-form" method="post">
-  <input type="text" name="firstname" id="firstname" placeholder="Firstname">
-  <input type="text" name="lastname" id="lastname" placeholder="Lastname">
-  <input type="submit" value="Join"> <br>
 
 
-</form>
-
-<div id="result">
-  <?php echo $_POST['firstname']  ?>
-</div>
-
--->
 
 
 

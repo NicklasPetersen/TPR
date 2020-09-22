@@ -1,12 +1,17 @@
 <?php
-class Test extends Mqttconn {
+
+class Test extends MQTTConn {
 
   public function publish($name) {
-    $this->client->publish('php-mqtt/client/test', $name, 2);
+    $this->conn->publish('php-mqtt/client/test', $name, 1);
   }
 
   public function subscribe() {
-    $this->client->subscribe('php-mqtt/client/test', $_SESSION['sub'], 2);
+    $this->conn->subscribe('php-mqtt/client/test', function ($topic, $message) {
+    echo sprintf("Received message on topic [%s]: %s\n", $topic, $message);
+    }, 1);
+    $this->conn->loop(true);
+
   }
 
 }

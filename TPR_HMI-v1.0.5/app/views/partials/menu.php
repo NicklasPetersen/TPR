@@ -9,8 +9,6 @@
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="/public/script.js"></script>
-    <script type="text/javascript" src="/public/TcAdsWebService.js"></script>
-    <script type="text/javascript" src="/public/AdsComm.js"></script>
 
 </head>
 <body>
@@ -37,6 +35,7 @@
               <li><a href="/public/alarm/">         Alarms</a></li>
               <li><a href="/public/manual/">        Manual</a></li>
               <li><a href="/public/setup/">         Setup</a></li>  <!-- input dimensions + calibration + calib check -->
+              <li><a href="/public/recipe/">        New Recipe</a></li>
               <li><a href="/public/log/">           Log</a></li>
               <li><a href="/public/info/contact">   Information</a></li>
               <li><a href="/public/vision/control"> Vision control</a></li>

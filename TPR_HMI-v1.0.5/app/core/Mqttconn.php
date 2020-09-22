@@ -1,51 +1,34 @@
 <?php
-//require __DIR__ . "/../vendor/php-mqtt/client/src/MQTTClient.php";
-//require_once "mqtt_config.php";
-//namespace \PhpMqtt\Client\;
+require_once "mqtt_config.php";
+
+/**
+ * Use: For not having to write \PhpMqtt\... when defining objects
+ */
+use \PhpMqtt\Client\MQTTClient;
+use \PhpMqtt\Client\ConnectionSettings;
 
 /**
  * This is a class for MQTT connection
  */
 
-require_once 'db_config.php';
-
-class Mqttconn extends DB_Config {
-  public $client;
-	public function __construct() {
-		try {
-			$this->client = new PDO("mysql:host=$this->servername;dbname=$this->dbname",
-			$this->username,
-			$this->password,
-			array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
-		} catch (PDOException $e) {
-			echo "Error: " . $e->getMessage();
-		}
-	}
-	public function __destruct() {
-		$this->conn = null;
-	}
-
-
-  /*protected $host       = 'localhost';
-  protected $port       = 1883;
-  protected $password   = 'password';
-  protected $username   = 'mqtt';
-  protected $clientId   = 'phpMQTT-publisher';
+class MQTTConn extends MQTT_Config {
 
  	public $conn;
 
  	public function __construct() {
-    try {
+    /*try {*/
 
 			$this->conn = new MQTTClient($this->host, $this->port, $this->clientId);
-      $this->conn->connect();
-    } catch (MQTTExeption $e) {
+
+      $connectionSettings = new ConnectionSettings();
+      $this->conn->connect($this->username, $this->password, $connectionSettings, true);
+    /*} catch (MQTTClientException $e) {
       echo "Error: " . $e->getMessage();
-    }
+    }*/
  	}
 
  	public function __destruct() {
  		$this->conn->close();
- 	}*/
+ 	}
 
 }

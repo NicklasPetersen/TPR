@@ -8,6 +8,10 @@ class MainController extends Controller {
 		$this->view('main/main.view', $viewbag);
 	}
 
+	public function main() {
+		$this->model('publish')->mainOperation($_POST);
+	}
+
 	public function other ($param1 = 'first parameter', $param2 = 'second parameter') {
 		$user = $this->model('User');
 		$user->name = $param1;
