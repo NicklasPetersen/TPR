@@ -4,10 +4,10 @@
     <title>TPR HMI</title>
     <link rel="icon" href="/public/img/EGATEC-icon.png">
     <link rel="stylesheet" href="/public/styles.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/public/bootstrap-3.4.1-dist/css/bootstrap.min.css">
     <link rel="stylesheet" type"text/css" href="/public/fontawesome-free-5.14.0-web/css/all.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    <script src="/public/jQuery-3.5.1.min.js"></script>
+    <script src="/public/bootstrap-3.4.1-dist/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="/public/script.js"></script>
 
 </head>
@@ -60,13 +60,23 @@
 
 
         <div class="state">
-          <br>
+
           <label>Date: <span id="spanDate"></span></label>
 
+          <br>
+          <label>State: <span id="stateSpan"><?php if (isset($_SESSION['value'])) { echo $_SESSION['value']; }?></span></label>
 
           <br>
+          <label>Connections:</label>
+
           <br>
-          <label><span>State: </span></label>
+          <table id="connection">
+            <tr>
+              <th><span id="PLCState">  PLC</span></th>
+              <th><span id="CutState">  Cut</span></th>
+              <th><span id="PickState"> Pick</span></th>
+            </tr>
+          </table>
         </div>
       </div>
 

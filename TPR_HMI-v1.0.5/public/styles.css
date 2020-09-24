@@ -5,6 +5,47 @@
 	}
 
 
+
+@media (min-width: 768px) {
+  .modal-xl {
+    width: 90% !important;
+
+   	max-width:1000px !important;
+  }
+}
+/* Modal Content/Box */
+.modal-content {
+  margin: 15% auto !important; /* 15% from the top and centered */
+  padding: 20px;
+}
+
+.modal-body .btn {
+	margin-top: 1em;
+  border:1px solid #FF8C00;
+  font-size: 1.5em;
+  background: #FF8C00;
+}
+
+.modal-body .btn:hover {
+	border:1px solid #FF8C00;
+  background: #FFA500;
+}
+
+.modal-footer .btn {
+	border:1px solid #FF8C00;
+  font-size: 1em;
+  background: #FF8C00;
+	right: 0;
+}
+
+.modal-footer .btn:hover {
+	border:1px solid #FF8C00;
+  background: #FFA500;
+}
+
+
+
+
 .content {
 	text-align: center;
 	width: 100vw;
@@ -90,7 +131,7 @@ header{
   background: #FFA500;
   overflow: hidden;
   height: 15%;
-  width: 100%;
+  width: 100% auto;
   max-width: 100%;
 
 }
@@ -107,7 +148,7 @@ header .container {
 .logo{
     position: absolute;
 		display: flex;
-    width: 20%;
+    width: 20% auto;
 		max-width: 20%;
     margin-top: .8em;
     left: 0%;
@@ -117,7 +158,7 @@ header .container {
 .logo img {
 	display: flex;
 	max-width:100%;
-  width:20em;
+  width:20em ;
 }
 
 
@@ -153,6 +194,7 @@ header .container {
 
 /* ----------- Menu ------------ */
 .menuClass {
+
 	display: flex;
   position: absolute;
   width:15%;
@@ -228,20 +270,45 @@ nav li a{
 
 
 header .state {
+	overflow: hidden;
   position: absolute;
   right: 0%;
   width:  15%;
   height: 15%;
   border:.075em solid #cbcbcb;
-  font-smoothing:subpixel-antialiased;
   padding:2px 15px 5px;
   display: inline-block;
   background: #f0f0f0;
+
 }
 
 .state label {
+	position: absolute;
   float: left;
 }
+
+
+#connection {
+	display: block;
+	padding-right: 1em;
+	width: 100%;
+	height: 30%;
+
+}
+
+#connection th {
+	margin: 1.5em;
+	padding-top: 0.4em;
+	padding-left: 0.6em;
+}
+
+#connection span {
+	font-size: 0.75em;
+	text-shadow: 0 0 5px red, 0 0 5px red, 0 0 5px red
+}
+
+
+
 
 
 /***************************** MAIN ***************************/
@@ -281,10 +348,12 @@ header .state {
 }
 
 .buttons button {
+	font-size: 1em;
 	width: 7.5em;
 	height: 5em;
 	margin-left: 3em;
 }
+
 
 .main label {
 	font-size: 2em;
@@ -389,6 +458,8 @@ hr {
 }
 
 .adjust-div td {
+	width: 400px;
+	overflow: hidden;
 	margin-left: 5em;
   text-align: left;
   padding-left: 5em;

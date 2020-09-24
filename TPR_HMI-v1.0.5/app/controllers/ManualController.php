@@ -6,4 +6,12 @@ class ManualController extends Controller {
 		$this->view('manual/man.view');
 	}
 
+	public function sendTrue () {
+		$this->model('publish')->manPublishTrue($_POST);
+	}
+
+	public function sendFalse () {
+		$this->model('publish')->manPublishFalse($_POST);
+	}
+
 }

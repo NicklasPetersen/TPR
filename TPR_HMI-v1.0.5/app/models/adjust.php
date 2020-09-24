@@ -7,26 +7,22 @@ class Adjust extends Database {
     } else {
       return false;
     }
+    $part1 = "SELECT *, operation_mode.name as operation_name, program.name as program_name, packing_pattern.name as pattern_name ";
+    $part2 = "FROM recipe LEFT JOIN program ON recipe.program_id = program.id ";
+    $part3 = "LEFT JOIN operation_mode ON recipe.Operation_mode_id = operation_mode.id ";
+    $part4 = "LEFT JOIN packing_pattern ON recipe.packing_pattern_id = packing_pattern.id WHERE recipe_id = :id";
 
-    $sql  = "SELECT * FROM tpr_db.recipe WHERE tpr_db.recipe.recipe_id = :id";
+
+    $sql = $part1 . $part2 . $part3 . $part4;
+
+
     $stmt = $this->conn->prepare($sql);
     $stmt->bindParam('id', $id);
     $stmt->execute();
     $recipe = $stmt->fetch();
     if (isset($recipe[0]) && sizeof($recipe) >= 1) {
-
-      /*$_SESSION['recipe_name']            = $recipe['recipe_name'];
-      $_SESSION['program_id']             = $recipe['program_id'];
-      $_SESSION['recipe_velocity']        = $recipe['recipe_velocity'];
-      $_SESSION['packing_pattern_id']     = $recipe['packing_pattern_id'];
-      $_SESSION['operation_mode_id']      = $recipe['Operation_mode_id'];
-      $_SESSION['recipe_valve_delay']     = $recipe['recipe_valve_delay'];
-      $_SESSION['recipe_image_retry_no']  = $recipe['recipe_image_retry_no'];
-      $_SESSION['recipe_cart_height']     = $recipe['recipe_cart_height'];*/
-
       echo (json_encode($recipe));
       die();
-      // $recipe;
     } else {
 
       return $id;

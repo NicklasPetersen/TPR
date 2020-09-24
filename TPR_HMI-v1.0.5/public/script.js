@@ -11,18 +11,61 @@
       document.getElementById("spanDate").innerHTML = output;
   };
 
+$(function() {
+  if ($('.state').length > 0)  {
+    var url = 'user/menu';
+
+    $.ajax({
+      method: 'post',   // Request type
+      url: url,         // The page containing php script
+      success:
+      function(data, status) {
+        alert(data);
+        var res = JSON.parse(data);
+        if (data.plc == "true") {
+          $("#PLCState").css('text-shadow', '0 0 5px green, 0 0 5px green, 0 0 5px green');
+        }
+        if (data.cut == "true") {
+          $("#CutState").css('text-shadow', '0 0 5px green, 0 0 5px green, 0 0 5px green');
+        }
+        if (data.pick == "true") {
+          $("#PickState").css('text-shadow', '0 0 5px green, 0 0 5px green, 0 0 5px green');
+        }
+
+      }
+    });
+  }
+});
+
 //////////////////////////////////////////////////////
 //////////////////////// MAIN ////////////////////////
+// jQuery calls
+$(function() {
+  if ($('div.main').length > 0 || $(".main-btn").click())  {
+    var url = 'opState';   // URL to function that gets opState from broker
+
+    $.ajax({
+      method: 'post',   // Request type
+      url: url,         // The page containing php script
+      success:
+      function(mainData, status) {
+        var res = JSON.parse(mainData);
+        console.log(res);
+
+        $("#spanOpState").html(res['message']);
+        $("#stateSpan").html(res['message']);
+      }
+    });
+  }
+});
 
 
-// jQuery call
 $(document).ready(function(){
-  $("#spanOpState").html("Not Operating");
   $(".main-btn").on('click', function(event) {
     var btnId = $(this).attr('id');
-    var url = 'main/main';
+    var url = 'main';
     var mqttData    = {
-      topic: "php-mqtt/main/opState",
+      topic: "php-mqtt/hmi2plc/opState",
       value: btnId,
     }
 
@@ -32,11 +75,13 @@ $(document).ready(function(){
       // Can use JSON.stringify for more elements
       data: mqttData,
       success: function(res) {
-        console.log(res)
+        var output = JSON.parse(res);
+        console.log(output)
       },
       error: function() {
         alert("Error");
       }
+
     });
   });
 });
@@ -53,7 +98,7 @@ $(document).ready(function(){
 
     var recipeNumber = $("#recipeNo").val();
     var recipeNumber = recipeNumber.toString();
-    var url = 'adjust/show';
+    var url = 'adjust/';
     var updateData    = {
       recipe  : recipeNumber,
     }
@@ -68,12 +113,12 @@ $(document).ready(function(){
         var res = JSON.parse(data);
         $("#recipeName")    .html(res.recipe_name);
         $("#progNo")        .val(parseInt(res.program_id));
-        $("#progDesc")      .html();
+        $("#progDesc")      .html(res.program_name);
         $("#vel")           .val(parseInt(res.recipe_velocity));
         $("#opNo")          .val(parseInt(res.Operation_mode_id));
-        $("#opDesc")        .html("hey hey");
+        $("#opDesc")        .html(res.operation_name);
         $("#patternNo")     .val(parseInt(res.packing_pattern_id));
-        $("#patternDesc")   .html(1);
+        $("#patternDesc")   .html(res.pattern_name);
       }
     });
 });
@@ -98,12 +143,12 @@ $(document).ready(function(){
         var res = JSON.parse(data);
         $("#recipeName")    .html(res.recipe_name);
         $("#progNo")        .val(parseInt(res.program_id));
-        $("#progDesc")      .html();
+        $("#progDesc")      .html(res.program_name);
         $("#vel")           .val(parseInt(res.recipe_velocity));
         $("#opNo")          .val(parseInt(res.Operation_mode_id));
-        $("#opDesc")        .html("hey hey");
+        $("#opDesc")        .html(res.operation_name);
         $("#patternNo")     .val(parseInt(res.packing_pattern_id));
-        $("#patternDesc")   .html(1);
+        $("#patternDesc")   .html(res.pattern_name);
       }
     });
   });
@@ -111,74 +156,50 @@ $(document).ready(function(){
 
 
 
-// function test() {
-//   if($('#adjust-div').is(':visible')){
-//     var recipeNumber = $("#recipeNo").val();
-//     var data = {
-//       recipe: recipeNumber,
-//     };
-//
-//     $.ajax({
-//       type: 'post',
-//       url:  'adjust/',
-//       data: data,
-//       success: function() {
-//         alert(data['recipe']);
-//       },
-//       error: function() {
-//         alert("It didn't work");
-//       }
-//     });
-//   }
-//
-// }
 
-// //function showAdjust() {
-//   $(document).ready(function(){
-//     var recipeNumber = $("#recipeNo").val();
-//     var data = {
-//       "recipe": recipeNumber
-//     }
-//     $.ajax({
-//       type: 'post',
-//       url:  'adjust/',
-//       data: recipeNumber,
-//       success: function() {
-//         alert("Data sent to Adjust model: " . data['recipe'])
-//       },
-//       error: function() {
-//         alert("It didn't work");
-//       }
-//     });
-//   });
-//
-// //}
+//////////////////////////////////////////////////////
+/////////////////////// MANUAL ///////////////////////
+$(document).ready(function() {
+  ///////////////////////// Positive ///////////////////////////
+  $("#resetWith-btn, #resetWithout-btn, #serviceStart-btn, #serviceStop-btn, #idle-btn").mousedown(function(e) {
+    var commandType = $(this).attr('id');
+    var url = 'sendTrue';
+    var commandData    = {
+      topic: 'php-mqtt/hmi2plc/',
+      value: commandType
+    }
 
+    $.ajax({
+      method: 'post',   // Request type
+      url: url,         // The page containing php script
+      // Can use JSON.stringify for more elements
+      data: commandData,
+      success:
+      function(data, status) {
+        console.log(JSON.parse(data))
+      }
+    });
+  });
 
+  ///////////////////////// Negative ///////////////////////////
+  $("#resetWith-btn, #resetWithout-btn, #serviceStart-btn, #serviceStop-btn, #idle-btn").mousedown(function(e) {
+    var commandType = $(this).attr('id');
+    var url = 'sendFalse';
+    var commandData    = {
+      topic: 'php-mqtt/hmi2plc/',
+      value: commandType
+    }
 
+    $.ajax({
+      method: 'post',   // Request type
+      url: url,         // The page containing php script
+      // Can use JSON.stringify for more elements
+      data: commandData,
+      success:
+      function(data, status) {
+        console.log(JSON.parse(data))
+      }
+    });
+  });
 
-
-
-
-// $(document).ready(function(){
-//   $('#adjust-form').submit(function(event){
-//     event.preventDefault();
-//
-//     // INPUTS
-//     var length = document.getElementById("boxLength").value;
-//     var width  = document.getElementById("boxWidth").value;
-//     var height  = document.getElementById("boxHeight").value;
-//
-//     // OUTPUT
-//     var result    = document.getElementById('result');
-//
-//     // make a post request ajax
-//     // AJAX request (running in background)
-//     $.post("../../app/services/submit.php",
-//       {firstname: firstname, lastname: lastname},
-//       function(data){
-//         result.innerHTML = data;
-//       }
-//     );
-//   });
-// });
+});

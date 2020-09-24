@@ -19,6 +19,10 @@ class UserController extends Controller {
 		}
 	}
 
+	public function menu () {
+		$this->model('subscribe')->menu();
+	}
+
 	public function logout() {
 		session_unset();
 		header('Location: /public/user/');

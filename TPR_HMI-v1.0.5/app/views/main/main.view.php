@@ -21,14 +21,14 @@
     <br>
     <label><span id="spanVelocity">No velocity</span></label>
     <br>
-    <label><span id="spanOpState"></span></label>
+    <label><span id="spanOpState">Not running</span></label>
 
   </div>
 
   <div class="buttons">
-    <button onsubmit="return acall()" class="main-btn" id="start-btn" type="button" data-toggle="" style="background:#00db16;">Start</button>
-    <button onsubmit="return acall()" class="main-btn" id="pause-btn" type="button" data-toggle="" style="background:#ebc700;">Pause</button>
-    <button onsubmit="return acall()" class="main-btn" id="stop-btn" type="button" data-toggle="" style="background:#eb0000;">Stop</button>
+    <button onsubmit="return acall()" class="main-btn fas fa-play" id="start-btn" type="button" data-toggle="" style="background:#00db16;"></button>
+    <button onsubmit="return acall()" class="main-btn fas fa-pause" id="pause-btn" type="button" data-toggle="" style="background:#ebc700;"></button>
+    <button onsubmit="return acall()" class="main-btn fas fa-stop" id="stop-btn" type="button" data-toggle="" style="background:#eb0000;"></button>
 
   </div>
 </div>
