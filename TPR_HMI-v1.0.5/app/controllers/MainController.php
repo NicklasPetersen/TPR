@@ -8,8 +8,9 @@ class MainController extends Controller {
 	 * @return viewbag
 	 */
 	public function index () {
-		$user = $this->model('User');
-		$viewbag['username'] = $user->name;
+		$viewbag['main_info'] = $this->model('subscribe')->subscribe2("mqtt/plc2hmi/velocity", "mqtt/plc2hmi/program");
+		$viewbag['program'] = $this->model('main')->showProgram($viewbag['main_info']['mqtt/plc2hmi/program']);
+		$viewbag['opState'] = $this->model('subscribe')->subscribe1("mqtt/plc2hmi/opState");
 		$this->view('main/main.view', $viewbag);
 	}
 
@@ -19,7 +20,7 @@ class MainController extends Controller {
 	 * @return json_object
 	 */
 	public function opState() {
-		$this->model('subscribe')->mainOperation();
+		$viewbag['opState'] = $this->model('subscribe')->subscribe1("mqtt/plc2hmi/opState");
 	}
 
 	/**
@@ -29,6 +30,7 @@ class MainController extends Controller {
 	 */
 	public function main() {
 		$this->model('publish')->mainOperation($_POST);
+
 		$this->opState();
 	}
 

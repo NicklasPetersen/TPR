@@ -3,22 +3,17 @@
 class AdjustController extends Controller {
 
 	public function index () {
-		$this->model('subscribe')->AdjustRecipe();
-
-		$this->model('adjust')->show($_POST);
-		$this->view('adjust/adjust.view');
-	}
+		$viewbag['recipe'] = $this->model('subscribe')->subscribe1("mqtt/plc2hmi/recipe");
+		$viewbag['adjust'] = $this->model('adjust')->show($_SESSION['recipe']);
+		$this->view('adjust/adjust.view', $viewbag);
 
 
-
-	public function showSpecific() {
-		$viewbag['specific'] = $this->model('adjust')->showSpecific($_POST);
-		$this->view('adjust/adjust.view');
 	}
 
 	public function update () {
-		$_SESSION['update-adjust'] = $this->model('adjust')->show();
-		$this->view('adjust/adjust.view');
+		$this->model('publish')->publishInt($_POST);
+
+		header('Location: /public/adjust/update');
 	}
 
 

@@ -64,7 +64,7 @@
           <label>Date: <span id="spanDate"></span></label>
 
           <br>
-          <label>State: <span id="stateSpan"><?php if (isset($_SESSION['value'])) { echo $_SESSION['value']; }?></span></label>
+          <label>State: <span id="stateSpan"><?php if (isset($_SESSION['opState'])) { echo $_SESSION['opState']; }?></span></label>
 
           <br>
           <label>Connections:</label>

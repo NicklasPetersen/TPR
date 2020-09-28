@@ -17,11 +17,11 @@
 
   </div>
   <div class="values">
-    <label><span id="spanProgram">No program</span></label>
+    <label><span id="spanProgram"><?php echo $viewbag['program']; ?></span></label>
     <br>
-    <label><span id="spanVelocity">No velocity</span></label>
+    <label><span id="spanVelocity"><?php echo $viewbag['main_info']['mqtt/plc2hmi/velocity'];?></span></label>
     <br>
-    <label><span id="spanOpState">Not running</span></label>
+    <label><span id="spanOpState"><?php echo $_SESSION['opState']; ?></span></label>
 
   </div>
 
@@ -31,5 +31,6 @@
     <button onsubmit="return acall()" class="main-btn fas fa-stop" id="stop-btn" type="button" data-toggle="" style="background:#eb0000;"></button>
 
   </div>
+  <input id="hidden-input" class="hidden" type="number" name="" value="1">
 </div>
 <?php include '../app/views/partials/foot.php'; ?>

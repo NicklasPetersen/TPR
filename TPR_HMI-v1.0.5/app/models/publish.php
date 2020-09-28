@@ -19,12 +19,14 @@
          if ($value == "start") {
            $_SESSION['value'] = "Running";
          } else if ($value == "stop") {
-           $_SESSION['value'] = "Stopped";
+           $_SESSION['value'] = "Stopped";}
+         else if ($value == "pause") {
+           $_SESSION['value'] = "Paused";
          } else {
            $_SESSION['value'] = "ERROR!";
          }
 
-         $output = array("topic"=> $topic, "value"=>$_SESSION['value']);
+         $output = array("topic"=> $topic, "value"=>$value);
          echo json_encode($output);
          exit();
        } else {
@@ -76,6 +78,30 @@
          $output = array("topic"=> $topic, "value"=>$value);
          echo json_encode($output);
          exit();
+       } else {
+         return false;
+       }
+
+     }
+
+     /**
+      * Send negative value to PLC after the samme command has been sent
+      *
+      * @return bool
+      */
+     public function publishInt  ($data) {
+       // Get topic and value for MQTT
+       $topic  = $data['topic'];
+       $value  = $data['value'];
+       $qos    = 1;
+
+       $value = explode('-', $value)[0];
+
+       if ($value !== 0) {
+         $this->conn->publish($topic, $value, $qos);
+         $output = array("topic"=> $topic, "value"=>$value);
+         echo json_encode($output);
+         return true;
        } else {
          return false;
        }
