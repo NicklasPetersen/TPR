@@ -4,7 +4,7 @@
 
 <!-- Here starts the page -->
 <div class="info">
-  <img src='..\..\app\views\partials\logo.png' alt="egamatic logo" width=500px />
+  <img src='/public/img/logo.png' alt="egamatic logo" width=500px />
 
   <br>
   <h3>Egamatic A/S</h3><br>

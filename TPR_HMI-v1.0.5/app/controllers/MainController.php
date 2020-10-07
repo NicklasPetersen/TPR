@@ -8,9 +8,12 @@ class MainController extends Controller {
 	 * @return viewbag
 	 */
 	public function index () {
-		$viewbag['main_info'] = $this->model('subscribe')->subscribe2("mqtt/plc2hmi/velocity", "mqtt/plc2hmi/program");
-		$viewbag['program'] = $this->model('main')->showProgram($viewbag['main_info']['mqtt/plc2hmi/program']);
-		$viewbag['opState'] = $this->model('subscribe')->subscribe1("mqtt/plc2hmi/opState");
+		$this->model('subscribe')->subscribe1("mqtt/plc2hmi/opState");
+		$this->model('subscribe')->subscribe1("mqtt/plc2hmi/recipe");
+
+		$viewbag['main_info'] = $this->model('main')->show($_SESSION['recipe']);
+		$viewbag['program'] = $this->model('main')->showProgram(5);
+
 		$this->view('main/main.view', $viewbag);
 	}
 

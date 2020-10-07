@@ -14,4 +14,6 @@ class ManualController extends Controller {
 		$this->model('publish')->manPublishFalse($_POST);
 	}
 
+
+
 }

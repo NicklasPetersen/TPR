@@ -16,13 +16,15 @@
       <div class="container">
         <div class="logo">
           <a href="/public/user/">
-            <img src="../../../public/img/logo.png" href="pictures.php" alt="logo" title="">
+            <img id="logo" src="/public/img/logo.png" href="pictures.php" alt="logo" title="">
           </a>
         </div>
 
         <div class="infobar">
           <iframe src="..\..\app\views\partials\infobar.php" scrolling="no" title="infobar"></iframe>
         </div>
+
+        
         <div class="menuClass">
           <nav>
            <div class="dropdown" id="down1">
@@ -44,16 +46,6 @@
               <li><a href="/public/user/logout">    Logout</a></li>
             </ul>
           </div>
-
-
-          <div class="dropdown" id="down2">
-           <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">
-             logout
-           <span class="caret"></span></button>
-           <ul class="dropdown-menu">
-             <li><a href="/public/user/logout">Logout</a></li>
-           </ul>
-         </div>
        </div>
 
         </nav>
@@ -61,7 +53,7 @@
 
         <div class="state">
 
-          <label>Date: <span id="spanDate"></span></label>
+          <label id="dataLabel">Date: <span id="spanDate"></span></label>
 
           <br>
           <label>State: <span id="stateSpan"><?php if (isset($_SESSION['opState'])) { echo $_SESSION['opState']; }?></span></label>

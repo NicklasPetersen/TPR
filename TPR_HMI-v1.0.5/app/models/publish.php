@@ -1,6 +1,8 @@
 <?php
   class Publish extends MQTTConn {
 
+    private $qos = 1;
+
     /**
      * This function is for sending Start/Pause/stop commands to PLC
      *
@@ -10,12 +12,11 @@
        // Get topic and value for MQTT
        $topic  = $data['topic'];
        $value  = $data['value'];
-       $qos    = 1;
 
        $value = explode('-', $value)[0];
 
        if ($value !== 0) {
-         $this->conn->publish($topic, $value, $qos);
+         $this->conn->publish($topic, $value, $this->qos);
          if ($value == "start") {
            $_SESSION['value'] = "Running";
          } else if ($value == "stop") {
@@ -43,24 +44,22 @@
        $endTopic = $data['value'];
        $endTopic = explode('-', $endTopic)[0];
        $topic = $data['topic'] . $endTopic;
-       $qos    = 1;
 
        $value = "1";
 
        if ($value !== 0) {
-         $this->conn->publish($topic, $value, $qos);
+         $this->conn->publish($topic, $value, $this->qos);
 
          $output = array("topic"=> $topic, "value"=>$value);
          echo json_encode($output);
          exit();
        } else {
-         return false;
        }
 
      }
 
      /**
-      * Send negative value to PLC after the samme command has been sent
+      * Send negative value to PLC after the same command has been sent
       *
       * @return void
       */
@@ -68,43 +67,36 @@
        $endTopic = $data['value'];
        $endTopic = explode('-', $endTopic)[0];
        $topic = $data['topic'] . $endTopic;
-       $qos    = 1;
 
        $value = "0";
 
        if ($value !== 0) {
-         $this->conn->publish($topic, $value, $qos);
+         $this->conn->publish($topic, $value, $this->qos);
 
          $output = array("topic"=> $topic, "value"=>$value);
          echo json_encode($output);
          exit();
        } else {
-         return false;
        }
-
      }
 
      /**
-      * Send negative value to PLC after the samme command has been sent
+      * Send command
+      * $data contains topic and value to be sent to broker
       *
-      * @return bool
+      * @return void
       */
-     public function publishInt  ($data) {
+     public function sendCommand($data) {
        // Get topic and value for MQTT
        $topic  = $data['topic'];
        $value  = $data['value'];
-       $qos    = 1;
-
-       $value = explode('-', $value)[0];
 
        if ($value !== 0) {
-         $this->conn->publish($topic, $value, $qos);
+         $this->conn->publish($topic, $value, $this->qos);
          $output = array("topic"=> $topic, "value"=>$value);
          echo json_encode($output);
-         return true;
        } else {
          return false;
        }
-
      }
   }

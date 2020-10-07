@@ -6,6 +6,9 @@ class VisionController extends Controller {
 		$this->view('vision/vision.view');
 	}
 
-	
+	public function sendCommand() {
+		$this->model('publish')->sendCommand($_POST);
+	}
+
 
 }

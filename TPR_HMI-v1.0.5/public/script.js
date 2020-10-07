@@ -1,33 +1,72 @@
 // For showing date in header
 window.onload = function() {
+
+    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
     var d = new Date();
     var weekday = ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"];
     var monthname = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
     // Set your output to a variable
-    var output = weekday[d.getDay()] + " " + d.getDate() + ". " + monthname[d.getMonth()] + " " + d.getFullYear();
+    if (vw > 1200) {
+      var output = weekday[d.getDay()] + " " + d.getDate() + ". " + monthname[d.getMonth()] + " " + d.getFullYear();
+    } else {
+      var output = weekday[d.getDay()] + " " + d.getDate() + ". " + monthname[d.getMonth()];
+    }
+
 
     // Target the ID of the span and update the HTML
     document.getElementById("spanDate").innerHTML = output;
 };
+function ajaxCall(url, commandData) {
+  $.ajax({
+    method: 'post',
+    url: url,
+    data: commandData,
+    success: function(res) {
+      console.log(JSON.parse(res));
+    },
+    error: function() {
+      alert("Error!!");
+    }
+  });
+}
+
+
+function ajaxCallUpdate(url, commandData) {
+  $.ajax({
+    method: 'post',
+    url: url,
+    data: commandData,
+    success: function(res) {
+      setTimeout(function() {
+           location.reload();
+        }, 0001);
+    },
+    error: function() {
+      alert("Error!!");
+    }
+  });
+}
+
 
 $(function() {
   if ($('.state').length > 0)  {
-    var url = 'user/menu';
+    var url = 'public/user/menu';
     $.ajax({
       method: 'post',   // Request type
       url: url,         // The page containing php script
+      async: true,
       success:
       function(data, status) {
-        //alert(data);
         var res = JSON.parse(data);
-        if (res.plc == "true") {
+        console.log(data);
+        if (res.plc == "TRUE") {
           $("#PLCState").css('text-shadow', '0 0 5px green, 0 0 5px green, 0 0 5px green');
         }
-        if (res.cut == "true") {
+        if (res.cut == "TRUE") {
           $("#CutState").css('text-shadow', '0 0 5px green, 0 0 5px green, 0 0 5px green');
         }
-        if (res.pick == "true") {
+        if (res.pick == "TRUE") {
           $("#PickState").css('text-shadow', '0 0 5px green, 0 0 5px green, 0 0 5px green');
         }
 
@@ -36,27 +75,14 @@ $(function() {
   }
 });
 
-//////////////////////////////////////////////////////
-//////////////////////// MAIN ////////////////////////
+
 // jQuery calls
-// $(function() {
-//   if (($('div.main').length > 0 && $('#hidden-input').val() == 1) || $(".main-btn").click())  {
-//     var url = 'opState';   // URL to function that gets opState from broker
-//
-//     $.ajax({
-//       method: 'post',   // Request type
-//       url: url,         // The page containing php script
-//       success:
-//       function(mainData, status) {
-//         var res = JSON.parse(mainData);
-//         console.log(res);
-//       }
-//     });
-//   }
-// });
+
 
 
 $(document).ready(function(){
+  //////////////////////////////////////////////////////
+  //////////////////////// MAIN ////////////////////////
   $(".main-btn").on('click', function(event) {
     var btnId = $(this).attr('id');
     var url = 'main';
@@ -65,62 +91,11 @@ $(document).ready(function(){
       value: btnId,
     }
 
-    $.ajax({
-      method: 'post',   // Reques type
-      url:  url,      // The page containing php script
-      // Can use JSON.stringify for more elements
-      data: mqttData,
-      success: function(res) {
-        var output = JSON.parse(res);
-        console.log(output)
-      },
-      error: function() {
-        alert("Error");
-      }
-
-    });
+    ajaxCallUpdate(url, mqttData);
   });
-});
 
-
-
-
-
-
-
-//////////////////////////////////////////////////////
-/////////////////////// ADJUST ///////////////////////
-// $(document).ready(function(){
-//   if ($('#adjust-div').length > 0)  {
-//     var recipeNumber = $("#recipeNo").val();
-//     var recipeNumber = recipeNumber.toString();
-//     var url = 'showSpecific';
-//     var updateData    = {
-//       recipe  : recipeNumber,
-//     }
-//
-//     $.ajax({
-//       method: 'post',   // Request type
-//       url: url,         // The page containing php script
-//       // Can use JSON.stringify for more elements
-//       data: updateData,
-//       success:
-//       function(data, status) {
-//         var res = JSON.parse(data);
-//         console.log(res);
-//         $("#recipeName")    .html(res.recipe_name);
-//         $("#vel")           .val(parseInt(res.recipe_velocity));
-//         $("#opNo")          .val(parseInt(res.Operation_mode_id));
-//         $("#opDesc")        .html(res.operation_name);
-//         $("#patternNo")     .val(parseInt(res.packing_pattern_id));
-//         $("#patternDesc")   .html(res.pattern_name);
-//       }
-//     });
-//   }
-// });
-
-// jQuery call
-$(document).ready(function(){
+  //////////////////////////////////////////////////////
+  /////////////////////// ADJUST ///////////////////////
   $("#adjust-btn").on("click", function(e) {
     var recipeNumber = $("#recipeNo").val();
     var recipeNumber = recipeNumber.toString();
@@ -129,68 +104,129 @@ $(document).ready(function(){
       topic: "php-mqtt/hmi2plc/recipe",
       value: recipeNumber,
     }
-
-    $.ajax({
-      method: 'post',   // Request type
-      url: url,         // The page containing php script
-      // Can use JSON.stringify for more elements
-      data: updateData,
-      success:
-      function(data, status) {
-        //var res = JSON.parse(data);
-        console.log(data);
-      }
-    });
-
+    ajaxCallUpdate(url, updateData);
   });
-});
 
 
-
-
-//////////////////////////////////////////////////////
-/////////////////////// MANUAL ///////////////////////
-$(document).ready(function() {
+  //////////////////////////////////////////////////////
+  /////////////////////// MANUAL ///////////////////////
   ///////////////////////// Positive ///////////////////////////
-  $("#resetWith-btn, #resetWithout-btn, #serviceStart-btn, #serviceStop-btn, #idle-btn").mousedown(function(e) {
-    var commandType = $(this).attr('id');
+  $(".cartControl, .resetControl, .serviceControl, idleControl").mousedown(function(e) {
+    var command = $(this).attr('id');
     var url = 'sendTrue';
     var commandData    = {
       topic: 'php-mqtt/hmi2plc/',
-      value: commandType
+      value: command
     }
 
-    $.ajax({
-      method: 'post',   // Request type
-      url: url,         // The page containing php script
-      // Can use JSON.stringify for more elements
-      data: commandData,
-      success:
-      function(data, status) {
-        console.log(JSON.parse(data))
-      }
-    });
+    ajaxCall(url, commandData);
   });
 
   ///////////////////////// Negative ///////////////////////////
-  $("#resetWith-btn, #resetWithout-btn, #serviceStart-btn, #serviceStop-btn, #idle-btn").mousedown(function(e) {
+  $(".cartControl, .resetControl, .serviceControl, idleControl").mouseup(function(e) {
     var commandType = $(this).attr('id');
     var url = 'sendFalse';
     var commandData    = {
       topic: 'php-mqtt/hmi2plc/',
       value: commandType
     }
+    ajaxCall(url, commandData);
+  });
 
-    $.ajax({
-      method: 'post',   // Request type
-      url: url,         // The page containing php script
-      // Can use JSON.stringify for more elements
-      data: commandData,
-      success:
-      function(data, status) {
-        console.log(JSON.parse(data))
-      }
-    });
+
+  //////////////////////////////////////////////////////
+  /////////////////////// Setup ////////////////////////
+  $(".setup-btn").mouseup(function(e) {
+    var command     = $(this).attr('id');
+    var url         = 'sendCommand';
+    var commandData = {
+      topic: "php-mqtt/hmi2plc/setup",
+      value: command
+    };
+    ajaxCall(url, commandData);
+  });
+
+  $(".calib").mouseup(function(e) {
+    var command     = $(this).attr('id');
+    var url         = 'sendCommand';
+    var commandData = {
+      topic: "php-mqtt/hmi2plc/calib",
+      value: command
+    };
+    ajaxCall(url, commandData);
+  });
+
+  $(".robot-frame").mouseup(function(e) {
+    var command       = $(this).attr('id');
+    var commandSplit  = command.split('-');
+    var type          = commandSplit[0];
+
+    var x = $("#"+type+"-x").val();
+    var y = $("#"+type+"-y").val();
+    var z = $("#"+type+"-z").val();
+    var a = $("#"+type+"-a").val();
+    var e = $("#"+type+"-e").val();
+    var r = $("#"+type+"-r").val();
+    if (x != "" && y != "" && z != "" && a != "" && e != "" && r != "") {
+      var url         = 'updateFrame';
+      var commandData = {
+        topic: "php-mqtt/hmi2plc/frameUpdate",
+        type: type,
+        x: x,
+        y: y,
+        z: z,
+        a: a,
+        e: e,
+        r: r
+      };
+      ajaxCallUpdate(url, commandData);
+    }
+  });
+
+
+  //////////////////////////////////////////////////////
+  /////////////////////// Vision ///////////////////////
+  $("#vision-btn").mousedown(function(e) {
+    var command     = $("#vision-input").val();
+    var url         = 'sendCommand';
+    var commandData = {
+      topic: "php-mqtt/hmi2plc/vision",
+      command: command,
+    }
+    ajaxCall(url, commandData);
+  });
+
+  $("#vision-btn").mouseup(function(e) {
+    var command     = 0;
+    var url         = 'sendCommand';
+    var commandData = {
+      topic: "php-mqtt/hmi2plc/vision",
+      command: command,
+    }
+    ajaxCallUpdate(url, commandData);
+  });
+
+
+  //////////////////////////////////////////////////////
+  /////////////////////// TOOLs ////////////////////////
+  $(".toolcontrol").mousedown(function(e) {
+    var command     = $(this).attr('id');
+    var url         = 'sendCommand';
+    var commandData = {
+      topic: "php-mqtt/hmi2plc/tool",
+      command: command,
+    }
+    ajaxCall(url, commandData);
+  });
+
+  $(".toolcontrol").mouseup(function(e) {
+    var command     = 0;
+    var url         = 'sendCommand';
+    var commandData = {
+      topic: "php-mqtt/hmi2plc/tool",
+      command: command,
+    }
+    ajaxCall(url, commandData);
   });
 
 });

@@ -4,15 +4,93 @@
 		}
 	}
 
+@media (max-width: 1200px) {
+	header{
+	  background: #FF7619;
+	  overflow: hidden;
+		width: 100%;
+	  height:7vh !important;
+
+	  max-width: 100%;
+
+	}
+
+	.logo img {
+		content:url("/public/img/logo-phone.png");
+		display: flex;
+		width: 6vh !important;
+		max-width: 20%;
+	  height:6vh !important;
+		margin-left: 1vw;
+
+	}
+
+	.infobar {
+		height: 6vh !important;
+	}
+
+	.dropdown button {
+		top: 20% !important;
+	  max-width: 8vw;
+	}
+
+	.state {
+		height: 7vh !important;
+	}
 
 
-@media (min-width: 768px) {
+	#box_img_laptop {
+		display: none !important;
+	}
+
+	#box_img_tablet {
+		display: inline-block !important;
+	}
+}
+
+@media (max-width: 1081px) {
   .modal-xl {
     width: 90% !important;
 
    	max-width:1000px !important;
   }
+
+	.logo img {
+		content:url("/public/img/logo-phone.png");
+		display: flex;
+		max-width:50%;
+		max-height: 50%;
+	  width:20em ;
+	}
+
+
+	.dropdown button {
+	  position: absolute;
+	  height: 2.4em;
+	  max-width: 4em;
+	  border:1px solid #FF6600;
+	  font-size: 1.25em;
+	  background: #FF6600;
+	}
+
 }
+
+
+.headline {
+	overflow:auto;
+}
+.headline img {
+	display: inline-block;
+	float: left;
+	width: 100px;
+	opacity: 0%;
+
+}
+.headline h1 {
+	margin: 0;
+	position: relative;
+}
+
 /* Modal Content/Box */
 .modal-content {
   margin: 15% auto !important; /* 15% from the top and centered */
@@ -21,9 +99,9 @@
 
 .modal-body .btn {
 	margin-top: 1em;
-  border:1px solid #FF8C00;
+  border:1px solid #FF6600;
   font-size: 1.5em;
-  background: #FF8C00;
+  background: #FF6600;
 }
 
 .modal-body .btn:hover {
@@ -32,9 +110,9 @@
 }
 
 .modal-footer .btn {
-	border:1px solid #FF8C00;
+	border:1px solid #FF6600;
   font-size: 1em;
-  background: #FF8C00;
+  background: #FF6600;
 	right: 0;
 }
 
@@ -47,6 +125,7 @@
 
 
 .content {
+	margin: auto;
 	text-align: center;
 	width: 100vw;
 }
@@ -85,12 +164,12 @@ text{
 /* The container centered in the middle */
 .container{
 
-    max-width: 960;
+    /*max-width: 960px;*/
     width: 100%;
     margin: auto;
 }
 .container a:link {
-  color: ##D3D3D3;
+  color: #D3D3D3;
 }
 
 /* visited link */
@@ -128,9 +207,9 @@ text{
 
 /**********************HEADER*******************/
 header{
-  background: #FFA500;
+  background: #FF7619;
   overflow: hidden;
-  height: 15%;
+  height:15vh;
   width: 100% auto;
   max-width: 100%;
 
@@ -148,11 +227,11 @@ header .container {
 .logo{
     position: absolute;
 		display: flex;
-    width: 20% auto;
+		height: 15%;
 		max-width: 20%;
+		max-height: 15%;
     margin-top: .8em;
     left: 0%;
-
 }
 
 .logo img {
@@ -203,37 +282,39 @@ header .container {
   line-height:1.5;
   padding:5px 5px 8px;
 
-
 }
 
 .dropdown {
 	display: flex;
   position: absolute;
-  margin-top: 0.25em;
-  height: 50%;
+  height: 100%;
   right: 20%;
+
 }
 
 nav{
     z-index: 999;
     max-height: 100%;
-    margin-left: 1.5em;
-    float: left;
+    margin-left: 1.25vw;
 
 }
 
 .dropdown button {
-  position: absolute;
-  height: 2.4em;
-  width: 10em;
-  border:1px solid #FF8C00;
+
+	position: absolute;
+	top: 50%;
+	-ms-transform: translateY(-50%);
+	transform: translateY(-50%);
+  height: 4em;
+  max-width: 12vw;
+  border:1px solid #FF6600;
   font-size: 1.25em;
-  background: #FF8C00;
+  background: #FF6600;
 }
 
 .dropdown button:hover {
   border:1px solid #FF8C00;
-  background: #FFA500;
+  background: #FF6600;
 }
 
 .container .dropdown input {
@@ -284,6 +365,7 @@ header .state {
 
 .state label {
 	position: absolute;
+	display: inline-block;
   float: left;
 }
 
@@ -355,24 +437,23 @@ header .state {
 }
 
 
-.main label {
-	font-size: 2em;
-	color: #363435;
-  float: left;
-  text-align: left;
-  margin-top: 1.25em;
-  padding-left:5em;
-}
-
 .main h2 {
 	color: #363435;
   float:left;
   margin-top: 1.25em;
+	margin-right:2em;
+}
+
+.main label {
+	font-size: 2em;
+  text-align: left;
+  margin-top: 1.25em;
+	float: right;
 }
 
 
  .content h1 {
-	 display: flex;
+	display: flex;
   color: #363435;
   float: left;
   text-align: left !important;
@@ -411,11 +492,20 @@ hr {
   box-shadow:0 4px 6px rgba(0,0,0,0.1);
 }
 
-.setup table {
+.setup label {
 	display: inline-block;
+  width: 14em;
+  text-align: right;
 }
 
+.calib label {
+  width: 9em;
+}
 
+.robot-frame {
+	width: 5em;
+	height: 1.75em;
+}
 
 .setup input[type=number] {
 	width: 4vw;
@@ -430,126 +520,138 @@ hr {
 }
 
 
+
 /**************** ADJUST ****************/
 .adjust-div {
-	overflow: hidden;
+	display: inline-block;
+	overflow:hidden;
 	width: 75vw;
 	height: auto;
   margin: 2em auto 0;
-  padding:15px 15px 30px;
+	padding-left: 10% !important;
+	padding-top: 15px;
+	padding-bottom: 15px;
   border-radius: 2px;
   border:1px solid #cbcbcb;
   transition:box-shadow 0.5s ease;
   box-shadow:0 4px 6px rgba(0,0,0,0.1);
+	text-align: left;
+
 }
 
-.adjust-div table {
+.adjust-div .block {
+	margin-top: .1em;
+}
+
+.box img {
+	position: absolute;
+	max-width: 15em;
 	display: inline-block;
-  font-family: arial, sans-serif;
-  border-collapse: collapse;
-  width: 60%;
 }
 
-.adjust-div th {
+#box_img_laptop {
+	display: inline-block;
+}
 
-  text-align: left;
+#box_img_tablet {
+	display: none;
+}
+
+
+.adjust-div label {
+	display: inline-block;
+  width: 15em;
+  text-align: right;
   padding-top: 1em;
-	padding-left: 5em;
-}
-
-.adjust-div td {
-	width: 400px;
-	overflow: hidden;
-	margin-left: 5em;
-  text-align: left;
-  padding-left: 5em;
-}
-
-.adjust-div td input {
-	display: inline-flex;
-  width: 20%;
-}
-
-.adjust-div td input[type=range] {
-	width: 100%
-}
-
-.adjust-div td .boxDesc {
-  width: 100%;
-}
-
-.adjust-div button {
-	clear: left;
-	margin-top: 2em;
-	margin-left: 5em;
+	padding-right: 5em;
 }
 
 .adjust-div span {
 	display: inline-block;
+	width: 15em !important;
 	overflow: hidden;
-	width: 78%;
+  text-align: left;
+	padding-top:.5em;
+	padding-bottom:.5em;
+  padding-left: .5em !important;
 	height: 30px;
 
-	padding:5px 5px 5px 0;
 	border-radius: 1px;
   border:1px solid #cbcbcb;
   transition:box-shadow 0.5s ease;
   box-shadow:0 2px 3px rgba(0,0,0,0.1);
-	text-align: left;
 }
 
-.adjust-div img {
+.adjust-div input {
 	display: inline-block;
-	float:right;
-	right: 15%;
+  width: 5em;
+}
+.adjust-div input[type=range] {
+	display: inline-block;
+	width: 20em;
+}
+
+.adjust-div .boxDesc {
+  width: 20em;
+}
+
+.adjust-div button {
+
+	margin-top: 2em;
+	margin-left: 5em;
+}
+
+.box img {
+	display: inline-block;
+	float: right;
+	right: 10%;
 	width: 25%;
 	position: relative;
 	margin-left: 5em;
-	margin-top: 10%;
 }
 
 /************** Manual ******************/
 
 .content .man {
-	overflow: hidden;
-	width: 75vw;
-	height: auto;
-  margin: 2em auto 0;
-  padding:15px 15px 30px;
+	display: inline-block;
+	width: 75%;
+  margin: auto;
+	padding-top: 15px;
+	padding-bottom: 15px;
   border-radius: 2px;
   border:1px solid #cbcbcb;
   transition:box-shadow 0.5s ease;
   box-shadow:0 4px 6px rgba(0,0,0,0.1);
+	text-align: left;
+}
 
+.buttons h4 {
+
+	display: inline-block;
+	width: 15em;
+	text-align: right;
+	padding-left: 2em;
+	padding-top: 1em;
+	padding-right: 5em;
 }
 
 .buttons button {
-	margin-right: 2em;
+	display: inline-block;
+	margin: auto;
+}
+
+.cart button {
+	display: inline-block;
+	margin: 1em;
 }
 
 .man div {
-  display:inline-table;
+  display:inline-block;
 	text-align: center;
 	max-width: 48%;
-  margin: 0 auto;
+	margin-left: 3em;
 }
 
-
-.man td {
-	text-align: center;
-}
-
-.man th {
-	padding-left: 2em;
-}
-
-.man td button {
-	display: inline-block;
-
-	margin-top: 1em;
-	margin-bottom: 1em;
-	margin-left:2em;
-}
 
 
 /************** Information ***************/
@@ -586,7 +688,7 @@ hr {
 	overflow: hidden;
 	width: 75vw;
 	height: auto;
-  margin: 2em auto 0;
+  margin: auto;
   padding:15px 15px 30px;
   border-radius: 2px;
   border:1px solid #cbcbcb;
@@ -595,8 +697,9 @@ hr {
 }
 
 .control div {
-	position: relative;
-	display: table;
+
+	display: block;
+	margin:auto;
 	float:left;
 	width: 48vw;
 	padding: 1.5em;
@@ -612,43 +715,42 @@ hr {
 	margin-left: 1em;
 }
 
+.commands input {
+	width: 10em;
+}
+
+.vision-pic {
+	display: inline-block;
+	clear: left;
+
+}
+
+
+#vision-btn {
+	width: 10em;
+	height: 2em;
+}
+
 /*********************** TOOLS ******************/
 
-
-.toolcontrol {
-  margin-top: 0.25em;
-  height: 3em;
-  width: 10em;
-}
-
-#cuttool, #picktool, #griptool {
+.control div {
 	width: 24vw;
-}
-.control div table {
-	width: 100%;
-}
-.control div td {
-  text-align: left;
-  padding-left: 2em;
-}
-.control div th {
-  text-align: right;
-  padding-right: 2em;
+	display: inline-block;
 }
 
-.toolcontrol input {
-  width:100%;
-  display:inline-block;
-  max-width:100%;
-  line-height:1.5;
-  padding:5px 5px 8px;
-  border-radius:3px;
-  border:1px solid #FF8C00 !important;
-  font:13px Tahoma, cursive;
-  transition: box-shadow 0.5s ease;
-  box-shadow:0 4px 6px rgba(0,0,0,0.1);
-  font-smoothing: subpixel-antialiased;
+.control label {
+	display: inline-block;
+  width: 12em;
+  text-align: right;
+  padding-top: 1em;
+	padding-right: 2em;
 }
+
+.control button {
+	display: inline-block;
+	margin-left:.5em;
+}
+
 
 
 
@@ -658,7 +760,6 @@ hr {
 .slider {
   -webkit-appearance: none;  /* Override default CSS styles */
   appearance: none;
-  /*width: 30% !important; /* Full-width */
   height: 25px; /* Specified height */
   background: #d3d3d3; /* Grey background */
   outline: none; /* Remove outline */
@@ -691,10 +792,10 @@ button {
 	height: 3em;
   width: 10em;
   font-size: 1.25em;
-  background: #FF8C00;
+  background: #FF6600;
 }
 
 button:hover {
   border:1px solid #FF8C00;
-  background: #FFA500;
+  background: #FF6600;
 }

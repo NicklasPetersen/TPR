@@ -1,104 +1,147 @@
 <?php include '../app/views/partials/menu.php'; ?>
 
-<br>
-<h1>Setup</h1><br><br>
-<hr><br>
+<div class="headline">
+  <img class="loading" src="/public/img/loading.gif" alt="">
+  <br>
+  <h1>Setup</h1>
+
+  <br><br>
+  <hr>
+</div>
+
+<!-- BOOTSTRAP MODAL(s) HERE -->
+<div class="modal fade" id="accept-modal">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Are the robot outside the rows?</h3>
+      </div>
+      <div class="modal-body">
+        <input id="calib-yes-btn" class="btn btn-primary" data-dismiss="modal" data-toggle="modal" data-target="#choose-calib-modal" value="Yes">
+        <input id="calib-no-btn" class="btn btn-primary" data-dismiss="modal" value="No">
+      </div>
+      <div class="modal-footer">
+        <input class="btn btn-primary" data-dismiss="modal" value="Dismiss">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="choose-calib-modal">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Choose Calibration type</h3>
+      </div>
+      <div class="modal-body">
+        <h4>Hand-Eye calibration</h4>
+        <input id="he-cut-start" class="btn btn-primary calib" data-dismiss="modal" data-toggle="modal" data-target="#he-Modal" value="Stationary camera">
+        <input id="he-pick-start" class="btn btn-primary calib" data-dismiss="modal" data-toggle="modal" data-target="#he-Modal" value="Pick-mounted camera">
+        <br><br>
+        <h4>Eye-Eye calibration</h4>
+        <input id="ee-cut-start" class="btn btn-primary calib" data-dismiss="modal" data-toggle="modal" data-target="#ee-cut-Modal" value="Stationary camera">
+        <input id="ee-pick-start" class="btn btn-primary calib" data-dismiss="modal" data-toggle="modal" data-target="#ee-pick-Modal" value="Pick-mounted camera">
+      </div>
+      <div class="modal-footer">
+        <input class="btn btn-primary" data-dismiss="modal" value="Dismiss">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="he-Modal">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Mount calibration plate on Robot Cut</h3>
+      </div>
+      <div class="modal-body">
+
+        <input id="calib-mounted" class="btn btn-primary calib" data-dismiss="modal" data-toggle="modal" data-target="#he-finish-Modal" value="Continue">
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="he-finish-Modal">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">When calibration finished, remove calibration plate</h3>
+      </div>
+      <div class="modal-body">
+
+        <input id="calib-unmounted" class="btn btn-primary calib" data-dismiss="modal"value="Plate removed">
+
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Here starts the page -->
 <div class="setup">
   <!-- Robot connection + input dimensions + calibration + calib check -->
+  <div class="rob-conn">
+    <h2>Robot connection</h2>
+    <button class="setup-btn" id="rob-con" type="button" name="connect">Connect</button>
+    <button class="setup-btn" id="rob-discon"type="button" name="disconnect">Disconnect</button>
+  </div>
 
-  <table>
-    <tr>
-      <th>
-        <h2>Robot connection</h2>
-      </th>
-      <th>
-        <button type="button" name="connect">Connect</button>
-        <button type="button" name="disconnect">Disconnect</button>
-      </th>
-    </tr>
+  <div class="cut-tool">
+    <label>New tool-frame: Robot Cut</label>
+    <input id="ct-x" type="number" name="cut-tool-x" placeholder="X" min="1" max="1000" value="<?php echo $_SESSION['ct-x']; ?>">
+    <input id="ct-y" type="number" name="cut-tool-y" placeholder="Y" min="1" max="1000" value="<?php echo $_SESSION['ct-y']; ?>">
+    <input id="ct-z" type="number" name="cut-tool-z" placeholder="Z" min="1" max="1000" value="<?php echo $_SESSION['ct-z']; ?>">
+    <input id="ct-a" type="number" name="cut-tool-a" placeholder="A" min="-180" max="180" value="<?php echo $_SESSION['ct-a']; ?>">
+    <input id="ct-e" type="number" name="cut-tool-e" placeholder="E" min="0" max="180" value="<?php echo $_SESSION['ct-e']; ?>">
+    <input id="ct-r" type="number" name="cut-tool-r" placeholder="R" min="-180" max="180" value="<?php echo $_SESSION['ct-r']; ?>">
+    <button id="ct-update" class="robot-frame" type="button" name="button">Update</button>
+  </div>
 
-    <tr>
-      <td>
-        <label>New tool-frame: Robot Cut</label>
-      </td>
-      <td>
-        <input type="number" name="cut-tool-x" placeholder="X">
-        <input type="number" name="cut-tool-y" placeholder="Y">
-        <input type="number" name="cut-tool-z" placeholder="Z">
-        <input type="number" name="cut-tool-a" placeholder="A">
-        <input type="number" name="cut-tool-e" placeholder="E">
-        <input type="number" name="cut-tool-r" placeholder="R">
-      </td>
-    </tr>
+  <div class="pick-tool">
+    <label>New tool-frame: Robot Pick</label>
+    <input id="pt-x" type="number" name="pick-tool-x" placeholder="X" min="1" max="1000" value="<?php echo $_SESSION['pt-x']; ?>">
+    <input id="pt-y" type="number" name="pick-tool-y" placeholder="Y" min="1" max="1000" value="<?php echo $_SESSION['pt-y']; ?>">
+    <input id="pt-z" type="number" name="pick-tool-z" placeholder="Z" min="1" max="1000" value="<?php echo $_SESSION['pt-z']; ?>">
+    <input id="pt-a" type="number" name="pick-tool-a" placeholder="A" min="-180" max="180" value="<?php echo $_SESSION['pt-a']; ?>">
+    <input id="pt-e" type="number" name="pick-tool-e" placeholder="E" min="0" max="180" value="<?php echo $_SESSION['pt-e']; ?>">
+    <input id="pt-r" type="number" name="pick-tool-r" placeholder="R" min="-180" max="180" value="<?php echo $_SESSION['pt-r']; ?>">
+    <button id="pt-update" class="robot-frame" type="button" name="button">Update</button>
+  </div>
 
-    <tr>
-      <td>
-        <label>New tool-frame: Robot Pick</label>
-      </td>
-      <td>
-        <input type="number" name="pick-tool-x" placeholder="X">
-        <input type="number" name="pick-tool-y" placeholder="Y">
-        <input type="number" name="pick-tool-z" placeholder="Z">
-        <input type="number" name="pick-tool-a" placeholder="A">
-        <input type="number" name="pick-tool-e" placeholder="E">
-        <input type="number" name="pick-tool-r" placeholder="R">
-      </td>
-    </tr>
+  <div class="cut-work">
+    <label>New work-frame: Robot Cut</label>
+    <input id="cw-x" type="number" name="cut-work-x" placeholder="X" min="-1000" max="1000" value="<?php echo $_SESSION['cw-x']; ?>">
+    <input id="cw-y" type="number" name="cut-work-y" placeholder="Y" min="-1000" max="1000" value="<?php echo $_SESSION['cw-y']; ?>">
+    <input id="cw-z" type="number" name="cut-work-z" placeholder="Z" min="-1000" max="1000" value="<?php echo $_SESSION['cw-z']; ?>">
+    <input id="cw-a" type="number" name="cut-work-a" placeholder="A" min="-180" max="180" value="<?php echo $_SESSION['cw-a']; ?>">
+    <input id="cw-e" type="number" name="cut-work-e" placeholder="E" min="0" max="180" value="<?php echo $_SESSION['cw-e']; ?>">
+    <input id="cw-r" type="number" name="cut-work-r" placeholder="R" min="-180" max="180" value="<?php echo $_SESSION['cw-r']; ?>">
+    <button id="cw-update" class="robot-frame" type="button" name="button">Update</button>
+  </div>
 
-    <tr>
-      <td>
-        <label>New work-frame: Robot Cut</label>
-      </td>
-      <td>
-        <input type="number" name="cut-work-x" placeholder="X">
-        <input type="number" name="cut-work-y" placeholder="Y">
-        <input type="number" name="cut-work-z" placeholder="Z">
-        <input type="number" name="cut-work-a" placeholder="A">
-        <input type="number" name="cut-work-e" placeholder="E">
-        <input type="number" name="cut-work-r" placeholder="R">
-      </td>
-    </tr>
-
-    <tr>
-      <td>
-        <label>New work-frame: Robot Pick</label>
-      </td>
-      <td>
-        <input type="number" name="pick-work-x" placeholder="X">
-        <input type="number" name="pick-work-y" placeholder="Y">
-        <input type="number" name="pick-work-z" placeholder="Z">
-        <input type="number" name="pick-work-a" placeholder="A">
-        <input type="number" name="pick-work-e" placeholder="E">
-        <input type="number" name="pick-work-r" placeholder="R">
-      </td>
-    </tr>
-  </table>
-
-  <div class="calib">
-    <table>
-      <tr>
-        <th><label>Start calibration</label></th>
-        <th>
-          <button type="button" name="calib-btn">Calibrate</button>
-        </th>
-      </tr>
-
-      <tr>
-        <th>
-          <label>Check calibration</label>
-        </th>
-
-        <th>
-          <button type="button" name="calib-check">Check</button>
-        </th>
-      </tr>
-    </table>
+  <div class="pick-work">
+    <label>New work-frame: Robot Pick</label>
+    <input id="pw-x" type="number" name="pick-work-x" placeholder="X" min="-1000" max="1000" value="<?php echo $_SESSION['pw-x']; ?>">
+    <input id="pw-y" type="number" name="pick-work-y" placeholder="Y" min="-1000" max="1000" value="<?php echo $_SESSION['pw-y']; ?>">
+    <input id="pw-z" type="number" name="pick-work-z" placeholder="Z" min="-1000" max="1000" value="<?php echo $_SESSION['pw-z']; ?>">
+    <input id="pw-a" type="number" name="pick-work-a" placeholder="A" min="-180" max="180" value="<?php echo $_SESSION['pw-a']; ?>">
+    <input id="pw-e" type="number" name="pick-work-e" placeholder="E" min="0" max="180" value="<?php echo $_SESSION['pw-e']; ?>">
+    <input id="pw-r" type="number" name="pick-work-r" placeholder="R" min="-180" max="180" value="<?php echo $_SESSION['pw-r']; ?>">
+    <button id="pw-update" class="robot-frame" type="button" name="button">Update</button>
   </div>
 
 
-  <!-- INput: Tool elementer + work-frame +  -->
+  <div class="calib">
+    <label>Start calibration</label>
+    <button type="button" name="calib-btn" data-toggle="modal" data-target="#accept-modal">Calibrate</button>
+
+    <br>
+
+    <label>Check calibration</label>
+    <button class="setup-btn" id="calib-check" type="button" name="calib-check">Check</button>
+  </div>
 
 </div>
 

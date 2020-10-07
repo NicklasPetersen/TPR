@@ -6,5 +6,9 @@ class ToolController extends Controller {
 		$this->view('tool/control.view');
 	}
 
+	public function sendCommand () {
+		$this->model('publish')->sendCommand($_POST);
+	}
+
 
 }

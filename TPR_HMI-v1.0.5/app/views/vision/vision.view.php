@@ -1,9 +1,13 @@
 <?php include '../app/views/partials/menu.php'; ?>
 
-<br>
-<h1>Vision control</h1><br><br>
-<hr>
-<br>
+<div class="headline">
+  <img class="loading" src="/public/img/loading.gif" alt="">
+  <br>
+  <h1>Vision</h1>
+
+  <br><br>
+  <hr><br>
+</div>
 
 <!-- Here starts the page -->
 <div class="control">
@@ -197,14 +201,14 @@
   <div class="commands">
     <h3>Send vision commands:</h3>
 
-    <input type="number" name="vision-command" placeholder="Enter command">
-    <button name="send-command">Send command</button>
+    <input id="vision-input" type="number" name="vision-command" min="0" max="20" placeholder="Enter command">
+    <button id="vision-btn" name="send-command">Send command</button>
     <br>
 
   </div>
 
   <div class="vision-pic">
-    <iframe src="" width="300" height="200"></iframe>
+    <iframe src="/public/img/logo.png" width="300" height="200"></iframe>
   </div>
 
 

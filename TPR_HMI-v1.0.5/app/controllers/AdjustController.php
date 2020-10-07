@@ -11,9 +11,13 @@ class AdjustController extends Controller {
 	}
 
 	public function update () {
-		$this->model('publish')->publishInt($_POST);
+		$this->model('publish')->sendCommand($_POST);
+		//$viewbag['adjust'] = $this->model('adjust')->show($_POST['value']);
+		$this->view('adjust/adjust.view', $viewbag);
+	}
 
-		header('Location: /public/adjust/update');
+	public function reload() {
+		$this->model('adjust')->show($_POST['value']);
 	}
 
 
