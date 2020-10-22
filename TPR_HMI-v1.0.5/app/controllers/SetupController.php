@@ -4,6 +4,7 @@ class SetupController extends Controller {
 
 	public function index () {
 		$this->model('setup')->getFrames();
+		$this->model('subscribe')->subscribe1("mqtt/plc2hmi/program");
 		$this->view('setup/setup.view');
 	}
 

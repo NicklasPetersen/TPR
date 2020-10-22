@@ -1,7 +1,7 @@
 <?php
 class MQTT_Config {
 
-  protected $host       = '192.168.56.1';
+  protected $host       = '192.168.29.55';
   protected $port       = 1883;
   protected $password   = 'password';
   protected $username   = 'mqtt';

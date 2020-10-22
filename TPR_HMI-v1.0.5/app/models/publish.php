@@ -90,8 +90,7 @@
        // Get topic and value for MQTT
        $topic  = $data['topic'];
        $value  = $data['value'];
-
-       if ($value !== 0) {
+       if ($value !== NULL) {
          $this->conn->publish($topic, $value, $this->qos);
          $output = array("topic"=> $topic, "value"=>$value);
          echo json_encode($output);

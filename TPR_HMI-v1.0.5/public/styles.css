@@ -506,7 +506,9 @@ hr {
 	width: 5em;
 	height: 1.75em;
 }
-
+.setup #program_no {
+	width: 10vw;
+}
 .setup input[type=number] {
 	width: 4vw;
 }
@@ -519,6 +521,91 @@ hr {
 	margin: 20px;
 }
 
+/**************** Recipe ****************/
+.recipe {
+	display: inline-block;
+	overflow:hidden;
+	width: 75vw;
+	height: auto;
+  margin: 2em auto 0;
+	padding-left: 10% !important;
+	padding-top: 15px;
+	padding-bottom: 15px;
+  border-radius: 2px;
+  border:1px solid #cbcbcb;
+  transition:box-shadow 0.5s ease;
+  box-shadow:0 4px 6px rgba(0,0,0,0.1);
+	text-align: left;
+}
+
+.recipe .block {
+	margin-top: .1em;
+}
+
+.recipe label {
+	display: inline-block;
+  width: 15em;
+  text-align: right;
+  padding-top: 1em;
+	padding-right: 5em;
+}
+
+.recipe span {
+	display: inline-block;
+	width: 20vw !important;
+	overflow: hidden;
+  text-align: left;
+	padding-top:.5vw;
+	padding-bottom:.5vw;
+  padding-left: .5vw !important;
+	height: 30px;
+
+	border-radius: 1px;
+  border:1px solid #cbcbcb;
+  transition:box-shadow 0.5s ease;
+  box-shadow:0 2px 3px rgba(0,0,0,0.1);
+}
+
+.block .number {
+	display: inline-block;
+	width: 4vw !important;
+}
+
+.block .desc {
+	display: inline-block;
+	width: 15.7vw !important;
+}
+
+
+.recipe input {
+	display: inline-block;
+  width: 4vw;
+	margin-bottom: 1vh;
+
+	padding-top:.5vw;
+	padding-bottom:.5vw;
+  padding-left: .5vw !important;
+	height: 30px;
+
+	border-radius: 1px;
+  border:1px solid #cbcbcb !important;
+  transition:box-shadow 0.5s ease !important;
+  box-shadow:0 2px 3px rgba(0,0,0,0.1) !important;
+}
+.recipe input[type=range] {
+	display: inline-block;
+	width: 20vw;
+}
+
+.recipe .boxDesc {
+  width: 20vw;
+}
+
+.recipe button {
+
+	margin-top: 2em;
+	margin-left: 5em;
+}
 
 
 /**************** ADJUST ****************/
@@ -586,6 +673,23 @@ hr {
 	display: inline-block;
   width: 5em;
 }
+
+.adjust-div .text {
+	display: inline-block;
+	width: 15em !important;
+	overflow: hidden;
+  text-align: left;
+	padding-top:.5em;
+	padding-bottom:.5em;
+  padding-left: .5em !important;
+	height: 30px;
+
+	border-radius: 1px;
+  border:1px solid #cbcbcb;
+  transition:box-shadow 0.5s ease;
+  box-shadow:0 2px 3px rgba(0,0,0,0.1);
+}
+
 .adjust-div input[type=range] {
 	display: inline-block;
 	width: 20em;

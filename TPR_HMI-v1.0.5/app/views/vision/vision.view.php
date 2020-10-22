@@ -201,7 +201,7 @@
   <div class="commands">
     <h3>Send vision commands:</h3>
 
-    <input id="vision-input" type="number" name="vision-command" min="0" max="20" placeholder="Enter command">
+    <input id="vision-input" pattern="[0-9]*" type="number" name="vision-command" min="0" max="20" placeholder="Enter command">
     <button id="vision-btn" name="send-command">Send command</button>
     <br>
 

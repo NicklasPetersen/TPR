@@ -16,9 +16,12 @@ class AdjustController extends Controller {
 		$this->view('adjust/adjust.view', $viewbag);
 	}
 
-	public function reload() {
-		$this->model('adjust')->show($_POST['value']);
+	public function updateRecipe() {
+		$this->model('adjust')->updateRecipe($_POST);
+		$this->model('publish')->sendCommand($_POST);
 	}
+
+
 
 
 }

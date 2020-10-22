@@ -17,6 +17,16 @@ window.onload = function() {
     // Target the ID of the span and update the HTML
     document.getElementById("spanDate").innerHTML = output;
 };
+
+/////////////////// TESTING /////////////////////////
+window.addEventListener("load", function() { window. scrollTo(0, 0); });
+document.addEventListener("touchmove", function(e) { e.preventDefault() });
+
+
+/////////////////////////////////////////////////////
+
+
+
 function ajaxCall(url, commandData) {
   $.ajax({
     method: 'post',
@@ -24,6 +34,7 @@ function ajaxCall(url, commandData) {
     data: commandData,
     success: function(res) {
       console.log(JSON.parse(res));
+
     },
     error: function() {
       alert("Error!!");
@@ -97,12 +108,59 @@ $(document).ready(function(){
   //////////////////////////////////////////////////////
   /////////////////////// ADJUST ///////////////////////
   $("#adjust-btn").on("click", function(e) {
-    var recipeNumber = $("#recipeNo").val();
+    var recipeNumber    = $("#recipeNo").val();
+    var recipeName      = $("#recipeName").val();
+    var recipeVelocity  = $("#vel").val();
+    var opNo            = $("#opNo").val();
+    var patternNo       = $("#patternNo").val();
+    var cartHeight      = $("#cartHeight").val();
+    var valveDelay      = $("#valveDelay").val();
+    var img_retry       = $("#img_retry").val();
+    var boxLength       = $("#boxLength").val();
+    var boxWidth        = $("#boxWidth").val();
+    var boxHeight       = $("#boxHeight").val();
+
+    var url = 'updateRecipe';
+    var updateData    = {
+      topic: "php-mqtt/hmi2plc/recipe",
+      value: recipeNumber,
+      recipe: recipeNumber,
+      recipeName: recipeName,
+      recipeVelocity: recipeVelocity,
+      opNo: opNo,
+      patternNo: patternNo,
+      cartHeight: cartHeight,
+      valveDelay: valveDelay,
+      img_retry: img_retry,
+      boxLength: boxLength,
+      boxWidth: boxWidth,
+      boxHeight: boxHeight,
+    }
+    ajaxCallUpdate(url, updateData);
+  });
+
+  //////////////////////////////////////////////////////
+  /////////////////////// RECIPE ///////////////////////
+  $("#recipe-btn").on("click", function(e) {
+    var recipeNumber = $("#recipeNoInput").val();
     var recipeNumber = recipeNumber.toString();
     var url = 'update';
     var updateData    = {
       topic: "php-mqtt/hmi2plc/recipe",
-      value: recipeNumber,
+      value: recipeNumber
+    }
+    ajaxCallUpdate(url, updateData);
+  });
+
+  $("#recipe-btn").on("click", function(e) {
+    var velocity        = $("#recipeVel").val();
+    var recipeNumber    = $("#recipeNoInput").val();
+    var url = 'update';
+    var updateData    = {
+      topic: "php-mqtt/hmi2plc/velocity",
+      value: velocity,
+      recipe: recipeNumber,
+      recipeVelocity: velocity
     }
     ajaxCallUpdate(url, updateData);
   });
@@ -141,6 +199,16 @@ $(document).ready(function(){
     var url         = 'sendCommand';
     var commandData = {
       topic: "php-mqtt/hmi2plc/setup",
+      value: command
+    };
+    ajaxCall(url, commandData);
+  });
+
+  $("#program").mouseup(function(e) {
+    var command     = $(program_no).val();
+    var url         = 'sendCommand';
+    var commandData = {
+      topic: "php-mqtt/hmi2plc/program",
       value: command
     };
     ajaxCall(url, commandData);
@@ -191,7 +259,7 @@ $(document).ready(function(){
     var url         = 'sendCommand';
     var commandData = {
       topic: "php-mqtt/hmi2plc/vision",
-      command: command,
+      value: command,
     }
     ajaxCall(url, commandData);
   });
@@ -201,7 +269,7 @@ $(document).ready(function(){
     var url         = 'sendCommand';
     var commandData = {
       topic: "php-mqtt/hmi2plc/vision",
-      command: command,
+      value: command,
     }
     ajaxCallUpdate(url, commandData);
   });
@@ -214,17 +282,19 @@ $(document).ready(function(){
     var url         = 'sendCommand';
     var commandData = {
       topic: "php-mqtt/hmi2plc/tool",
-      command: command,
+      value: command,
     }
+
+
     ajaxCall(url, commandData);
   });
 
   $(".toolcontrol").mouseup(function(e) {
-    var command     = 0;
+    var command     = '1';
     var url         = 'sendCommand';
     var commandData = {
       topic: "php-mqtt/hmi2plc/tool",
-      command: command,
+      value: command,
     }
     ajaxCall(url, commandData);
   });

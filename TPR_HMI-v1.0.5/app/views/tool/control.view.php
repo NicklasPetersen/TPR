@@ -8,7 +8,7 @@
   <br><br>
   <hr><br>
 </div>
-
+<?php print_r( $_SESSION['testest']); ?>
 <!-- Here starts the page -->
 <div class="control tool">
   <div id="cuttool">

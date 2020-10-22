@@ -20,6 +20,7 @@ class User extends Database {
 			if (password_verify($password, $result[0]['password'])) {
 				$_SESSION['logged_in'] 	= true;
 				$_SESSION['username'] 	= $result[0]['username'];
+				$_SESSION['access']			= $result[0]['access'];
 
 				return true;
 			} else {

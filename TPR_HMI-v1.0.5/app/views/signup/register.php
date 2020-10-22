@@ -27,7 +27,7 @@
 					<input type="password" name="password2" id="password2" placeholder="Password here.."/>
 					<br><br>
 
-					<label for="access" id="laccess">Access level</label>
+					<label for="access" pattern="[0-9]*" id="laccess">Access level</label>
 					<br>
 					<input type="number" name="access" id="access"/>
 					<br><br>

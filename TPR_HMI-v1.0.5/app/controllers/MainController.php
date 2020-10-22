@@ -12,7 +12,8 @@ class MainController extends Controller {
 		$this->model('subscribe')->subscribe1("mqtt/plc2hmi/recipe");
 
 		$viewbag['main_info'] = $this->model('main')->show($_SESSION['recipe']);
-		$viewbag['program'] = $this->model('main')->showProgram(5);
+		$program = $this->model('subscribe')->subscribe1("mqtt/plc2hmi/program");
+		$viewbag['program'] = $this->model('main')->showProgram($_SESSION['program']);
 
 		$this->view('main/main.view', $viewbag);
 	}

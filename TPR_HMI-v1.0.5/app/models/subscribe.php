@@ -35,7 +35,7 @@ class Subscribe extends MQTTConn {
           $_SESSION['program'] = $message;
           $this->conn->interrupt();
           return $message;
-        }
+        } 
       }
     }, $this->qos);
     $this->conn->loop(true);
