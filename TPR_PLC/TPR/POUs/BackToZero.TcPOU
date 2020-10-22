@@ -1,0 +1,229 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="BackToZero" Id="{4af8ae33-1f53-4557-a815-723e26c9a660}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM BackToZero
+VAR_INPUT
+	State: 		INT := 0;
+	NewState:	INT := 0;
+END_VAR
+VAR
+	uiPickCoordX: UINT;
+	uiPickCoordY: UINT;
+	uiPickCoordZ: UINT;
+	
+	flag: bool := false;
+
+	StartBackToZero: BOOL;
+	bReset: BOOL;
+	CANCEL_MOVE: BOOL;
+	uiCutCoordX: UINT;
+	uiCutCoordY: UINT;
+	uiCutCoordZ: UINT;
+
+	timer : TON;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(* Start connection to Robot Cut if physical botton or HMI button is pressed *)
+IF bBackToZero THEN
+	StartBackToZero := TRUE;
+ELSE
+	StartBackToZero := FALSE;
+END_IF
+
+CASE State OF
+
+	0:
+		IF StartBackToZero THEN
+			NewState  	:= 10;
+		END_IF
+
+	10:		(* RESET ALL SEQUENCES *)
+		IF NOT bReset THEN
+			bReset := TRUE;
+			BlockTest.				NewState := 1000;
+			Control.					NewState := 1000;
+			ControlAuto.				NewState := 1000;
+			ControlMoveToCalibPos.	NewState := 1000;
+			CalibCam1.				NewState := 1000;
+			CalibCam2.				NewState := 1000;
+			ControlGrabAuto.			NewState := 1000;
+
+			FB_GET_STEM.			NewState := 1000;
+			FB_GRAB_STEM.			NewState := 1000;
+			FB_MOVE_ON_STEM.		NewState := 1000;
+			FB_FIND_JOINT.			NewState := 1000;
+			FB_GRAB_JOINT.			NewState := 1000;
+			FB_DELEAF_PLACE.		NewState := 1000;
+
+			getPickCoords 	:= FALSE;
+			getCutCoords 	:= FALSE;
+		END_IF
+
+		IF Control.NewState = 0 AND ControlAuto.NewState = 0 AND ControlMoveToCalibPos.NewState = 0 AND
+			CalibCam1.NewState = 0 AND CalibCam2.NewState = 0 AND ControlGrabAuto.NewState = 0 THEN
+			timer.IN := TRUE;
+			IF timer.Q THEN
+				timer.IN := FALSE;
+				bReset := FALSE;
+				getPickCoords := FALSE;
+				getCutCoords := FALSE;
+				NewState := 20;
+			END_IF
+		END_IF
+
+	20:		(* SEND SIGNAL TO ROBOTS TO STOP MOTION *)
+		CANCEL_MOVE := TRUE;
+		IF uiSignalInAck = 0 THEN
+			timer.IN := TRUE;
+			IF timer.Q THEN
+				timer.IN := FALSE;
+				CANCEL_MOVE := FALSE;
+				NewState := 25;
+			END_IF
+		END_IF
+		
+	25:		(* Set calibration velocity *)
+		uiSignalOutSpeedControl := UINT_TO_BYTE(uiSpeedSetting);
+		uiSignalOutControl := Set_Velocity;
+
+		IF uiSignalInAck = Set_Velocity THEN
+			uiSignalOutControl := 0;
+			NewState := 30;
+		END_IF
+
+
+	30:		(* FIGURE OUT WHICH ROBOT IS SITURATED THE LOWEST *)
+		(* Get Cut coord *)
+		getCutCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_CUT_COORD.Execute = FALSE THEN
+			bPosSentToPcCom := FALSE;
+			gResetPcCom := TRUE;
+			NewState := 35;
+		END_IF
+
+	35:
+		IF uiSignalInAck = 0 THEN
+			uiCutCoordX	:= stDataToVision.CoordXR1G / 10;
+			uiCutCoordY	:= stDataToVision.CoordYR1G / 10;
+			uiCutCoordZ	:= stDataToVision.CoordZR1G / 10;
+			timer.IN := TRUE;
+			IF timer.Q THEN
+				timer.IN := FALSE;
+				gResetPcCom := TRUE;
+				NewState := 40;
+			END_IF
+		END_IF
+
+
+	40:
+		(* Get Cut coord *)
+		getPickCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_PICK_COORD.Execute = FALSE THEN
+			bPosSentToPcCom := FALSE;
+			gResetPcCom := TRUE;
+			NewState := 45;
+		END_IF
+
+	45:
+		IF uiSignalInAck = 0 THEN
+			uiPickCoordX	:= stDataToVision.CoordXR2G / 10;
+			uiPickCoordY	:= stDataToVision.CoordYR2G / 10;
+			uiPickCoordZ	:= stDataToVision.CoordZR2G / 10;
+			timer.IN := TRUE;
+			IF timer.Q THEN
+				timer.IN := FALSE;
+				gResetPcCom := TRUE;
+				NewState := 50;
+			END_IF
+		END_IF
+
+	50:		(* MOVE THE LOWEST ROBOT AWAY *)
+		IF uiCutCoordZ < (uiPickCoordZ - 50) THEN
+			FB_CUT_TO_ZERO.Execute := TRUE;
+			uiSignalOutControl := FB_CUT_TO_ZERO.OutQ;
+			IF FB_CUT_TO_ZERO.Done THEN
+				FB_CUT_TO_ZERO.Execute := FALSE;
+				NewState := 60;
+			END_IF
+		ELSE
+			FB_PICK_TO_ZERO.Execute := TRUE;
+			uiSignalOutControl := FB_PICK_TO_ZERO.OutQ;
+			IF FB_PICK_TO_ZERO.Done THEN
+				FB_PICK_TO_ZERO.Execute := FALSE;
+				NewState := 60;
+			END_IF
+		END_IF
+
+	60:		(* MOVE THE LAST ROBOT *)
+		IF uiCutCoordZ > (uiPickCoordZ - 50) THEN
+			FB_CUT_TO_ZERO.Execute := TRUE;
+			uiSignalOutControl := FB_CUT_TO_ZERO.OutQ;
+			IF FB_CUT_TO_ZERO.Done THEN
+				FB_CUT_TO_ZERO.Execute := FALSE;
+				NewState := 70;
+			END_IF
+		ELSE
+			FB_PICK_TO_ZERO.Execute := TRUE;
+			uiSignalOutControl := FB_PICK_TO_ZERO.OutQ;
+			IF FB_PICK_TO_ZERO.Done THEN
+				FB_PICK_TO_ZERO.Execute := FALSE;
+				NewState := 70;
+			END_IF
+		END_IF
+
+	70:		(* MOVE BACK TO IDLE *)
+		FB_MOVE_TO_IDLE.Execute := TRUE;
+		uiSignalOutControl := FB_MOVE_TO_IDLE.OutQ;
+		IF FB_MOVE_TO_IDLE.Done THEN
+			FB_MOVE_TO_IDLE.Execute := FALSE;
+			NewState := 80;
+		END_IF
+
+
+	80:		(* RESET THE TOOLS *)
+		IF flag = FALSE THEN
+			Tools.NewState := 1000;
+			flag := TRUE;
+		END_IF
+		
+		IF uiToolState = 0 THEN
+			flag := false;
+			NewState := 90;
+		END_IF
+
+
+	90:		(* RESET VALUES AND CHANGE STATE TO 0 *)
+		bBackToZero := FALSE;
+		CANCEL_MOVE := FALSE;
+
+		uiCutCoordX	:= 0;
+		uiCutCoordY	:= 0;
+		uiCutCoordZ 	:= 0;
+		uiPickCoordX	:= 0;
+		uiPickCoordY := 0;
+		uiPickCoordZ := 0;
+
+		NewState := 0;
+
+
+END_CASE
+
+uiSignalOut2.03 := CANCEL_MOVE;
+ timer( PT:=t#500ms, Q=>, ET=>);]]></ST>
+    </Implementation>
+    <LineIds Name="BackToZero">
+      <LineId Id="19" Count="57" />
+      <LineId Id="210" Count="0" />
+      <LineId Id="212" Count="6" />
+      <LineId Id="211" Count="0" />
+      <LineId Id="77" Count="91" />
+      <LineId Id="223" Count="0" />
+      <LineId Id="225" Count="0" />
+      <LineId Id="222" Count="0" />
+      <LineId Id="224" Count="0" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="170" Count="21" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

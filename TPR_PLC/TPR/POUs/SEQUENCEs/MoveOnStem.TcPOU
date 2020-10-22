@@ -1,0 +1,267 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+  <POU Name="MoveOnStem" Id="{decad3cc-ea59-4396-a8a0-5766cb8e3398}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK MoveOnStem
+VAR_INPUT
+	Execute: 		BOOL;
+	State : 		INT;
+	NewState : 	INT;
+
+END_VAR
+VAR_OUTPUT
+
+
+END_VAR
+VAR
+
+
+	Done: 		BOOL;
+	Fail: BOOL;
+	bRetry: USINT;
+	JointReached: BOOL;
+	Height: UINT;
+	iCnfgChange: USINT;
+	bRobotFail: BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF State <> NewState THEN
+	State := NewState;
+END_IF
+
+CASE  State OF
+	0:
+		Done := FALSE;
+		IF Execute  THEN
+			NewState	 :=10;
+		END_IF
+
+	10:		(* Send Robot Pick Position *)
+		getPickCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_PICK_COORD.Execute = FALSE THEN
+			ImageRetryHeight := stDataToVision.CoordZR2G;
+			bPosSentToPcCom := FALSE;
+			bGetCoordDone := FALSE;
+			NewState := 20;
+		END_IF
+
+	20:
+		IF stDataToVision.CoordXR2G <> 0 AND stDataToVision.CoordYR2G <> 0 AND stDataToVision.CoordZR2G <> 0 THEN
+			FB_CAM_TWO_CONTROL.Execute := TRUE;
+			IF FB_CAM_TWO_CONTROL.Done THEN
+				FB_CAM_TWO_CONTROL.Execute := FALSE;
+				(* Check if the stem is found *)
+				IF FB_CAM_TWO_CONTROL.StemFound = 1 THEN
+					GviX := (FB_CAM_TWO_CONTROL.X + 320) / 2;
+					GviY := (FB_CAM_TWO_CONTROL.Y + 320) / 2;
+					GviZ := FB_CAM_TWO_CONTROL.Z;
+					Height := FB_CAM_TWO_CONTROL.Z;
+					GviA := 0;
+					GviE := 0;
+					GviR := 40;
+					IF FB_CAM_TWO_CONTROL.JointFound = 1 THEN
+						GviPick := FB_CAM_TWO_CONTROL.PickAngle;
+						iImageZone := FB_CAM_TWO_CONTROL.Zone;
+						gResetPcCom := TRUE;
+						JointReached := TRUE;
+						NewState := 1000;
+					ELSE
+						gResetPcCom := TRUE;
+						NewState := 30;
+					END_IF
+				ELSE
+					gResetPcCom := TRUE;
+					NewState := 500;
+				END_IF
+			END_IF
+		END_IF
+
+	30:		(* Send coordinates *)
+		(* Send pos to Robots *)
+		(* GsendCoord			-->	Starter SendCoordinates sekvensen							-	Sender koordinater til robotterne 		*)
+		(* uiSignalOutShared.06	-->	Bekræftelse på at koordinaterne er sendt til udgangene i box 10	-	Acknowledge fra SendCoordinates	*)
+		GsendCoord := TRUE;
+		IF uiSignalOutShared.06 THEN
+			(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
+			uiSignalOutControl := Send_pos;
+		END_IF
+		IF uiSignalInAck = Send_pos THEN
+			uiSignalOutControl := 0;
+			uiCalibImgCount := uiCalibImgCount + 1;
+			NewState := 35;
+		END_IF
+
+	35:
+		IF uiSignalInAck = 0 THEN
+			NewState := 40;
+		END_IF
+
+	40:		(* CO-MOVE up the stem *)
+		FB_COMOVE_IMAGE.Execute := TRUE;
+		uiSignalOutControl := FB_COMOVE_IMAGE.OutQ;
+		IF FB_COMOVE_IMAGE.Done THEN
+			FB_COMOVE_IMAGE.Execute := FALSE;
+			IF bRobotFail THEN
+				NewState := 600;
+			ELSE
+				NewState := 50;
+			END_IF
+		END_IF
+
+	50:		(* Send Pick coordinate *)
+		(* Send Pick pos to PcCom for next image *)
+		getPickCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_PICK_COORD.Execute = FALSE THEN
+			bPosSentToPcCom := FALSE;
+			IF Height < iBunchPosZ THEN
+				NewState := 20;
+			ELSE
+				NewState := 1000;
+			END_IF
+		END_IF
+
+
+
+	500:		(* Stem cannot be found		-->		Change configuration *)
+		(* Change configuration *)
+		iCnfgChange := iCnfgChange + 1;
+		IF uiCalibImgCount >= 50 AND uiCalibImgCount <= 200 THEN
+			NewState := 505;
+		ELSIF uiCalibImgCount = 250 THEN
+			bBackToZero := TRUE;
+		END_IF
+		gResetPcCom := TRUE;
+		NewState := 505;
+
+	505:
+		IF iCnfgChange <= 5 THEN
+			uiCalibImgCount := INT_TO_BYTE(iCnfgChange * 50);
+		ELSE
+			bBackToZero := TRUE;
+		END_IF
+		(* Robot Pick to image pos *)
+		FB_PICK_TRUNK_IMAGE.Execute := TRUE;
+		uiSignalOutControl := FB_PICK_TRUNK_IMAGE.OutQ;
+		IF FB_PICK_TRUNK_IMAGE.Done THEN
+			FB_PICK_TRUNK_IMAGE.Execute := FALSE;
+			NewState := 510;
+		END_IF
+
+	510:		(* Send Pick coordinate *)
+		(* Send Pick pos to PcCom for next image *)
+		getPickCoords := TRUE;
+		IF bPosSentToPcCom THEN
+			bPosSentToPcCom := FALSE;
+			NewState := 20;
+		END_IF
+
+
+
+
+	600:		(* Robot cut reached either stick-out or joint *)
+		(* Get Cut coord *)
+		getCutCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_CUT_COORD.Execute = FALSE THEN
+			bPosSentToPcCom := FALSE;
+			gResetPcCom := TRUE;
+			NewState := 605;
+		END_IF
+
+	605:
+		IF uiSignalInAck = 0 THEN
+			uiCutCoordX	:= stDataToVision.CoordXR1G / 10;
+			uiCutCoordY	:= stDataToVision.CoordYR1G / 10;
+			uiCutCoordZ	:= stDataToVision.CoordZR1G / 10;
+
+			NewState := 610;
+		END_IF
+
+	610:
+		GviX := uiCutCoordX;
+		GviY := uiCutCoordY;
+		GviZ := uiCutCoordZ;
+		GviA := 0;
+		GviE := 0;
+		GviR := 40;
+
+		IF uiCutCoordZ > iBunchPosZ THEN
+			(* Then cut must have reached the joint*)
+
+			(* Send pos to Robots *)
+			(* GsendCoord			-->	Starter SendCoordinates sekvensen							-	Sender koordinater til robotterne 		*)
+			(* uiSignalOutShared.06	-->	Bekræftelse på at koordinaterne er sendt til udgangene i box 10	-	Acknowledge fra SendCoordinates	*)
+			GsendCoord := TRUE;
+			IF uiSignalOutShared.06 THEN
+				(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
+				uiSignalOutControl := Send_pos;
+			END_IF
+			IF uiSignalInAck = Send_pos THEN
+				uiSignalOutControl := 0;
+				uiCalibImgCount := uiCalibImgCount + 1;
+				NewState := 615;
+			END_IF
+
+		ELSE
+			(* It must be a too big of a stick-out *)
+			FB_RELEASE_CUT.Execute := TRUE;
+			IF FB_RELEASE_CUT.Done THEN
+				FB_RELEASE_CUT.Execute := FALSE;
+				NewState := 630;
+			END_IF
+		END_IF
+
+	615:
+		IF uiSignalInAck = 0 THEN
+			JointReached := TRUE;
+			NewState := 620;
+		END_IF
+
+	620:
+		FB_COMOVE_IMAGE.Execute := TRUE;
+		uiSignalOutControl := FB_COMOVE_IMAGE.OutQ;
+		IF FB_COMOVE_IMAGE.Done THEN
+			FB_COMOVE_IMAGE.Execute := FALSE;
+			NewState := 900;
+			JointReached := TRUE;
+		END_IF
+
+	630:
+		FB_LOAD_CUT.Execute := TRUE;
+		IF FB_LOAD_CUT.Done THEN
+			FB_LOAD_CUT.Execute := FALSE;
+			NewState := 10;
+		END_IF
+
+
+
+
+
+	900:
+		(* Send Pick pos to PcCom for next image *)
+		getPickCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_PICK_COORD.Execute = FALSE THEN
+			bPosSentToPcCom := FALSE;
+			NewState := 1000;
+		END_IF
+
+
+	1000:
+		Done := TRUE;
+		IF NOT Execute THEN
+			Fail := FALSE;
+			bRetry := 0;
+			JointReached := FALSE;
+			Height := 0;
+			iCnfgChange := 0;
+			NewState := 0;
+		END_IF
+
+
+
+END_CASE
+bRobotFail := uiSignalIn2.07;]]></ST>
+    </Implementation>
+    <LineIds Name="MoveOnStem">
+      <LineId Id="22" Count="234" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

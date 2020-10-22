@@ -1,0 +1,107 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+  <POU Name="GetStem" Id="{9aa1b33f-7f4f-4842-acaa-51489727e46a}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK GetStem
+VAR_INPUT
+	Execute: 		BOOL;
+	State : 		INT;
+	NewState : 	INT;
+
+END_VAR
+VAR_OUTPUT
+
+
+END_VAR
+VAR
+
+	Done: 		BOOL;
+	Fail: BOOL;
+	bRetry: BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF State <> NewState THEN
+	State := NewState;
+END_IF
+
+CASE  State OF
+	0:
+		Done := FALSE;
+		IF Execute  THEN
+			NewState	 :=10;
+		END_IF
+
+	10:		(* Cam 1 Take image	-	parameters recieved from Vision = height of lowest ripe tomato and Y coord for lowest point of the stem *)
+
+		FB_CAM_ONE_CONTROL.Execute := TRUE;
+		IF FB_CAM_ONE_CONTROL.Done THEN
+			FB_CAM_ONE_CONTROL.Execute := FALSE;
+			IF FB_CAM_ONE_CONTROL.Fail THEN
+				(* Adjust cart height  in order to retry *)
+				Fail := TRUE;
+				NewState := 1000;
+			ELSE
+				(* uiDistToGrab 	-->		Distance from Joris Gripper to stem 			*)
+				uiDistToGrab	:= FB_CAM_ONE_CONTROL.TrunkDist;
+				(* iBunchPosZ	-->		Height of the lowest hanging red tomato		*)
+				iBunchPosZ 	:= FB_CAM_ONE_CONTROL.BunchHeight;
+				(* i StemAngle	-->		Heading direction from stem to lowest tomato	*)
+				iStemAngle	:= FB_CAM_ONE_CONTROL.StemHeading;
+				(* iImageZone	-->		Zone of lowest tomato						*)
+				iImageZone	:= FB_CAM_ONE_CONTROL.Zone;
+				NewState := 20;
+			END_IF
+		END_IF
+
+
+	20:				(* Joris gripper retreives stem *)
+		(* Grab stem and pull in *)
+		IF NOT bAck THEN
+			(* HMI knap der kalder GribStem *)
+			GbGripStem := TRUE;
+		ELSIF bAck THEN
+			gResetPcCom := TRUE;
+			NewState := 25;
+		END_IF
+
+	25:
+		(* Needs an option To move cart a bit, to take a new photo *)
+		IF uiToolState = 0 THEN
+			IF bJorisSensor AND bRetry < 1 THEN
+				uiDistToGrab := uiDistToGrab + 50;
+				bRetry := 1;
+				NewState := 30;
+			ELSIF bJorisSensor AND bRetry >= 1 THEN
+				Fail := TRUE;
+				gResetPcCom := TRUE;
+				NewState := 1000;
+			ELSE
+				bRetry := 0;
+				gResetPcCom := TRUE;
+				NewState := 1000;
+			END_IF
+		END_IF
+
+	30:	(* Open gripper *)
+		FB_OPEN_GRIP.Execute := TRUE;
+		IF FB_OPEN_GRIP.Done THEN
+			FB_OPEN_GRIP.Execute := FALSE;
+			NewState := 20;
+		END_IF
+
+
+	1000:
+		Done := TRUE;
+		IF NOT Execute THEN
+			Fail := FALSE;
+			NewState := 0;
+		END_IF
+
+
+
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="GetStem">
+      <LineId Id="17" Count="79" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

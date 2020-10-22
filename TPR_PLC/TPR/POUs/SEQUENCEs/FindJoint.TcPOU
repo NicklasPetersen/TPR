@@ -1,0 +1,233 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+  <POU Name="FindJoint" Id="{d0d031d8-81e6-4a65-9c11-b27ad528e2f2}" SpecialFunc="None">
+    <Declaration><![CDATA[ FUNCTION_BLOCK FindJoint
+VAR_INPUT
+	Execute: 		BOOL;
+	State : 		INT;
+	NewState : 	INT;
+
+END_VAR
+VAR_OUTPUT
+
+
+END_VAR
+VAR
+
+
+	Done: 		BOOL;
+	Fail: BOOL;
+	bRetry: INT;
+	bRobotFail: BOOL;
+	iCnfgChange: INT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF State <> NewState THEN
+	State := NewState;
+END_IF
+
+CASE  State OF
+	0:
+		Done := FALSE;
+		IF Execute  THEN
+			gResetPcCom := TRUE;
+			NewState	 :=10;
+		END_IF
+
+	10:		(* Send Robot Pick Position *)
+		getPickCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_PICK_COORD.Execute = FALSE THEN
+			ImageRetryHeight := stDataToVision.CoordZR2G;
+			bPosSentToPcCom := FALSE;
+			bGetCoordDone := FALSE;
+			NewState := 20;
+		END_IF
+
+	20:		(* Take a picture *)
+		IF stDataToVision.CoordXR2G <> 0 AND stDataToVision.CoordYR2G <> 0 AND stDataToVision.CoordZR2G <> 0 THEN
+			FB_CAM_TWO_CONTROL.Execute := TRUE;
+			IF FB_CAM_TWO_CONTROL.Done THEN
+				IF FB_CAM_TWO_CONTROL.StemFound <> 1 THEN
+					(* Change configuration *)
+					(* IF cnfgCount <> 0 THEN *)
+					FB_CAM_TWO_CONTROL.Execute := FALSE;
+					NewState := 100;
+				ELSE
+					IF FB_CAM_TWO_CONTROL.JointFound <> 1 THEN
+						(* MOVE ON STEM *)
+						GviX := (FB_CAM_TWO_CONTROL.X + 320) / 2;
+						GviY := (FB_CAM_TWO_CONTROL.Y + 320) / 2;
+						GviZ := FB_CAM_TWO_CONTROL.Z;
+						GviA 	:= 0;
+						GviE 	:= 0;
+						GviR 	:= 40;
+
+						FB_CAM_TWO_CONTROL.Execute := FALSE;
+						gResetPcCom := TRUE;
+						NewState := 50;
+
+					ELSE
+						IF FB_CAM_TWO_CONTROL.PickAngle = 0 THEN
+							(* MOVE ON STEM *)
+							GviX := (FB_CAM_TWO_CONTROL.X + 320) / 2;
+							GviY := (FB_CAM_TWO_CONTROL.Y + 320) / 2;
+							GviZ := FB_CAM_TWO_CONTROL.Z;
+							GviA 	:= 0;
+							GviE 	:= 0;
+							GviR 	:= 40;
+	
+							FB_CAM_TWO_CONTROL.Execute := FALSE;
+							gResetPcCom := TRUE;
+							NewState := 50;
+						ELSE
+							(* SEND CUT COORD + HEADING *)
+							GviPick := FB_CAM_TWO_CONTROL.PickAngle;
+							(* Get Cut coord *)
+							getCutCoords := TRUE;
+							IF bPosSentToPcCom AND FB_GET_CUT_COORD.Execute = FALSE THEN
+								bPosSentToPcCom := FALSE;
+								FB_CAM_TWO_CONTROL.Execute := FALSE;
+								gResetPcCom := TRUE;
+								NewState := 25;
+							END_IF
+						END_IF
+					END_IF
+				END_IF
+			END_IF
+		END_IF
+
+	25:
+		IF uiSignalInAck = 0 THEN
+			GviX	:= stDataToVision.CoordXR1G / 10;
+			GviY	:= stDataToVision.CoordYR1G / 10;
+			GviZ	:= stDataToVision.CoordZR1G / 10;
+			gResetPcCom := TRUE;
+			NewState := 30;
+		END_IF
+
+	30:		(* Send pos *)
+		(* GsendCoord			-->	Starter SendCoordinates sekvensen							-	Sender koordinater til robotterne 		*)
+		(* uiSignalOutShared.06	-->	Bekræftelse på at koordinaterne er sendt til udgangene i box 10	-	Acknowledge fra SendCoordinates	*)
+		GsendCoord := TRUE;
+		IF uiSignalOutShared.06 THEN
+			(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
+			uiSignalOutControl := Send_pos;
+		END_IF
+		IF uiSignalInAck = Send_pos THEN
+			uiSignalOutControl := 0;
+			(*uiCalibImgCount := uiCalibImgCount + 1;*)
+			NewState := 35;
+		END_IF
+
+	35:
+		IF uiSignalInAck = 0 THEN
+			NewState := 1000;
+		END_IF
+
+
+	(* ------------------------------------------------------------------------------------- *)
+
+	50:		(* Send pos *)
+		(* GsendCoord			-->	Starter SendCoordinates sekvensen							-	Sender koordinater til robotterne 		*)
+		(* uiSignalOutShared.06	-->	Bekræftelse på at koordinaterne er sendt til udgangene i box 10	-	Acknowledge fra SendCoordinates	*)
+		GsendCoord := TRUE;
+		IF uiSignalOutShared.06 THEN
+			(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
+			uiSignalOutControl := Send_pos;
+		END_IF
+		IF uiSignalInAck = Send_pos THEN
+			uiSignalOutControl := 0;
+			(*uiCalibImgCount := uiCalibImgCount + 1;*)
+			NewState := 55;
+		END_IF
+
+	55:
+		IF uiSignalInAck = 0 THEN
+			NewState := 60;
+		END_IF
+
+	60:
+		FB_COMOVE_IMAGE.Execute := TRUE;
+		uiSignalOutControl := FB_COMOVE_IMAGE.OutQ;
+		IF FB_COMOVE_IMAGE.Done THEN
+			IF bRobotFail THEN
+				FB_COMOVE_IMAGE.Execute := FALSE;
+				NewState := 70;
+			ELSE
+				FB_COMOVE_IMAGE.Execute := FALSE;
+				NewState := 10;
+			END_IF
+		END_IF
+
+	70:
+		(* Get Cut coord *)
+		getCutCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_CUT_COORD.Execute = FALSE THEN
+			bPosSentToPcCom := FALSE;
+			FB_CAM_TWO_CONTROL.Execute := FALSE;
+			gResetPcCom := TRUE;
+			NewState := 25;
+		END_IF
+
+
+	(* ------------------------------------------------------------------------------------- *)
+
+	100:		(* Stem cannot be found		-->		Change configuration *)
+		(* Change configuration *)
+		iCnfgChange := iCnfgChange + 1;
+		IF uiCalibImgCount >= 50 AND uiCalibImgCount <= 200 THEN
+			gResetPcCom := TRUE;
+			NewState := 105;
+		ELSIF uiCalibImgCount = 250 THEN
+			Fail := TRUE;
+			NewState := 1000;
+		END_IF
+
+	105:
+		IF iCnfgChange <= 5 THEN
+			uiCalibImgCount := INT_TO_BYTE(iCnfgChange * 50);
+		ELSE
+			bBackToZero := TRUE;
+		END_IF
+		NewState := 110;
+
+	110:
+		(* Robot Pick to image pos *)
+		FB_PICK_TRUNK_IMAGE.Execute := TRUE;
+		uiSignalOutControl := FB_PICK_TRUNK_IMAGE.OutQ;
+		IF FB_PICK_TRUNK_IMAGE.Done THEN
+			FB_PICK_TRUNK_IMAGE.Execute := FALSE;
+			NewState := 120;
+		END_IF
+
+	120:		(* Send Pick coordinate *)
+		(* Send Pick pos to PcCom for next image *)
+		getPickCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_PICK_COORD.Execute = FALSE THEN
+			bPosSentToPcCom := FALSE;
+			NewState := 20;
+		END_IF
+
+
+	(* ------------------------------------------------------------------------------------- *)
+
+	1000:
+		Done := TRUE;
+		IF NOT Execute THEN
+			Fail := FALSE;
+			bRetry := 0;
+			iCnfgChange := 0;
+			NewState := 0;
+		END_IF
+
+
+
+END_CASE
+
+bRobotFail := uiSignalIn2.07;]]></ST>
+    </Implementation>
+    <LineIds Name="FindJoint">
+      <LineId Id="20" Count="202" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

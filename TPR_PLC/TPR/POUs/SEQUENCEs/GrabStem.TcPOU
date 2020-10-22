@@ -1,0 +1,225 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+  <POU Name="GrabStem" Id="{75e0418d-480e-427b-9867-7ef0bab69824}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK GrabStem
+VAR_INPUT
+	Execute: 		BOOL;
+	State : 		INT;
+	NewState : 	INT;
+
+END_VAR
+VAR_OUTPUT
+
+
+END_VAR
+VAR
+
+
+	Done: 		BOOL;
+	Fail: BOOL;
+	bRetry: USINT;
+	bRobotFail: BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF State <> NewState THEN
+	State := NewState;
+END_IF
+
+CASE  State OF
+	0:
+		Done := FALSE;
+		IF Execute  THEN
+			NewState	 :=10;
+		END_IF
+
+	10:		(* Robot Pick move to Image Pos *)
+		FB_PICK_TRUNK_IMAGE.Execute := TRUE;
+		uiSignalOutControl := FB_PICK_TRUNK_IMAGE.OutQ;
+		IF FB_PICK_TRUNK_IMAGE.Done THEN
+			FB_PICK_TRUNK_IMAGE.Execute := FALSE;
+			gResetPcCom := TRUE;
+			NewState := 20;
+		END_IF
+
+	20:		(* Send Robot Pick Position *)
+		getPickCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_PICK_COORD.Execute = FALSE THEN
+			ImageRetryHeight := stDataToVision.CoordZR2G;
+			bPosSentToPcCom := FALSE;
+			bGetCoordDone := FALSE;
+			NewState := 40;
+		END_IF
+
+	40:		(* Cam 2 take image *)
+		(* Take bottom Image *)
+		(* If pick coordinates are recieved, take an image *)
+		IF stDataToVision.CoordXR2G <> 0 AND stDataToVision.CoordYR2G <> 0 AND stDataToVision.CoordZR2G <> 0 THEN
+			FB_CAM_TWO_CONTROL.Execute := TRUE;
+			IF FB_CAM_TWO_CONTROL.Done THEN
+				(* If the positions was unacceptable  - Prepare to take a new picture from 50 mm further up *)
+				IF FB_CAM_TWO_CONTROL.Fail THEN
+					(* Send new pos to Robots *)
+					GviX	:= stDataToVision.CoordXR2G / 10;
+					GviY 	:= stDataToVision.CoordYR2G / 10;
+					GviZ 	:= (stDataToVision.CoordZR2G / 10) + 50;
+
+					(* GsendCoord			-->	Starter SendCoordinates sekvensen							-	Sender koordinater til robotterne 		*)
+					(* uiSignalOutShared.06	-->	Bekræftelse på at koordinaterne er sendt til udgangene i box 10	-	Acknowledge fra SendCoordinates	*)
+					GsendCoord := TRUE;
+					IF uiSignalOutShared.06 THEN
+						(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
+						uiSignalOutControl := Send_pos;
+					END_IF
+					IF uiSignalInAck = Send_pos THEN
+						FB_CAM_TWO_CONTROL.Execute := FALSE;
+						uiSignalOutControl := 0;
+						uiCalibImgCount := uiCalibImgCount + 1;
+						NewState := 50;
+					END_IF
+				ELSE
+					(* If positions are acceptable and stem is found, Send the posiotions to the robots *)
+					FB_CAM_TWO_CONTROL.Execute := FALSE;
+					IF stDataFromVision.gStemFound = 1 THEN
+						GviX	:= FB_CAM_TWO_CONTROL.X;
+						GviY 	:= FB_CAM_TWO_CONTROL.Y;
+						GviZ 	:= FB_CAM_TWO_CONTROL.Z;
+						GviA 	:= FB_CAM_TWO_CONTROL.RotZ0;
+						GviE 	:= FB_CAM_TWO_CONTROL.RotY;
+						GviR 	:= FB_CAM_TWO_CONTROL.RotZ1;
+
+						GviX2 	:= FB_CAM_TWO_CONTROL.X;
+						GviY2 	:= (FB_CAM_TWO_CONTROL.Y + FB_CAM_TWO_CONTROL.Y + FB_CAM_ONE_CONTROL.Y)/3;
+						GviZ2 	:= FB_CAM_ONE_CONTROL.Z + 50;
+
+						iImageZone	:= FB_CAM_ONE_CONTROL.Zone;
+						NewState := 60;
+					(* IF the stem cannot be found, retry grabbing the stem with Joris gripper *)
+					ELSE
+						IF bRetry = 0 THEN
+							bRetry := 1;
+							gResetPcCom := TRUE;
+							NewState := 20;
+						ELSE
+							Fail := TRUE;
+							NewState := 1000;
+						END_IF
+					END_IF
+				END_IF
+			END_IF
+		(*ELSE
+			gResetPcCom := TRUE;
+			NewState := 20;*)
+		END_IF
+
+
+	50:
+		IF uiSignalInAck = 0 THEN
+			IF bRetry = 0 THEN
+				bRetry := bRetry + 1;
+				NewState := 10;
+			ELSE
+				Fail := TRUE;
+				NewState := 1000;
+			END_IF
+		END_IF
+
+	60:		(* Send Pos to Robot *)
+
+		(* GsendCoord			-->	Starter SendCoordinates sekvensen							-	Sender koordinater til robotterne 		*)
+		(* uiSignalOutShared.06	-->	Bekræftelse på at koordinaterne er sendt til udgangene i box 10	-	Acknowledge fra SendCoordinates	*)
+		GsendCoord := TRUE;
+		IF uiSignalOutShared.06 THEN
+			(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
+			uiSignalOutControl := Send_two_pos;
+		END_IF
+
+		IF uiSignalInAck = Send_two_pos THEN
+			uiSignalOutControl := 0;
+			uiCalibImgCount := uiCalibImgCount + 1;
+			NewState := 65;
+		END_IF
+
+	65:
+		IF uiSignalInAck = 0 THEN
+			NewState := 70;
+		END_IF
+
+	70:		(* Grab the stem + Move to image pos *)
+		FB_IMAGE_GRAB.Execute := TRUE;
+		uiSignalOutControl := FB_IMAGE_GRAB.OutQ;
+
+		IF FB_IMAGE_GRAB.Done THEN
+			FB_IMAGE_GRAB.Execute := FALSE;
+			NewState := 80;
+		END_IF
+
+	80:
+		IF NOT bRobotFail THEN
+			bRetry := 0;
+			gResetPcCom := TRUE;
+			NewState := 1000;
+		ELSE
+			(* Retries:																						*)
+			(* Open and close cone								-	To check if it was a misreading from sensor 	*)
+			(* Move to pos 50mm above normal image pos, then retry												*)
+			IF bRetry  < 2 THEN
+				bRetry := bRetry + 1;
+				(*uiCalibImgCount := 0;*)
+				GviZ2 := stDataToVision.CoordZR2G/10 + 100;
+				NewState := 90;
+			ELSE
+				bBackToZero := TRUE;
+			END_IF
+		END_IF
+
+
+	90:
+		(* GsendCoord			-->	Starter SendCoordinates sekvensen							-	Sender koordinater til robotterne 		*)
+		(* uiSignalOutShared.06	-->	Bekræftelse på at koordinaterne er sendt til udgangene i box 10	-	Acknowledge fra SendCoordinates	*)
+		GsendCoord := TRUE;
+		IF uiSignalOutShared.06 THEN
+			(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
+			uiSignalOutControl := Send_two_pos;
+		END_IF
+
+		IF uiSignalInAck = Send_two_pos THEN
+			uiSignalOutControl := 0;
+			NewState := 95;
+		END_IF
+
+	95:
+		IF uiSignalInAck = 0 THEN
+			gResetPcCom := TRUE;
+			NewState := 100;
+		END_IF
+
+
+	100:		(* Retry Grab Stem *)
+		FB_RETRY_GRAB_STEM.Execute := TRUE;
+		uiSignalOutControl := FB_RETRY_GRAB_STEM.OutQ;
+		IF FB_RETRY_GRAB_STEM.Done THEN
+			FB_RETRY_GRAB_STEM.Execute := FALSE;
+			gResetPcCom := TRUE;
+			NewState := 20;
+		END_IF
+
+
+	1000:
+		Done := TRUE;
+		IF NOT Execute THEN
+			Fail := FALSE;
+			bRetry := 0;
+			NewState := 0;
+		END_IF
+
+
+
+END_CASE
+
+bRobotFail := uiSignalIn2.07;]]></ST>
+    </Implementation>
+    <LineIds Name="GrabStem">
+      <LineId Id="19" Count="195" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

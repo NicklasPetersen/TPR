@@ -1,0 +1,229 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="FB_EasySql" Id="{36f86a88-9a01-423b-821d-919b9bd9a854}" SpecialFunc="None">
+    <Declaration><![CDATA[//------------------------------------------------------------------------------------------
+//                                                                                        	
+//***************************** Beckhoff TwinCAT Examples **********************************
+//                                                                                        	
+//************************************* WARNING ********************************************
+// This program is only an example. If it is used as a control program in any real        	
+// application, Beckhoff is not responsible for any malfunction, loss or damage           	
+// which could arise by using this program!                                               	
+//                                                                                        	
+//*************************************  Program Info. *************************************
+//                                                                                        	
+// PLC program name:       	F_Replace (Function)               	                           	
+// Software platform:      	TwinCat v3.1.4024.10
+//							Database Server 3.3.33.1				                          	
+// Modified by:            	Per Søgaard Carlsen 			                                  	
+// Email:					p.carlsen@beckhoff.com	                                  	
+//                                                                                        	
+// ======================================================================================== 
+//         Version       Date                        Remarks                              	
+// ======================================================================================== 
+//         1.0           10 july 2020                 First release of this example        	
+// ======================================================================================== 
+//                                                                                        	
+//******************************* Aims OF this PLC PROGRAM *********************************
+//                                                                                        	
+// Execute SQL quires in expert mode						 			                             
+//                                                                                        	
+//-----------------------------------------------------------------------------------------
+
+FUNCTION_BLOCK FB_EasySql
+
+VAR_INPUT
+	bExecute : BOOL;
+	wDBID : WORD; //DBID
+	pSql : POINTER TO BYTE; //Pointer to SQL command string
+	cbSql : UDINT; //Sizeof of SSql command string
+	pData : POINTER TO BYTE; //Pointer to data array to store readed data from database - set to 0 for write
+	cbData : UDINT; //Sizeof data array for stored data.  - set to 0 for write
+	udiMaxOfRecord : UDINT; //Maximum numbers of data record to read.
+END_VAR
+	
+VAR_OUTPUT
+	udiNoOfRecords : UDINT; //Hvor mange record er fundet
+	bDone : BOOL; //Database skrivning afsluttet
+	bBusy : BOOL; //Database skrivning afsluttet
+	bError : BOOL; //Fejl under skrivning til database
+	sError : STRING(255); //Fejl beskrivelse
+END_VAR
+
+VAR
+	fbSqlConnection : FB_SQLDatabaseEvt(sNetID:='',tTimeout:=T#5S);
+	fbSqlCommand : FB_SQLCommandEvt(sNetID:='',tTimeout:=T#5S);
+	fbSqlResult : FB_SQLResultEvt(sNetID:='', tTimeout   := T#5S);
+	iState : INT;
+	ipResultEvent : Tc3_Eventlogger.I_TcMessage;
+	bInternDone : BOOL;
+	bInternError : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE iState OF
+	0:
+		
+		IF bExecute THEN //Whait for start
+			bBusy := TRUE;
+			M_Zero();
+			iState := 100;
+		END_IF
+					
+	100: //Open database connection
+
+		fbSqlConnection.Connect(hDBID:= wDBID);
+				
+		IF NOT fbSqlConnection.bBusy THEN
+			IF fbSqlConnection.bError THEN
+				ipResultEvent := fbSqlConnection.ipTcResult;
+				iState := 9000;	
+			ELSE
+				iState := 110;	
+			END_IF
+		END_IF
+				
+	110: //Init SQL command
+											
+		IF fbSqlConnection.CreateCmd(ADR(fbSqlCommand)) THEN
+			IF fbSqlConnection.bError THEN
+				ipResultEvent := fbSqlConnection.ipTcResult;
+				iState := 9000;
+			ELSE
+				IF pData = 0 OR cbData = 0 OR udiMaxOfRecord = 0 THEN
+					iState := 130;	
+				ELSE
+					iState := 120;
+				END_IF
+				
+			END_IF
+		END_IF		
+				
+	120: //Execute SQL command, with data return
+			
+		IF fbSqlCommand.ExecuteDataReturn(pSQLCmd:=pSql , cbSQLCmd:= cbSql, pSQLDBResult:= ADR(fbSQLResult)) THEN
+			ipResultEvent := fbSqlCommand.ipTcResult;
+				
+			IF udiMaxOfRecord < 1 THEN // Minimum read one record
+				udiMaxOfRecord := 1;
+			END_IF
+					
+						
+			IF fbSqlResult.Read(0, udiMaxOfRecord, pData, cbData, TRUE, TRUE) THEN //Parse sql data to struct
+				IF fbSqlResult.bError THEN
+					ipResultEvent := fbSqlResult.ipTcResult;
+					udiNoOfRecords := 0;
+					iState := 9000; 
+				ELSE
+					// Data found without any errors
+					udiNoOfRecords := fbSqlResult.nDataCount; 
+					bInternDone := TRUE;
+					iState := 1000; 
+				END_IF
+			END_IF
+			
+		END_IF
+		
+	130: //Execute SQL command, without data return
+		IF fbSqlCommand.Execute(pSQLCmd:= pSql, cbSQLCmd:= cbSql) THEN
+			IF fbSqlCommand.bError THEN
+				ipResultEvent := fbSqlCommand.ipTcResult;
+				udiNoOfRecords := 0;
+				iState := 9000; 
+			ELSE
+				// Write data without any errors
+				udiNoOfRecords := fbSqlResult.nDataCount; 
+				bInternDone := TRUE;
+				iState := 1000; 
+			END_IF
+		END_IF
+				
+	1000: //Close database connection
+		fbSqlConnection.Disconnect();	
+		IF NOT fbSqlConnection.bBusy THEN
+			iState := 1010;
+		END_IF
+			
+	1010: // Return to start
+		bBusy := FALSE;
+		bDone := bInternDone;
+		bError := bInternError;
+		IF NOT bExecute THEN
+			bDone := FALSE;
+			iState := 0;
+		END_IF
+								
+	9000: //Parse error description
+		bInternError := TRUE;
+		IF ipResultEvent.RequestEventText(nLangId:= 1033, sResult:= sError, nResultSize:= SIZEOF(sError), bError=> , hrErrorCode=> ) THEN
+			iState := 1000;
+		END_IF
+	
+END_CASE
+]]></ST>
+    </Implementation>
+    <Method Name="M_Zero" Id="{50ea0aed-0550-41c0-a44c-7272fd88c4e5}">
+      <Declaration><![CDATA[METHOD PRIVATE M_Zero : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[sError := '';
+bBusy := FALSE;
+bError := FALSE;
+bInternError := FALSE;
+bDone := FALSE;
+bInternDone := FALSE;
+udiNoOfRecords := 0;
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_EasySql">
+      <LineId Id="47" Count="0" />
+      <LineId Id="130" Count="0" />
+      <LineId Id="448" Count="0" />
+      <LineId Id="132" Count="0" />
+      <LineId Id="171" Count="0" />
+      <LineId Id="452" Count="0" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="53" Count="1" />
+      <LineId Id="56" Count="13" />
+      <LineId Id="71" Count="4" />
+      <LineId Id="304" Count="1" />
+      <LineId Id="307" Count="1" />
+      <LineId Id="306" Count="0" />
+      <LineId Id="76" Count="12" />
+      <LineId Id="380" Count="0" />
+      <LineId Id="89" Count="11" />
+      <LineId Id="245" Count="0" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="309" Count="2" />
+      <LineId Id="314" Count="8" />
+      <LineId Id="312" Count="1" />
+      <LineId Id="102" Count="2" />
+      <LineId Id="106" Count="1" />
+      <LineId Id="109" Count="1" />
+      <LineId Id="176" Count="0" />
+      <LineId Id="442" Count="1" />
+      <LineId Id="445" Count="0" />
+      <LineId Id="177" Count="0" />
+      <LineId Id="512" Count="0" />
+      <LineId Id="178" Count="1" />
+      <LineId Id="175" Count="0" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="117" Count="0" />
+      <LineId Id="182" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="215" Count="0" />
+      <LineId Id="118" Count="1" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EasySql.M_Zero">
+      <LineId Id="6" Count="2" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="9" Count="4" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

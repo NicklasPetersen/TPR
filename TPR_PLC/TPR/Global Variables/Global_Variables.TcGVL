@@ -1,0 +1,369 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <GVL Name="Global_Variables" Id="{4b29a8e2-5a75-4a26-bf4d-f08aaddd008d}">
+    <Declaration><![CDATA[//{attribute 'Tc2GvlVarNames'}
+ VAR_GLOBAL
+	bReady: BOOL := FALSE;
+	(* ------------------Binary values to commands--------------- *)
+	Send_pos:					BYTE := 1;
+	Send_pos_pick:				BYTE := 2;
+	Move_to_idle:				BYTE := 3;
+	Slave_to_image_pos:			BYTE := 4;
+	Slave_to_grab_pos:			BYTE := 5;
+	Slave_to_place_pos:			BYTE := 6;
+	Master_move_to_stem:		BYTE := 7;
+	Master_move_on_stem:		BYTE := 8;
+	Master_move_from_stem:		BYTE := 9;
+	Slave_move_from_pick:		BYTE := 10;
+	Set_Velocity:				BYTE := 11;
+	getCurrentCutCoords:		BYTE := 12;
+	getCurrentPickCoords:		BYTE := 13;
+	CalibCamOne:				BYTE := 14;
+	CalibCamTwo:				BYTE := 15;
+	Master_rotate_on_stem: 		BYTE := 16;
+	Pick_Move_To_Pos: 			BYTE := 17;
+	MOVE_CUT_TO_POS:			BYTE := 18;
+	Pick_Move_From_Place:		BYTE := 19;
+	Pick_Place_Cut_Move:		BYTE := 20;
+	Pick_Trunk_Image:			BYTE := 21;
+	DELEAF_IMAGE_PROGRAM:		BYTE := 22;
+	INSERT_TO_PATH:				BYTE := 23;
+	MOVE_ON_STEM_IMAGE:			BYTE := 24;
+	PLACE_DELEAF:				BYTE := 25;
+	Send_two_pos:				BYTE := 26;
+	IMAGE_POS_GRAB_STEM:		BYTE := 27;
+	RETRY_GRAB_STEM:			BYTE := 28;
+	ROBOT_SERVICE:				BYTE := 29;
+	CUT_BACK_TO_ZERO:			BYTE := 30;
+	PICK_BACK_TO_ZERO:			BYTE := 31;
+
+	FB_SEND_POS: 				RobotControl_1;
+	FB_MOVE_TO_IDLE:			RobotControl_1;
+	FB_IMAGE_POS: 				RobotControl_1;
+	FB_PICK_GRAB:				RobotControl_1;
+	FB_PICK_PLACE:				RobotControl_1;
+	FB_PICK_MOVE_FROM_PICK:		RobotControl_1;
+	FB_CUT_TO_STEM:				RobotControl_1;
+	FB_CUT_ON_STEM:				RobotControl_1;
+	FB_CUT_FROM_STEM:			RobotControl_1;
+	FB_SET_VELOCITY:			RobotControl_1;
+	FB_GET_CUT_COORD:			RobotControl_1;
+	FB_GET_PICK_COORD:			RobotControl_1;
+	FB_CALIB_CAM_ONE:			RobotControl_1;
+	FB_CALIB_CAM_TWO:			RobotControl_1;
+	FB_PICK_FROM_PLACE:			RobotControl_1;
+	FB_PICK_TRUNK_IMAGE:		RobotControl_1;
+	FB_PICK_DELEAF_PROGRAM:		RobotControl_1;
+	FB_COMOVE_IMAGE:			RobotControl_1;
+	FB_PLACE_DELEAF:			RobotControl_1;
+	FB_SEND_TWO_POS:			RobotControl_1;
+	FB_IMAGE_GRAB:				RobotControl_1;
+	FB_RETRY_GRAB_STEM:			RobotControl_1;
+
+	FB_CUT_TO_ZERO:				RobotControl_1;
+	FB_PICK_TO_ZERO:			RobotControl_1;
+
+	FB_ROBOT_SERVICE:			RobotControl_1;
+
+	(* -------------------------Modbus to HMI------------------------- *)
+	(* Control *)
+	bStart 				AT %MX50.0: 	BOOL; 				(*%MW12313:X0*)
+	bStartBottonHMI		AT %MX50.4: 	BOOL;				(*%MW12313:X4*)
+	bStop 				AT %MX50.1: 	BOOL; 				(*%MW12313:X1*)
+	bAlarmState 		AT %MX50.2: 	BOOL; 				(*%MW12313:X2*)
+	uiStatus 			AT %MB10: 		UINT; 				(*%MW12293*)
+
+	(* Status *)
+	bRobotPickStatus	AT %MX50.5:		BOOL := FALSE;		(*%MW12313:X5*)
+	bRobotCutStatus		AT %MX50.6:		BOOL := FALSE;		(*%MW12313:X6*)
+	bPLCStatus			AT %MX50.7: 	BOOL := FALSE;		(*%MW12313:X7*)
+	NewbPLCStatus 		: 	BOOL;
+	NewbRobotCutStatus	:	BOOL;
+	NewbRobotPickStatus	:	BOOL;
+
+	(* Alarm *)
+	bAckAlarm 			AT %MX50.3: 	BOOL; 				(*%MW12313:X3*)
+	uiAlarm 			AT %MB12: 		UDINT := 0;			(*%MW12294*)
+	bRobotAlarm			AT %MX56.0:		BOOL;				(*%MW12314:X0*)
+
+	(* Speed *)
+	uiSpeedSetting 		AT %MB24: 		USINT := 1; 			(*%MW12300*)
+
+	(* Program *)
+	uiprogNo 			AT %MB20: 		USINT := 0; 			(*%MW12298 *)   (* 0:No Program	1:CalibCam1		2:CalibCam2		3:Move to calib pos	4:Auto (NO adaptive )	5:GRAB AUTO*)
+	sprogName 			AT %MB100: 		STRING := 'No Program'; 		(*%MB12338*)
+	sprogNameArray:  	ARRAY[1..15] OF STRING :=[ 'No Program', 'Calib Cam 1', 'Calib Cam 2', 'Move to calib pos',  'Auto', 'GRAB AUTO'];
+
+	uimodeNo			AT %MB22:		USINT := 0;			(* %MW12299 *)  (* 0: Both			1:Tomato cutting	2:Deleafing *)
+	smodeName 			AT %MB150:		STRING := 'Both';		(* %MW12363 *)
+	smodeNameArray: 	ARRAY[1..3] OF STRING :=[ 'Both', 'Tomato Cutting', 'Deleafing'];
+
+	uiPackingModeNo 	AT %MB26:	USINT := 0;			(*%MW12301*)
+	sPackingModeName 	AT %MB250: STRING :='DEFAULT';	(* %MW12413 *)
+	sPackingModeNameArray: ARRAY[1..2] OF STRING :=[ 'DEFAULT', 'OTHER'];
+	uiPackModeNo 		AT %Q*:BYTE;
+
+	uiBoxLength			AT %MB28:	 UINT := 450;			(*%MW12302*)
+	uiBoxWidth			AT %MB32:	UINT := 400;			(*%MW12304*)
+	uiBoxHeight			AT %MB36:	UINT := 200;			(*%MW12306*)
+
+	MasterState 		AT %MB200:	 INT := 0;				(*Master state*)
+
+	(* PC control *)
+	bHelloWorld				AT %MX52.0:	BOOL;		(*%MW12314:X0*)
+	bCalibCamOneStart		AT %MX52.1:	BOOL;		(*%MW12314:X1*)
+	bNewPosCalibCamOne	AT %MX52.2:	BOOL;		(*%MW12314:X2*)
+	bEndCalibCamOne		AT %MX52.3:	BOOL;		(*%MW12314:X3*)
+	bCalibCamTwoStart		AT %MX52.4:	BOOL;		(*%MW12314:X4*)
+	bNewPosCalibCamTwo	AT %MX52.5:	BOOL;		(*%MW12314:X5*)
+	bEndCalibCamTwo		AT %MX52.6:	BOOL;		(*%MW12314:X6*)
+	bStartStopPlantCheck		AT %MX52.7:	BOOL;		(*%MW12314:X7*)
+	bStopCheck				AT %MX54.0: BOOL;		(*%MW12315:X0*)
+	bGetPlantDataCamOne	AT %MX54.1: BOOL;		(*%MW12315:X1*)
+	bGetPlantDataCamTwo	AT %MX54.2: BOOL;		(*%MW12315:X2*)
+	bRestart					AT %MX54.3: BOOL;		(*%MW12315:X3*)
+	bShutdown				AT %MX54.4: BOOL;		(*%MW12315:X4*)
+	bTestCamPointCam2		AT %MX54.5: BOOL;		(*%MW12315:X5*)
+	bTestCamPointCam1		AT %MX54.6: BOOL;		(*%MW12315:X6*)
+
+	bRobotServiceStart			AT %MX54.7: BOOL;		(*%MW12315:X7*)
+	bRobotServiceStop : BOOL;
+	
+	bBackToZero			AT %MX56.0:	BOOL;		(*%MW12316:X0*)
+
+
+
+	(* --------------------------------------------------FUNCTION BLOCKs-------------------------------------------------- *)
+	FB_CAM_ONE_CONTROL:	CamControl_1;
+	FB_CAM_TWO_CONTROL:	CamControl_2;
+
+	FB_PLACE: 			PlaceCoordinates;
+	FB_GET_STEM:		GetStem;
+	FB_GRAB_STEM:		GrabStem;
+	FB_MOVE_ON_STEM:	MoveOnStem;
+	FB_FIND_JOINT:		FindJoint;
+	FB_GRAB_JOINT:		GrabJoint;
+	FB_DELEAF_PLACE:	DeleafPlace;
+
+	FB_OPEN_CUT : 		ValveControl_1;
+	FB_CLOSE_CUT : 	ValveControl_1;
+	FB_RELEASE_CUT :	ValveControl_1;
+	FB_OPEN_PICK : 		ValveControl_1;
+	FB_CLOSE_PICK : 	ValveControl_1;
+
+	FB_LOAD_CUT: 		ValveControl_1;
+	FB_DELOAD_CUT: 	ValveControl_1;
+
+	FB_OPEN_GRIP: 		ValveControl_1;
+	FB_CLOSE_GRIP: 	ValveControl_1;
+
+	(* --------------------------------------------------Shared variables-------------------------------------------------- *)
+
+	(* REALS *)
+
+	(* INTEGERS *)
+	uiTrunkPos: 		UINT;				(* Stamme position	-->	Afstand i mm.															*)
+	iBunchPosZ: 		UINT;
+	iStemAngle:		INT;
+
+	uiCutCoordX: 		UINT;
+	uiCutCoordY: 		UINT;
+	uiCutCoordZ: 		UINT;
+
+	iStemPosX: 		UINT;				(* *)
+	iStemPosY: 		UINT;				(* *)
+	iStemPosZ: 		UINT;
+	iRoll: 			INT;
+	iPitch: 			UINT;
+	iYaw:			INT;
+	iPickAngle: 		INT;
+
+	ImageRetryHeight:	INT;
+
+
+	(* --------------------------------------------------Tool parameters-------------------------------------------------- *)
+	sToolControl	:STRING(45);
+
+
+	(* Tool control AT %MX60	-	Modbus to HMI *)
+	GbCloseCut				AT %MX60.0: BOOL;		(*%MW12318:X0*)
+	GbOpenCut				AT %MX60.1: BOOL;		(*%MW12318:X1*)
+	GbLoadCut				AT %MX60.2: BOOL;		(*%MW12318:X2*)
+	GbClosePick				AT %MX60.3: BOOL;		(*%MW12318:X3*)
+	GbOpenPick				AT %MX60.4: BOOL;		(*%MW12318:X4*)
+	GbReleaseStem: BOOL;
+	GbGripStem: BOOL;
+	GbReleaseCut: BOOL;
+	GbMotorIn: BOOL;
+	GbHomeGripStem			AT %MX62.0: BOOL;		(*%MW12319:X0*)
+	GbCloseGrip				AT %MX60.6: BOOL;		(*%MW12318:X6*)
+	GbOpenGrip				AT %MX60.5: BOOL;		(*%MW12318:X5*)
+	GbCancelAlarm: BOOL;
+	bAck: BOOL;							(* Acknowledge Tool kommando *)
+	bHomeDone: BOOL;
+	GbDeloadCut				AT %MX60.7: BOOL;		(*%MW12318:X7*)
+
+	Cam					AT %MX62.3: BOOL;		(*%MW12319:X3*)
+	bResetButton				AT %MX62.4: BOOL;		(*%MW12319:X4*)
+	bResetButton2			AT %MX62.5: BOOL;		(*%MW12319:X5*)
+
+
+	(* --------------------------------------------------Ethercat to Vision-------------------------------------------------- *)
+	(*OutPut*)
+
+	stDataToVision: ST_DataToVision;
+	
+	stAdsTest : ST_AdsTest;
+
+	(*InPut*)
+	stDataFromVision : ST_DataFromVision;
+
+	(* Sent to Robot Cut *)
+	gStemFound AT %Q* 	: BYTE;
+	gJointFound AT %Q* 	: BYTE;
+
+
+
+
+	gSendCmdPc : BOOL;
+	gCmdIdPc : BOOL;
+	gErrorCode : INT;
+	gResetPcCom: BOOL;
+	bPosSentToPcCom: BOOL;
+
+	(* --------------------------------------------------PLC parameters-------------------------------------------------- *)
+	(*Sendcoord*)
+	GsendCoord: BOOL;
+	GcoordSent: BOOL;
+	GviX : INT;
+	GviY: INT;
+	GviZ: INT;
+	GviA: INT;
+	GviE: INT;
+	GviR: INT;
+	GviX2: INT;
+	GviY2: INT;
+	GviZ2: INT;
+	GviPick: INT;
+
+	uiToolState: UINT;
+
+	bCalibCheck 		: BOOL;
+	sNewCalib 			: STRING(45);
+	sCalib 				: STRING(45);
+	usiVisionCmd		: USINT;
+
+	(* --------------------------------------------------OnOffRobotCut parameters-------------------------------------------------- *)
+	bRobotConnect		: BOOL;
+	bRobotDisconnect	: BOOL;
+	(*Out*)
+	bNoHold 			: BOOL;
+	bNoDriveOff			: BOOL;
+	bDriveOn 			: BOOL;
+
+	(*In*)
+	bNoAlarm 			: BOOL;
+	bDriveOnState 		: BOOL;
+	bStartNoHold 		: BOOL;
+
+	uiSignalOut1 AT %Q*	: BYTE;			(* OnOffRobotCut Controls *)
+	uiSignalOut2 AT %Q*	: BYTE;
+
+
+	uiSignalOut3 AT %Q*	: BYTE;			(* $DIN[1017..1025]		01 = Calib cam 2 pos (1018)		02 = (1019)		03 = (1020) 		1023 ()*)
+
+	(* --------------------------------------------------SendCoordinates parameters-------------------------------------------------- *)
+	(*Inputs - Sendcoords*)
+	uiSignalIn4 AT %I*: BYTE;			(* $FMI[4] på Robot Cut *)
+
+	(*Outputs - Sendcoords*)
+	uiSignalOutX AT %Q*: BYTE;
+	uiSignalOutY AT %Q*: BYTE;
+	uiSignalOutZ AT %Q*: BYTE;
+	uiSignalOutShared AT %Q*: BYTE;
+	uiSignalOutA AT%Q*: BYTE;
+	uiSignalOutE AT %Q*: BYTE;
+	uiSignalOutR AT %Q*: BYTE;
+	uiSignalOutPick AT %Q*: BYTE;
+	uiSignalOutOrientation AT %Q*: BYTE;
+	uiSignalOutX2 AT %Q*:	INT;
+	uiSignalOutY2 AT %Q*:	INT;
+	uiSignalOutZ2 AT %Q*:	INT;
+	uiSignalOutBoxWidth AT %Q*: BYTE;
+	uiSignalOutBoxLength AT %Q*: BYTE;
+	uiSignalOutBoxHeight AT %Q*: BYTE;
+	uiSignalOutPackingMode AT %Q*: BYTE;
+
+	iImageZone AT %Q*: BYTE;
+
+	(* --------------------------------------------------GetCoordinates parameters-------------------------------------------------- *)
+	(*Tcp Coord Input - Getcoord*)
+	uiSignalInX AT %I*: INT;
+	uiSignalInY AT %I*: INT;
+	uiSignalInZ AT %I*: INT;
+	uiSignalInShared AT %I*: BYTE;
+	uiSignalInA AT%I*: INT;
+	uiSignalInE AT %I*: INT;
+	uiSignalInR AT %I*: INT;
+	uiSignalInOrientation AT %I*: BYTE;
+	getPickCoords: BOOL;
+	getCutCoords: BOOL;
+
+	GgetCoord: BOOL;
+	currentRobotX: INT;
+	currentRobotY: INT;
+	currentRobotZ: INT;
+	currentRobotA: INT;
+	currentRobotE: INT;
+	currentRobotR: INT;
+	PickCoord: BOOL;
+	CutCoord: BOOL;
+	bGetCoordDone: BOOL := FALSE;
+
+	(*Output - Calib*)
+	uiCalibImgCount AT %Q*: BYTE;			(* $FMI[14] på Robot Cut *)
+
+	(*Inputs*)
+	uiSignalIn2 AT %I*: BYTE;				(* DOUT[1009..1016]:	1016: GRAB FAIL *)
+	uiSignalInAck AT %I*: BYTE;			(* $FMO[5] på Robot Cut *)
+	uiSignalInToolAck AT %I*: BYTE;		(* $DOUT[1041..1048] på Robot Cut *)
+
+	(*Outputs*)
+	uiSignalOutControl AT %Q*: BYTE;		(* $FMI[8]  på Robot Cut *)
+	uiSignalOutSpeedControl AT %Q*: BYTE;
+	uiSignalOutTool AT %Q*: BYTE;		(* $DIN[0..0] på Robot Cut 		00=	Load Cut		01 =	Release Cut		02 = Open Cut		03 = Close Cut		04 = Open Pick		05 = Close Pick		07 = *)
+
+	startCalibCam1: BOOL;
+	startCalibCam2: BOOL;
+
+
+	iEncoderCount: INT := 0;
+	uiSignalInEncoderCount AT %I*: UDINT;
+	bGripSensorStop AT %I*: BOOL;
+	bSetCounter AT %Q*: BOOL;
+	uiSetCounterValue AT %Q*: UDINT := 10000;
+	uiDistToGrab: INT;				(* Measure in mm. *)
+	next5:  BOOL;
+	WaitGrip: TON;
+
+	adstest : DINT := 0;
+
+	(* Sensors *)
+	bCutSensor:		 		BOOL;
+	bPickSensor:			BOOL;
+	bJorisSensor:			BOOL;
+	
+	PROGRAM_DATA 	: PrgData;
+	FRAME_DATA		: frameData;
+
+END_VAR
+
+
+VAR_GLOBAL PERSISTENT
+	arrPrograms: ARRAY [0..99] OF PrgData;
+	stAktPrg AT %MB1000: PrgData;
+
+END_VAR
+]]></Declaration>
+  </GVL>
+</TcPlcObject>

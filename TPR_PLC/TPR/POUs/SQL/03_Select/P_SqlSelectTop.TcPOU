@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="P_SqlSelectTop" Id="{b9773f60-d921-4791-9892-29f951bac57f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_SqlSelectTop
+VAR
+	
+	fbSq : FB_EasySql;
+	sSql : STRING(1000);
+	
+	iGE : INT:=1; //Select value
+	
+	astData : ARRAY[0..9] OF ST_SelectStruct; //Data array for recieved data
+	
+	bRead : BOOL; //Execute command
+	bDone : BOOL; //Command done
+	bError : BOOL; //Command error
+	sError : STRING(255);
+	
+	udiNoOfRecords : UDINT; //Numbers of returned recoreds
+	udiMaxOfRecord : UDINT;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Select data from database, only return max numbers of records from Database to database server.
+udiMaxOfRecord := 3;
+sSql := 'SELECT myId,myCustomer,myValue FROM myTable where myId >¤1¤ ORDER BY myId LIMIT ¤2¤'; // Only transmit LIMIT numbers of record from database to TC Database server
+
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤1¤', sReplace:= TO_STRING(iGE)); //Replace placeholder
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤2¤', sReplace:= TO_STRING(udiMaxOfRecord)); //Replace placeholder
+
+fbSq(
+	bExecute:= bRead, 
+	wDBID:= 1, 
+	pSql:= ADR(sSql), 
+	cbSql:= SIZEOF(sSql), 
+	pData:= ADR(astData), 
+	cbData:= SIZEOF(astData), 
+	udiMaxOfRecord:= udiMaxOfRecord, //Max number of recieved records
+	udiNoOfRecords=> udiNoOfRecords, 
+	bDone=> bDone, 
+	bBusy=> , 
+	bError=> bError, 
+	sError=> sError);]]></ST>
+    </Implementation>
+    <LineIds Name="P_SqlSelectTop">
+      <LineId Id="275" Count="0" />
+      <LineId Id="200" Count="1" />
+      <LineId Id="237" Count="0" />
+      <LineId Id="202" Count="0" />
+      <LineId Id="276" Count="0" />
+      <LineId Id="203" Count="12" />
+      <LineId Id="25" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

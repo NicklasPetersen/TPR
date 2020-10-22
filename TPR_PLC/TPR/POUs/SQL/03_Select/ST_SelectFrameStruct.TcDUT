@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <DUT Name="ST_SelectFrameStruct" Id="{e55ab1fd-4f7d-4b7b-be25-bb79600f4b21}">
+    <Declaration><![CDATA[TYPE ST_SelectFrameStruct :
+STRUCT
+	sId	: STRING(45);
+	diX	: DINT;
+	diY	: DINT;
+	diZ	: DINT;
+	diA	: DINT;
+	diE	: DINT;
+	diR	: DINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

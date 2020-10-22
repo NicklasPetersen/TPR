@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+  <DUT Name="ST_AdsTest" Id="{4b396826-c164-47bc-9df2-7729e600cf3d}">
+    <Declaration><![CDATA[TYPE ST_AdsTest :
+STRUCT
+	byteValue	:	BYTE := 255;
+	wordValue	:	WORD := 2300;
+	dwordValue	:	DWORD := 10;
+	sintValue	:	SINT := -50;
+	intValue	:	INT := 16555;
+	dintValue	:	DINT := 65345;
+	realValue 	:	REAL := 150.345;
+	lrealValue	:	LREAL := -50.50;	
+
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

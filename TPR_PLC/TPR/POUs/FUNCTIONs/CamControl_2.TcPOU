@@ -1,0 +1,127 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="CamControl_2" Id="{36d331c4-7c2e-4e7e-aab3-f772f4eac655}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK CamControl_2
+VAR_INPUT
+		NewState : 	INT;
+	X:				INT;
+	Y:				INT;
+	Z:				INT;
+	RotZ0:			INT;
+	RotY:			UINT;
+	RotZ1:			INT;
+	StemHeading:	INT;
+
+	StemFound:		USINT;
+	JointFound:		USINT;
+
+	ControlType: 		USINT;		(*	1: Controlling valves from Robot		2: Controlling valves from Robot and  PLC		3: Close only using PLC		4: Open only using PLC		*)
+	CommandNo:		USINT;		(*	Command to Robot		*)
+	Ack: 			BYTE;		(*	Acknowledge from Robot	*)
+	Execute: 			BOOL;
+END_VAR
+VAR_OUTPUT
+	Command:		BOOL;
+	Zone:			USINT;
+	PickAngle:		INT;
+END_VAR
+VAR
+	State : 		INT;
+
+
+	Done: 		BOOL;
+	Fail:			BOOL;
+	Retry: BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF State <> NewState THEN
+	State := NewState;
+END_IF
+
+CASE  State OF
+	0:
+		Done := FALSE;
+		IF Execute  THEN
+			IF ControlType = 1 THEN
+				NewState	 :=10;
+			ELSIF ControlType = 2 THEN
+				NewState := 50;
+			ELSE
+				NewState := 0;
+			END_IF
+		END_IF
+
+	10:		(* Send CmdByte  to PC	-	Stationary cam takes picture *)
+		Command := TRUE;							(* Send CmdByte 14 to PC *)
+		IF CommandNo = Ack AND Ack <> 0 THEN		(* When the PC  has sent the position, prepare to send the position to robot pick *)
+			(* Check if the positions are acceptable *)
+			IF (X < 100 OR X > 450 OR Y < 100 OR Y > 450 OR Z < 250) AND NOT Retry THEN
+				Command := FALSE;
+				NewState := 30;
+			(* If positions are not acceptable second time, return FAIL := TRUE *)
+			ELSIF (X < 100 OR X > 450 OR Y < 100 OR Y > 450 OR Z < 250) AND Retry THEN
+				Command := FALSE;
+				Retry := FALSE;
+				Fail := TRUE;
+				NewState := 1000;
+			ELSE
+				(* Define Zone *)
+				IF StemHeading <> 0 THEN
+					IF (StemHeading < -125 AND StemHeading >=-180) OR (StemHeading >135 AND StemHeading <= 180) THEN
+						Zone := 1;
+						IF StemHeading < 0 THEN
+							PickAngle := REAL_TO_INT(190 + StemHeading);
+							IF StemHeading >= -140 THEN
+								PickAngle := REAL_TO_INT(-(190 + StemHeading));		(* IKKE RIGTIGT*)
+							END_IF
+						ELSE
+							PickAngle := REAL_TO_INT(StemHeading - 190);
+						END_IF
+					ELSIF (StemHeading <= 135 AND StemHeading >= 35) THEN
+						Zone := 2;
+						PickAngle := REAL_TO_INT(( - 170 + StemHeading ));
+					ELSIF (StemHeading >= -125 AND StemHeading <= -45) THEN
+						Zone := 3;
+						PickAngle := REAL_TO_INT((StemHeading));
+					ELSIF (StemHeading > -45 AND StemHeading < 40) THEN
+						Zone := 4;
+						PickAngle := REAL_TO_INT(StemHeading - 1);
+						IF StemHeading < 0 THEN
+							PickAngle := REAL_TO_INT(-StemHeading + 1);
+						END_IF
+					ELSE
+						Zone := 0;
+					END_IF
+				END_IF
+				Command := FALSE;
+				NewState := 20;
+			END_IF
+		END_IF
+
+	20:
+		(* When Ack is 0, the command has been executed *)
+		IF Ack = 0 THEN
+			NewState := 1000;
+		END_IF
+
+	30:
+		Retry := TRUE;
+		NewState := 10;
+
+	1000:
+		Done := TRUE;
+		IF NOT Execute THEN
+			Retry := FALSE;
+			Fail := FALSE;
+			NewState := 0;
+		END_IF
+
+
+
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="CamControl_2">
+      <LineId Id="32" Count="84" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

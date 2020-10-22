@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+  <POU Name="RobotControl_1" Id="{ce2dface-3ef8-4b0a-9918-5272752a8464}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK RobotControl_1
+VAR_INPUT
+	ControlType: 	USINT;		(*	1: Controlling valves from Robot		2: Controlling valves from Robot and  PLC		3: Close only using PLC		4: Open only using PLC		*)
+	Command:	USINT;		(*	Command to Robot		*)
+	Ack: 		BYTE;		(*	Acknowledge from Robot	*)
+	Execute: 		BOOL;
+
+	CoordX:		INT;
+	CoordY:		INT;
+	CoordZ:		INT;
+
+END_VAR
+VAR_OUTPUT
+	OutQ: 		BYTE;
+END_VAR
+VAR
+	trigger : 		R_TRIG;
+	R_Execute : 	R_TRIG;
+	WaitValve:	TON;
+
+	State : INT;
+	NewState : INT;
+
+	Done: 		BOOL;
+	bValveTime: 	BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF State <> NewState THEN
+	State := NewState;
+END_IF
+
+CASE  State OF
+	0:
+		Done := FALSE;
+		IF Execute  THEN
+			IF ControlType = 1 THEN
+				NewState	 :=10;
+			ELSIF ControlType = 2 THEN
+				NewState := 50;
+			ELSE
+				NewState := 0;
+			END_IF
+		END_IF
+
+	10:
+		(* Send command To robot *)
+		OutQ := Command;
+		(* When Robot sends back the same command, the command starts *)
+		IF Ack = Command THEN
+			OutQ := 0;
+			NewState := 20;
+		END_IF
+
+	20:
+		(* When Ack is 0, the command has been executed *)
+		IF Ack = 0 THEN
+			NewState := 1000;
+		END_IF
+
+	50:
+		IF CoordX = 0 AND CoordY = 0 AND CoordZ = 0 OR OutQ = Command THEN
+			OutQ := Command;
+			IF Ack = Command THEN
+				OutQ := 0;
+				NewState := 20;
+			END_IF
+		END_IF
+
+
+	1000:
+		Done := TRUE;
+		IF NOT Execute THEN
+			NewState := 0;
+		END_IF
+
+
+
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="RobotControl_1">
+      <LineId Id="26" Count="50" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

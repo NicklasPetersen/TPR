@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="P_SqlSum" Id="{c1bdc1f5-bd44-4ea9-b845-3f6819e73eb1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_SqlSum
+VAR
+	
+	fbSq : FB_EasySql;
+	sSql : STRING(1000);
+	
+	sCustomer : STRING := 'Tom';
+	
+	lrSum : LREAL; //Data for recieved data
+	
+	
+	
+	bSum : BOOL; //Execute command
+	bDone : BOOL; //Command done
+	bError : BOOL; //Command error
+	sError : STRING(255);
+	
+	udiNoOfRecords : UDINT; //Numbers of returned recoreds
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Return sum of col.
+sSql := 'SELECT SUM(myValue) FROM myTable WHERE myCustomer = $'¤1¤$'';
+
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤1¤', sReplace:= sCustomer); //Replace placeholder
+
+fbSq(
+	bExecute:= bSum, 
+	wDBID:= 1, 
+	pSql:= ADR(sSql), 
+	cbSql:= SIZEOF(sSql), 
+	pData:= ADR(lrSum), 
+	cbData:= SIZEOF(lrSum), 
+	udiMaxOfRecord:= 1, //Max number of recieved records
+	udiNoOfRecords=> udiNoOfRecords, 
+	bDone=> bDone, 
+	bBusy=> , 
+	bError=> bError, 
+	sError=> sError);]]></ST>
+    </Implementation>
+    <LineIds Name="P_SqlSum">
+      <LineId Id="390" Count="0" />
+      <LineId Id="407" Count="0" />
+      <LineId Id="392" Count="14" />
+      <LineId Id="25" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

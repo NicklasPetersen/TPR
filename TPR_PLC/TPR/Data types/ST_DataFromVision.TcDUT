@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+  <DUT Name="ST_DataFromVision" Id="{73ac31bd-81a2-4788-a0df-d647187e4e79}">
+    <Declaration><![CDATA[TYPE ST_DataFromVision :
+STRUCT
+
+	CmdIdIn 			: DWORD;   		(*ECHO if Current ID Byte 1,2,3,4*)
+
+								(*CMD 2-7:					CMD 8-9:							CMD 10:					CMD 11:			*)
+	ResultPar1 		: INT;               	(*1: Done,    255: Failed		0: Searching,   1: Stop 255: Error            	P X						Crus X				*)	(* ResultPar1 Byte  7 	&	8 	*)
+	ResultPar2 		: INT;		(*														P Y						Crus Y				*)	(* ResultPar2 Byte  9	&   	10 	*)
+	ResultPar3 		: INT;		(*														P Z						Crus Z				*)	(* ResultPar3 Byte  11 	& 	12 	*)
+	ResultPar4 		: INT;		(*														P Z0 rotation				Stem heading angle	*)	(* ResultPar4 Byte  13 	& 	14 	*)
+	ResultPar5 		: INT;		(*														P Y   rotation									*)	(* ResultPar5 Byte  15 	& 	16 	*)
+	ResultPar6 		: INT;		(*														P Z1 rotation									*)	(* ResultPar6 Byte  17 	& 	18 	*)
+	ResultPar7 		: INT;		(*														P2 rotation around Z							*)	(* ResultPar7 Byte  19 	& 	20 	*)
+	ResultPar8 		: INT;		(*														??											*)	(* ResultPar8 Byte  21 	& 	22 	*)
+	ResultPar9 		: INT;		(*														??											*)	(* ResultPar9 Byte  23 	& 	24 	*)
+
+	(*				Cam 1 information																Cam 2 information
+		ResultPar1:	Stem pos Low 	X															Pos 		X
+		ResultPar2:	Stem pos Low 	Y															Pos 		Y
+		ResultPar3:	Stem pos Low 	Z															Pos 		Z
+		ResultPar4:	Lowest tomato  	X															Rotation Z0			(Stem heading angle)
+		ResultPar5:	Lowest tomato  	Y															Rotation Y			(Stem heading angle)
+		ResultPar6:	Lowest tomato  	Z															Rotation Z1			(Stem heading angle)
+		ResultPar7:	Rotation around Z	-	Angle between vector from stem to lowest tomato and X-axis		P2 rotation around Z						
+	*)
+
+	gStemFound	 	: BYTE; 		(*0: Not found 1: Found 255: timeout  Byte 5*)	(* Byte 5 *)
+	gJointFound		: BYTE;		(*0: Not found 1: Found 255: timeout  Byte 6 *)	(* Byte 6 *)
+
+	CmdInProcess	: BYTE;     	(*ECHO of current CMD Byte 0*)
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

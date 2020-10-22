@@ -1,0 +1,112 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+  <POU Name="GrabJoint" Id="{40fead04-3bf6-48f0-b790-a286b7257458}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK GrabJoint
+VAR_INPUT
+	Execute: 		BOOL;
+	State : 		INT;
+	NewState : 	INT;
+
+END_VAR
+VAR_OUTPUT
+
+
+END_VAR
+VAR
+
+	Done: 		BOOL;
+	Fail: BOOL;
+	bRetry: USINT;
+	bRobotFail: BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF State <> NewState THEN
+	State := NewState;
+END_IF
+
+CASE  State OF
+	0:
+		Done := FALSE;
+		IF Execute  THEN
+			IF uimodeNo = 2 THEN
+				NewState 	:= 20;
+			ELSE
+				NewState	 :=10;
+			END_IF
+		END_IF
+
+	10:		(* Robot Pick grab *)
+		FB_PICK_GRAB.Execute := TRUE;
+		uiSignalOutControl := FB_PICK_GRAB.OutQ;
+		IF FB_PICK_GRAB.Done THEN
+			FB_PICK_GRAB.Execute := FALSE;
+			IF NOT bRobotFail THEN
+				bRetry := 0;
+				NewState := 20;
+			ELSE
+				IF bRetry = 0 THEN
+					(* Take a new picture *)
+
+					bRetry := 1;
+					NewState := 500;
+				ELSE
+					Fail := TRUE;
+				END_IF
+			END_IF
+		END_IF
+
+	20:		(* Cut *)
+		FB_RELEASE_CUT.Execute := TRUE;
+		IF FB_RELEASE_CUT.Done THEN
+			FB_RELEASE_CUT.Execute := FALSE;
+			NewState := 25;
+		END_IF
+
+	25:		(* Load Cut *)
+		FB_LOAD_CUT.Execute := TRUE;
+		IF FB_LOAD_CUT.Done THEN
+			FB_LOAD_CUT.Execute := FALSE;
+			IF uimodeNo <= 1 THEN
+				NewState := 30;
+			ELSE
+				NewState := 1000;
+			END_IF
+		END_IF
+
+	30:		(* Move from pick *)
+		FB_PICK_MOVE_FROM_PICK.Execute := TRUE;
+		uiSignalOutControl := FB_PICK_MOVE_FROM_PICK.OutQ;
+		IF FB_PICK_MOVE_FROM_PICK.Done THEN
+			FB_PICK_MOVE_FROM_PICK.Execute := FALSE;
+			NewState := 1000;
+		END_IF
+
+	500:
+		FB_RETRY_GRAB_STEM.Execute := TRUE;
+		IF FB_RETRY_GRAB_STEM.Done THEN
+			FB_RETRY_GRAB_STEM.Execute := FALSE;
+			NewState := 1000;
+		END_IF
+
+
+	1000:
+		Done := TRUE;
+		IF NOT Execute THEN
+			IF Fail THEN
+				bRetry := 0;
+				Fail := FALSE;
+			END_IF
+			NewState := 0;
+		END_IF
+
+
+
+END_CASE
+
+bRobotFail := uiSignalIn2.07;]]></ST>
+    </Implementation>
+    <LineIds Name="GrabJoint">
+      <LineId Id="18" Count="83" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

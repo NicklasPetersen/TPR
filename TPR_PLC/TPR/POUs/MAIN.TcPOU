@@ -1,0 +1,458 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="MAIN" Id="{408e7d2e-01fc-4a0f-b06b-65bd1533c676}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR		
+
+	iAlive : 						INT;
+	ControlState: 					INT;
+	ControlMoveToCalibPosState: 	INT;
+	CalibCam1State: 				INT;
+	CalibCam2State: 				INT;
+	ToolsState: 					INT;
+	ControlGrabAutoState: 			INT;
+
+	bStopped: 					BOOL;
+	bStopFlag: BOOL;
+
+	trig:							R_TRIG;
+
+	ControlAutoState: INT;
+	ControlInternalState: INT;
+	bService: BOOL;
+	BlockTestState: INT;
+	FB_MOVE_ON_STEM_STATE: INT;
+	FB_GRAB_STEM_STATE: INT;
+	FB_GRAB_JOINT_STATE: INT;
+END_VAR
+VAR_INPUT
+	FB_GET_STEM_STATE: INT;
+	FB_FIND_JOINT_STATE: INT;
+END_VAR
+VAR_OUTPUT
+	FB_DELEAF_STATE: INT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[iAlive := iAlive + 1;
+
+///////////////////////////// INIT Function blocks to communication /////////////////////////////
+P_Mqtt();		// For pub/sub information to/from mosquitto broker
+
+
+P_SqlGeneratTestData();
+
+P_SqlSelect();
+P_SqlSelectRecipe();
+P_SqlSelectFrame();
+P_SqlSelectTop();
+P_SqlInsert();
+P_SqlInsertRowConstructor();
+P_SqlUpdate();
+P_SqlInsertRowConstructor();
+P_SqlInsertUnionAll();
+P_SqlDelete();
+P_SqlCount();
+P_SqlSum();
+
+DB_Conn();
+
+///////////////////////////// INIT sequences /////////////////////////////
+
+OnOffRobotCut();
+IF  OnOffRobotCut.State <> OnOffRobotCut.NewState THEN
+	OnOffRobotCut.State := OnOffRobotCut.NewState;
+END_IF
+
+Control();
+IF Control.InternalState <> Control.InternalNewState THEN
+	 Control.InternalState :=  Control.InternalNewState;
+END_IF
+IF Control.State <> Control.NewState THEN
+	Control.State := Control.NewState;
+END_IF
+
+ControlAuto();
+IF ControlAuto.State <> ControlAuto.NewState THEN
+	ControlAuto.State := ControlAuto.NewState;
+END_IF
+
+ControlGrabAuto();
+IF ControlGrabAuto.State <> ControlGrabAuto.NewState THEN
+	ControlGrabAuto.State := ControlGrabAuto.NewState;
+END_IF
+
+ControlMoveToCalibPos();
+IF ControlMoveToCalibPos.State <> ControlMoveToCalibPos.NewState THEN
+	ControlMoveToCalibPos.State := ControlMoveToCalibPos.NewState;
+END_IF
+
+Tools();
+IF  Tools.State <> Tools.NewState THEN
+	Tools.State := Tools.NewState;
+END_IF
+
+SendCoordinates();
+IF SendCoordinates.State <> SendCoordinates.NewState THEN
+	SendCoordinates.State := SendCoordinates.NewState;
+END_IF
+
+PcCom();
+IF  PcCom.State <> PcCom.NewState THEN
+	PcCom.State := PcCom.NewState;
+END_IF
+
+ErrorHandle();
+IF  ErrorHandle.State <> ErrorHandle.NewState THEN
+	ErrorHandle.State := ErrorHandle.NewState;
+END_IF
+
+GetCoordinates();
+IF GetCoordinates.State <> GetCoordinates.NewState THEN
+	GetCoordinates.State := GetCoordinates.NewState;
+END_IF
+
+CalibCam1();
+IF CalibCam1.State <> CalibCam1.NewState THEN
+	CalibCam1.State := CalibCam1.NewState;
+END_IF
+
+CalibCam2();
+IF CalibCam2.State <> CalibCam2.NewState THEN
+	CalibCam2.State := CalibCam2.NewState;
+END_IF
+
+BackToZero();
+IF BackToZero.State <> BackToZero.NewState THEN
+	BackToZero.State := BackToZero.NewState;
+END_IF
+
+RobotService();
+IF RobotService.State <> RobotService.NewState THEN
+	RobotService.State := RobotService.NewState;
+END_IF
+
+BlockTest();
+IF BlockTest.State <> BlockTest.NewState THEN
+	BlockTest.State := BlockTest.NewState;
+END_IF
+
+///////////////////////////// Reset sequence /////////////////////////////
+IF bResetButton THEN
+	Control.NewState := 1000;
+
+	ControlAuto.NewState := 1000;
+	ControlMoveToCalibPos.NewState := 1000;
+	CalibCam1.NewState := 1000;
+	CalibCam2.NewState := 1000;
+	ControlGrabAuto.NewState := 1000;
+	Tools.NewState := 1000;
+
+	BlockTest.NewState := 1000;
+
+	FB_GET_STEM.				Execute := FALSE;
+	FB_GRAB_STEM.				Execute := FALSE;
+	FB_MOVE_ON_STEM.			Execute := FALSE;
+	FB_FIND_JOINT.				Execute := FALSE;
+	FB_GRAB_JOINT.				Execute := FALSE;
+	FB_DELEAF_PLACE.			Execute := FALSE;
+
+	FB_GET_STEM.				NewState := 1000;
+	FB_GRAB_STEM.				NewState := 1000;
+	FB_MOVE_ON_STEM.			NewState := 1000;
+	FB_FIND_JOINT.				NewState := 1000;
+	FB_GRAB_JOINT.				NewState := 1000;
+	FB_DELEAF_PLACE.			NewState := 1000;
+
+
+	FB_SEND_POS.				Execute := FALSE;
+	FB_MOVE_TO_IDLE.			Execute := FALSE;
+	FB_IMAGE_POS.				Execute := FALSE;
+	FB_PICK_GRAB.				Execute := FALSE;
+	FB_PICK_PLACE.				Execute := FALSE;
+	FB_PICK_MOVE_FROM_PICK.	Execute := FALSE;
+	FB_CUT_TO_STEM.			Execute := FALSE;
+	FB_CUT_ON_STEM.			Execute := FALSE;
+	FB_CUT_FROM_STEM.		Execute := FALSE;
+	FB_SET_VELOCITY.			Execute := FALSE;
+	FB_GET_CUT_COORD.		Execute := FALSE;
+	FB_GET_PICK_COORD.		Execute := FALSE;
+	FB_CALIB_CAM_ONE.			Execute := FALSE;
+	FB_CALIB_CAM_TWO.			Execute := FALSE;
+	FB_PICK_FROM_PLACE.		Execute := FALSE;
+	FB_PICK_TRUNK_IMAGE.		Execute := FALSE;
+	FB_PICK_DELEAF_PROGRAM.	Execute := FALSE;
+	FB_ROBOT_SERVICE.		Execute := FALSE;
+
+
+	FB_COMOVE_IMAGE.			Execute := FALSE;
+	FB_PLACE_DELEAF.			Execute := FALSE;
+	FB_SEND_TWO_POS.			Execute := FALSE;
+	FB_IMAGE_GRAB.			Execute := FALSE;
+
+	FB_RETRY_GRAB_STEM.		Execute := FALSE;
+
+	FB_CUT_TO_ZERO.			Execute := FALSE;
+	FB_PICK_TO_ZERO.		Execute := FALSE;
+
+	FB_CAM_ONE_CONTROL.	Execute := FALSE;
+	FB_CAM_ONE_CONTROL.	NewState := 1000;
+	FB_CAM_TWO_CONTROL.	Execute := FALSE;
+	FB_CAM_TWO_CONTROL.	NewState := 1000;
+	
+
+	bService := FALSE;
+	gResetPcCom := TRUE;
+
+END_IF
+
+IF bResetButton2 THEN
+	Control.NewState := 1000;
+	BlockTest.NewState := 1000;
+	ControlAuto.NewState := 1000;
+	ControlMoveToCalibPos.NewState := 1000;
+	CalibCam1.NewState := 1000;
+	CalibCam2.NewState := 1000;
+	ControlGrabAuto.NewState := 1000;
+	Tools.NewState := 3000;
+
+	bService := FALSE;
+
+	FB_GET_STEM.				Execute := FALSE;
+	FB_GRAB_STEM.				Execute := FALSE;
+	FB_MOVE_ON_STEM.			Execute := FALSE;
+	FB_FIND_JOINT.				Execute := FALSE;
+	FB_GET_STEM.				Execute := FALSE;
+	FB_GRAB_JOINT.				Execute := FALSE;
+	FB_DELEAF_PLACE.			Execute := FALSE;
+
+	FB_GET_STEM.				NewState := 1000;
+	FB_GRAB_STEM.				NewState := 1000;
+	FB_MOVE_ON_STEM.			NewState := 1000;
+	FB_FIND_JOINT.				NewState := 1000;
+	FB_GRAB_JOINT.				NewState := 1000;
+	FB_DELEAF_PLACE.			NewState := 1000;
+
+	FB_SEND_POS.				Execute := FALSE;
+	FB_MOVE_TO_IDLE.			Execute := FALSE;
+	FB_IMAGE_POS.				Execute := FALSE;
+	FB_PICK_GRAB.				Execute := FALSE;
+	FB_PICK_PLACE.				Execute := FALSE;
+	FB_PICK_MOVE_FROM_PICK.	Execute := FALSE;
+	FB_CUT_TO_STEM.			Execute := FALSE;
+	FB_CUT_ON_STEM.			Execute := FALSE;
+	FB_CUT_FROM_STEM.		Execute := FALSE;
+	FB_SET_VELOCITY.			Execute := FALSE;
+	FB_GET_CUT_COORD.		Execute := FALSE;
+	FB_GET_PICK_COORD.		Execute := FALSE;
+	FB_CALIB_CAM_ONE.			Execute := FALSE;
+	FB_CALIB_CAM_TWO.			Execute := FALSE;
+	FB_PICK_FROM_PLACE.		Execute := FALSE;
+	FB_PICK_TRUNK_IMAGE.		Execute := FALSE;
+	FB_PICK_DELEAF_PROGRAM.	Execute := FALSE;
+
+	FB_ROBOT_SERVICE.		Execute := FALSE;
+
+
+	FB_COMOVE_IMAGE.			Execute := FALSE;
+	FB_PLACE_DELEAF.			Execute := FALSE;
+	FB_SEND_TWO_POS.			Execute := FALSE;
+	FB_IMAGE_GRAB.			Execute := FALSE;
+
+	FB_RETRY_GRAB_STEM.		Execute := FALSE;
+
+	FB_CUT_TO_ZERO.			Execute := FALSE;
+	FB_PICK_TO_ZERO.			Execute := FALSE;
+
+	FB_CAM_ONE_CONTROL.	Execute := FALSE;
+	FB_CAM_TWO_CONTROL.	Execute := FALSE;
+
+
+	gResetPcCom := TRUE;
+
+END_IF
+
+///////////////////////////// Stop/Pause sequence /////////////////////////////
+IF bStop OR bStopped THEN
+	uiStatus := 2;
+	IF NOT bStopped THEN
+		FB_GET_STEM_STATE 		:= FB_GET_STEM.State;
+		FB_GRAB_STEM_STATE 		:= FB_GRAB_STEM.State;
+		FB_MOVE_ON_STEM_STATE	:= FB_MOVE_ON_STEM.State;
+		FB_FIND_JOINT_STATE 		:= FB_FIND_JOINT.State;
+		FB_GRAB_JOINT_STATE		:= FB_GRAB_JOINT.State;
+		FB_DELEAF_STATE 			:= FB_DELEAF_PLACE.State;
+
+		FB_GET_STEM.NewState := 2000;
+		FB_GRAB_STEM.NewState := 2000;
+		FB_MOVE_ON_STEM.NewState := 2000;
+		FB_FIND_JOINT.NewState := 2000;
+		FB_GRAB_JOINT.NewState := 2000;
+		FB_DELEAF_PLACE.NewState := 2000;
+
+		ControlState 					:= Control.State;
+		BlockTestState				:= BlockTest.State;
+
+		ControlAutoState				:= ControlAuto.State;
+		ControlMoveToCalibPosState 	:= ControlMoveToCalibPos.State;
+		CalibCam1State 				:= CalibCam1.State;
+		CalibCam2State 				:= CalibCam2.State;
+		ControlGrabAutoState 			:= ControlGrabAuto.State;
+		ToolsState 					:= Tools.State;
+
+		BlockTest.State 					:= 2000;
+		Control.State 						:= 2000;
+		ControlAuto.NewState 				:= 2000;
+		ControlMoveToCalibPos.NewState 	:= 2000;
+		CalibCam1.NewState 				:= 2000;
+		CalibCam2.NewState 				:= 2000;
+		ControlGrabAuto.NewState 			:= 2000;
+		Tools.NewState 					:= 2000;
+		bStopped := TRUE;
+	END_IF
+
+	IF bStart THEN
+		uiStatus := 1;
+
+		FB_GET_STEM.NewState := FB_GET_STEM_STATE;
+		FB_GRAB_STEM.NewState := FB_GRAB_STEM_STATE;
+		FB_MOVE_ON_STEM.NewState := FB_MOVE_ON_STEM_STATE;
+		FB_FIND_JOINT.NewState := FB_FIND_JOINT_STATE;
+		FB_GRAB_JOINT.NewState := FB_GRAB_JOINT_STATE;
+		FB_DELEAF_PLACE.NewState := FB_DELEAF_STATE;
+
+		BlockTest.NewState := BlockTestState;
+		Control.NewState := ControlState;
+		ControlAuto.NewState := ControlAutoState;
+		ControlMoveToCalibPos.NewState := ControlMoveToCalibPosState;
+		CalibCam1.NewState := CalibCam1State;
+		CalibCam2.NewState := CalibCam2State;
+		ControlGrabAuto.NewState := ControlGrabAutoState;
+		Tools.NewState := ToolsState;
+		bStopped := FALSE;
+	END_IF
+END_IF
+
+
+//uiprogNo := PROGRAM_DATA.usiProgram;
+
+///////////////////////////// FUNCTIONBLOCK CALL /////////////////////////////
+FB_SEND_POS				(ControlType := 1,		Command := Send_pos,					Ack := uiSignalInAck);
+FB_MOVE_TO_IDLE			(ControlType := 1,		Command := Move_to_idle,				Ack := uiSignalInAck);
+FB_IMAGE_POS			(ControlType := 1,		Command := Slave_to_image_pos,			Ack := uiSignalInAck);
+FB_PICK_GRAB			(ControlType := 1,		Command := Slave_to_grab_pos,			Ack := uiSignalInAck);
+FB_PICK_PLACE			(ControlType := 1,		Command := Slave_to_place_pos,			Ack := uiSignalInAck);
+FB_PICK_MOVE_FROM_PICK	(ControlType := 1,		Command := Slave_move_from_pick,		Ack := uiSignalInAck);
+FB_CUT_TO_STEM			(ControlType := 1,		Command := Master_move_to_stem,			Ack := uiSignalInAck);
+FB_CUT_ON_STEM			(ControlType := 1,		Command := Master_move_on_stem,			Ack := uiSignalInAck);
+FB_CUT_FROM_STEM		(ControlType := 1,		Command := Master_move_from_stem,		Ack := uiSignalInAck);
+FB_SET_VELOCITY			(ControlType := 1,		Command := Set_Velocity,				Ack := uiSignalInAck);
+FB_GET_CUT_COORD		(ControlType := 1,		Command := getCurrentCutCoords,			Ack := uiSignalInAck);
+FB_GET_PICK_COORD		(ControlType := 2,		Command := getCurrentPickCoords,		Ack := uiSignalInAck,		CoordX := stDataToVision.CoordXR2G,		CoordY := stDataToVision.CoordYR2G,		CoordZ := stDataToVision.CoordZR2G	);
+FB_CALIB_CAM_ONE		(ControlType := 1,		Command := CalibCamOne,					Ack := uiSignalInAck);
+FB_CALIB_CAM_TWO		(ControlType := 1,		Command := CalibCamTwo,					Ack := uiSignalInAck);
+FB_PICK_FROM_PLACE		(ControlType := 1,		Command := Pick_Move_From_Place,		Ack := uiSignalInAck);
+FB_PICK_TRUNK_IMAGE		(ControlType := 1,		Command := Pick_Trunk_Image,			Ack := uiSignalInAck);
+FB_PICK_DELEAF_PROGRAM	(ControlType := 1,		Command := DELEAF_IMAGE_PROGRAM,		Ack := uiSignalInAck);
+FB_COMOVE_IMAGE			(ControlType := 1,		Command := MOVE_ON_STEM_IMAGE,			Ack := uiSignalInAck);
+FB_PLACE_DELEAF			(ControlType := 1,		Command := PLACE_DELEAF,				Ack := uiSignalInAck);
+FB_SEND_TWO_POS			(ControlType := 1,		Command := Send_two_pos,				Ack := uiSignalInAck);
+FB_IMAGE_GRAB			(ControlType := 1,		Command := IMAGE_POS_GRAB_STEM,			Ack := uiSignalInAck);
+FB_RETRY_GRAB_STEM		(ControlType := 1,		Command := RETRY_GRAB_STEM,				Ack := uiSignalInAck);
+FB_ROBOT_SERVICE		(ControlType := 1,		Command := ROBOT_SERVICE,				ACK := uiSignalInAck, Execute := bRobotServiceStart OR FB_ROBOT_SERVICE.Execute);
+FB_CUT_TO_ZERO			(ControlType := 1,		Command := CUT_BACK_TO_ZERO,			Ack := uiSignalInAck);
+FB_PICK_TO_ZERO			(ControlType := 1,		Command := PICK_BACK_TO_ZERO,			Ack := uiSignalInAck);
+
+FB_PLACE(Offset := 140,		Box_length := uiBoxLength, 		Box_width := uiBoxWidth,	Box_height := uiBoxHeight,		Stem_length := 200,	Mode := uiPackingModeNo);
+
+FB_GET_STEM();
+FB_GRAB_STEM();
+FB_MOVE_ON_STEM();
+FB_FIND_JOINT();
+FB_GRAB_JOINT();
+FB_DELEAF_PLACE();
+
+uiProgNo := PROGRAM_DATA.usiProgram;
+
+uiSignalOutBoxWidth		:= INT_TO_BYTE(uiBoxWidth/10);
+uiSignalOutBoxLength 	:= INT_TO_BYTE(uiBoxLength/10);
+uiSignalOutBoxHeight 	:= INT_TO_BYTE(uiBoxHeight/10);
+uiSignalOutPackingMode 	:= INT_TO_BYTE(uiPackingModeNo);
+
+///////////////////////////// MQTT /////////////////////////////
+// P_MQTT function block are always looking for the topic "mqtt-php/hmi2plc/opState"
+// If the value is either 'start', 'stop' or 'pause', publish the same value
+
+
+/////////////////////////// NOGET TIL GAMLE HMI /////////////////////////////////
+sprogName := sprogNameArray[uiprogNo+1];
+uiToolState := Tools.NewState;
+uiSignalOutSpeedControl := UINT_TO_BYTE(uiSpeedSetting);
+
+smodeName := smodeNameArray[uimodeNo+1];
+
+sPackingModeName := sPackingModeNameArray[uiPackingModeNo+1];
+
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN">
+      <LineId Id="388" Count="0" />
+      <LineId Id="474" Count="0" />
+      <LineId Id="455" Count="0" />
+      <LineId Id="507" Count="0" />
+      <LineId Id="509" Count="0" />
+      <LineId Id="506" Count="0" />
+      <LineId Id="457" Count="0" />
+      <LineId Id="674" Count="0" />
+      <LineId Id="459" Count="0" />
+      <LineId Id="848" Count="0" />
+      <LineId Id="887" Count="0" />
+      <LineId Id="460" Count="0" />
+      <LineId Id="462" Count="1" />
+      <LineId Id="465" Count="2" />
+      <LineId Id="469" Count="0" />
+      <LineId Id="471" Count="0" />
+      <LineId Id="473" Count="0" />
+      <LineId Id="886" Count="0" />
+      <LineId Id="885" Count="0" />
+      <LineId Id="456" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="475" Count="0" />
+      <LineId Id="31" Count="41" />
+      <LineId Id="74" Count="4" />
+      <LineId Id="80" Count="9" />
+      <LineId Id="91" Count="19" />
+      <LineId Id="540" Count="1" />
+      <LineId Id="544" Count="57" />
+      <LineId Id="918" Count="0" />
+      <LineId Id="602" Count="0" />
+      <LineId Id="920" Count="0" />
+      <LineId Id="919" Count="0" />
+      <LineId Id="603" Count="70" />
+      <LineId Id="542" Count="1" />
+      <LineId Id="677" Count="57" />
+      <LineId Id="675" Count="0" />
+      <LineId Id="850" Count="1" />
+      <LineId Id="854" Count="0" />
+      <LineId Id="737" Count="1" />
+      <LineId Id="741" Count="16" />
+      <LineId Id="760" Count="3" />
+      <LineId Id="765" Count="0" />
+      <LineId Id="767" Count="0" />
+      <LineId Id="769" Count="9" />
+      <LineId Id="739" Count="0" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="951" Count="0" />
+      <LineId Id="121" Count="5" />
+      <LineId Id="815" Count="2" />
+      <LineId Id="127" Count="0" />
+      <LineId Id="258" Count="1" />
+      <LineId Id="809" Count="5" />
+      <LineId Id="318" Count="1" />
+      <LineId Id="358" Count="0" />
+      <LineId Id="424" Count="0" />
+      <LineId Id="423" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

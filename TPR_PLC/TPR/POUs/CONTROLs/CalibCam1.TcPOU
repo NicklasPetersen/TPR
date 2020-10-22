@@ -1,0 +1,202 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="CalibCam1" Id="{5a068959-7445-4566-a77a-1d5af3bc0010}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM CalibCam1
+VAR_INPUT
+	State: INT :=0;
+	NewState: INT := 0;
+	next: BOOL;
+END_VAR
+
+VAR
+	bCommandStarted: BOOL;
+
+	Wait: TON;
+	bWait: BOOL;
+	Wait2: TON;
+	bWait2: BOOL;
+	Wait3: TON;
+	bWait3: BOOL;
+	bStopped: BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE State OF
+
+	0:		(* Wait for start of Calib cam 1 *)
+		IF uiprogNo = 1 AND startCalibCam1 AND State <> 2000  AND NOT bAlarmState THEN
+			uiCalibImgCount := 0;
+			startCalibCam1 := FALSE;
+			GbCloseCut := TRUE;									(* When calibrating Cam 1, the cutter most be closed *)
+			NewState := 10;
+		END_IF
+
+	10:		(* Set calibration velocity *)
+		uiSignalOutSpeedControl := UINT_TO_BYTE(uiSpeedSetting);
+		uiSignalOutControl := Set_Velocity;
+
+		IF uiSignalInAck = Set_Velocity THEN
+			uiSignalOutControl := 0;
+			NewState := 15;
+		END_IF
+
+	15:
+		IF uiSignalInAck = 0 THEN
+			IF sNewCalib = 'he_cut-start' THEN
+				NewState := 20;
+			END_IF
+		END_IF
+
+		
+	20:		(* Move to idle *)
+		uiSignalOutControl := Move_to_idle;
+		IF uiSignalInAck = Move_to_idle THEN
+			uiSignalOutControl := 0;
+			NewState := 25;
+		END_IF
+
+	25:
+		IF uiSignalInAck = 0 THEN
+			NewState := 30;
+		END_IF
+
+	30:		(* Set CmdByte to 2, to tell PC to start calibration of Cam 1 *)
+		bCalibCamOneStart := TRUE;
+
+		IF stDataFromVision.CmdInProcess =  stDataToVision.CmdByte AND stDataToVision.CmdByte <> 0 THEN							(* When PC recieve command, it sends acknowledge *)
+			bCalibCamOneStart := FALSE;
+			NewState := 40;
+		END_IF
+		
+	40:	(* Move to Mount calib plate *)
+		NewState := 45;
+		
+	45:	(* When mounting is done *)
+		IF uiSignalInAck = 0 THEN
+			IF sNewCalib = 'calib-mounted' THEN
+				NewState := 50;
+			END_IF
+		END_IF
+
+	50:		(* Call CALIB_CAM1 on robot Cut. Robot Cut move to a pos to take a picture *)
+		uiSignalOutControl := CalibCamOne;
+		IF uiSignalInAck = CalibCamOne THEN
+			uiSignalOutControl := 0;
+			NewState := 55;
+		END_IF
+
+	55:
+		IF uiSignalInAck = 0 THEN
+			NewState := 60;
+		END_IF
+
+	60:		(* Before the picture is taken, call get cut coord *)
+		getCutCoords := TRUE;										(* Get coord from robot Cut *)
+		IF uiSignalInAck = getCurrentCutCoords THEN
+			uiSignalOutControl := 0;
+			NewState := 65;
+		END_IF
+
+	65:
+		IF uiSignalInAck = 0 THEN
+			bWait := TRUE;
+			IF Wait.Q THEN
+				bWait := FALSE;
+				NewState := 70;
+			END_IF
+		END_IF
+
+	70:		(* CmdByte 3 means that we want to take a picture *)
+		bNewPosCalibCamOne := TRUE;
+		IF stDataFromVision.CmdInProcess =  stDataToVision.CmdByte AND stDataToVision.CmdByte <> 0 THEN
+			bNewPosCalibCamOne := FALSE;
+			NewState := 80;
+		END_IF
+
+	80:		(* If there has not been taken enough pictures go to state 40 in order to take more picture. Else send CmdByte 4 to tell PC to stop calib *)
+		uiCalibImgCount := uiCalibImgCount + 1;
+		IF uiCalibImgCount < 8 THEN
+			NewState := 50;
+		ELSE
+			uiCalibImgCount := 0;
+			bEndCalibCamOne := TRUE;
+			NewState := 90;
+		END_IF
+		
+	90:	(* When calib is finished -> Unmount plate *)
+		NewState := 95;
+		
+	95:
+		IF uiSignalInAck = 0 THEN
+			IF sNewCalib = 'calib-unmounted' THEN
+				NewState := 100;
+			END_IF
+		END_IF
+
+	100:		(* Reset CmdByte and go to init state *)
+		uiSignalOutControl := Move_to_idle;
+		IF uiSignalInAck = Move_to_idle THEN
+			uiSignalOutControl := 0;
+			NewState := 105;
+		END_IF
+
+	105:
+		IF uiSignalInAck = 0 THEN
+			NewState := 110;
+		END_IF
+
+	110:
+		IF stDataFromVision.CmdInProcess = stDataToVision.CmdByte AND stDataToVision.CmdByte <>0 THEN
+			bEndCalibCamOne := FALSE;
+			GbCloseCut := FALSE;
+			uiStatus := 0;
+			NewState := 0;
+		END_IF
+
+	1000:		(* RESET *)
+		startCalibCam1 			:= FALSE;
+		uiSignalOutControl 		:= 0;
+		bCalibCamOneStart 		:= FALSE;
+		getCutCoords				:= FALSE;
+		bNewPosCalibCamOne 	:= FALSE;
+		uiCalibImgCount			:= 0;
+		bEndCalibCamOne		:= FALSE;
+
+		NewState := 0;
+
+	2000:
+		bStopped := TRUE;
+
+
+END_CASE
+
+IF bStart AND NOT bStop AND NOT bAlarmState AND uiprogNo = 1 AND State <> 2000 THEN
+	startCalibCam1 := TRUE;
+	(*bStart := FALSE;*)
+	uiStatus := 1;
+END_IF
+
+IF State <> 2000 THEN
+	bStopped := FALSE;
+END_IF
+Wait		(IN:=  bWait		, PT:=t#1000ms, Q=>, ET=>); 		(*Timer*)
+Wait2	(IN:=  bWait2		, PT:=t#2000ms, Q=>, ET=>); 	(*Timer*)
+Wait3	(IN:=  bWait3		, PT:=t#2000ms, Q=>, ET=>); 	(*Timer*)]]></ST>
+    </Implementation>
+    <LineIds Name="CalibCam1">
+      <LineId Id="18" Count="20" />
+      <LineId Id="173" Count="2" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="184" Count="0" />
+      <LineId Id="179" Count="0" />
+      <LineId Id="42" Count="18" />
+      <LineId Id="187" Count="0" />
+      <LineId Id="189" Count="7" />
+      <LineId Id="188" Count="0" />
+      <LineId Id="61" Count="44" />
+      <LineId Id="197" Count="2" />
+      <LineId Id="206" Count="5" />
+      <LineId Id="203" Count="0" />
+      <LineId Id="106" Count="49" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

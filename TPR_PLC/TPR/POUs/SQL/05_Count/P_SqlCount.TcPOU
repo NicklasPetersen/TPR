@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="P_SqlCount" Id="{8220f5e1-a3eb-4437-b53f-2ac12d160f10}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_SqlCount
+VAR
+	
+	fbSq : FB_EasySql;
+	sSql : STRING(1000);
+	
+	sCustomer : STRING := 'Tom';
+	
+	diCount : LINT; //Data array for recieved data
+	
+	bCount : BOOL; //Execute command
+	bDone : BOOL; //Command done
+	bError : BOOL; //Command error
+	sError : STRING(255);
+	
+	udiNoOfRecords : UDINT; //Numbers of returned recoreds
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Return record counts
+sSql := 'SELECT COUNT(myCustomer) FROM myTable WHERE myCustomer = $'¤1¤$'';
+
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤1¤', sReplace:= sCustomer); //Replace placeholder
+
+fbSq(
+	bExecute:= bCount, 
+	wDBID:= 1, 
+	pSql:= ADR(sSql), 
+	cbSql:= SIZEOF(sSql), 
+	pData:= ADR(diCount), 
+	cbData:= SIZEOF(diCount), 
+	udiMaxOfRecord:= 1, //Max number of recieved records
+	udiNoOfRecords=> udiNoOfRecords, 
+	bDone=> bDone, 
+	bBusy=> , 
+	bError=> bError, 
+	sError=> sError);]]></ST>
+    </Implementation>
+    <LineIds Name="P_SqlCount">
+      <LineId Id="327" Count="16" />
+      <LineId Id="25" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

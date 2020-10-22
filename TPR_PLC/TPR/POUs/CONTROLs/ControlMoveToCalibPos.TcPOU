@@ -1,0 +1,291 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+  <POU Name="ControlMoveToCalibPos" Id="{eb38343d-5253-4d4f-a5f9-34c7ea1d78d0}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM ControlMoveToCalibPos
+VAR_INPUT
+	State: INT := 0;
+	NewState: INT := 0;
+END_VAR
+
+VAR
+
+	(* Timer *)
+	Wait:TON;
+	WaitCut:TON;
+
+	test: BOOL;
+
+	counter: INT := 0;
+	bWait: BOOL;
+	bWaitCut: BOOL;
+	testX: INT;
+	testY: INT;
+	testCount: INT := 0;
+	Wait2: TON;
+	Wait3: TON;
+	bWait2: BOOL;
+	next: BOOL;
+	bWait3: BOOL;
+	bStopped: BOOL;
+	iBottomPosY: INT;
+	iBottomPosX: INT;
+	iBottomPosZ: INT;
+	iTopPosX: INT;
+	iTopPosY: INT;
+	iTopPosZ: INT;
+	bResetSat: BOOL;
+	rDotZY: REAL;
+	rDotZX: REAL;
+	rDotYX: REAL;
+	rMagnitudeZY: REAL;
+	rMagnitudeZX: REAL;
+	rMagnitudeYX: REAL;
+	iAngleZY: REAL;
+	iAngleZX: REAL;
+	iAngleYX: REAL;
+
+	iUnity:	ARRAY[0..2] OF INT :=[ 0, 0, 1];
+	iOriVec:	ARRAY[0..2] OF INT;
+	bConverted: BOOL;
+	iRoll: INT;
+	iPitch: INT;
+	iYaw: INT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE State OF
+
+	0:		(* Move robot pick to pos from sequence 14 *)
+		uiStatus := 0;
+		IF bStart AND uiprogNo = 3 AND State <> 2000  AND NOT bAlarmState THEN
+			uiStatus := 1;
+			Cam := FALSE;
+			(* Encoder	-->	Så grip kan køre til den korrekte position *)
+			(* Before starting - Home *)
+			GbHomeGripStem := TRUE;
+			IF bHomeDone THEN
+				bHomeDone := FALSE;
+				NewState := 5;
+			END_IF
+		END_IF
+
+	5:		(* Velocity *)
+   		uiSignalOutSpeedControl := UINT_TO_BYTE(uiSpeedSetting);
+		uiSignalOutControl := Set_Velocity;
+		IF uiSignalInAck = Set_Velocity THEN
+			uiSignalOutControl := 0;
+			NewState := 10;
+		END_IF
+
+	10:		(* Move to Idle positions *)
+		IF uiSignalInAck = 0 THEN
+			NewState := 15;
+		END_IF
+
+	15:		(* Get pick coord *)
+
+		(* Before the picture is taken, call get pick coord *)
+		getPickCoords := TRUE;
+		IF uiSignalInAck = getCurrentPickCoords THEN
+			uiSignalOutControl := 0;
+			NewState := 17;
+		END_IF
+
+	17:
+		uiSignalOutControl := 0;
+		IF uiSignalInAck = 0 THEN
+			IF bPosSentToPcCom THEN
+				stDataToVision.ResultRead := 0;
+				bPosSentToPcCom := FALSE;
+				bGetCoordDone := FALSE;
+				NewState := 30;
+			END_IF
+		END_IF
+
+	20:		(* GET position from PC for robot pick *)
+
+		IF stDataToVision.CoordXR2G <> 0 AND stDataToVision.CoordYR2G <> 0 AND stDataToVision.CoordZR2G <> 0 THEN
+			IF Cam THEN
+				bTestCamPointCam2 := TRUE;										(* Sends CmdByte 14 to PC *)
+			ELSE
+				bTestCamPointCam2 := TRUE;
+			END_IF
+			IF stDataFromVision.CmdInProcess = stDataToVision.CmdByte AND stDataToVision.CmdByte <> 0 THEN					(* When the PC  has sent the position, prepare to send the position to robot pick *)
+				iBottomPosX 	:= stDataFromVision.ResultPar1;
+				iBottomPosY 	:= stDataFromVision.ResultPar2;
+				iBottomPosZ 	:= stDataFromVision.ResultPar3;
+
+				bTestCamPointCam2 := FALSE;
+				NewState := 25;
+			END_IF
+		END_IF
+
+	25:		(*Reset PcCom Values *)
+		(* Når ResultReady også sættes lav *)
+		stDataToVision.ResultRead := 0;
+		NewState := 30;
+
+	30:		(* Take Top Image *)
+		IF stDataToVision.CoordXR2G <> 0 AND stDataToVision.CoordYR2G <> 0 AND stDataToVision.CoordZR2G <> 0 THEN
+			IF Cam THEN
+				bTestCamPointCam2 := TRUE;										(* Sends CmdByte 14 to PC *)
+			ELSE
+				bTestCamPointCam2 := TRUE;
+			END_IF									(* Send CmdByte 14 to PC *)
+			IF stDataFromVision.CmdInProcess = stDataToVision.CmdByte AND stDataToVision.CmdByte <> 0 THEN					(* When the PC  has sent the position, prepare to send the position to robot pick *)
+				iTopPosX 	:= stDataFromVision.ResultPar1;
+				iTopPosY 	:= stDataFromVision.ResultPar2;
+				iTopPosZ 	:= stDataFromVision.ResultPar3;
+				iRoll	 		:= stDataFromVision.ResultPar4;
+				iPitch		:= stDataFromVision.ResultPar5;
+				iYaw		:= stDataFromVision.ResultPar6;
+
+				bTestCamPointCam2 := FALSE;
+				NewState := 35;
+			END_IF
+		END_IF
+
+	35:		(*Reset PcCom Values *)
+		(* Når ResultReady også sættes lav *)
+		bWaitCut := TRUE;
+		IF WaitCut.Q THEN
+			IF NOT bResetSat THEN
+				bResetSat := TRUE;
+				gResetPcCom := TRUE;
+			END_IF
+			IF NOT gResetPcCom  THEN
+				bWaitCut := FALSE;
+				bResetSat := FALSE;
+				NewState := 50;
+			END_IF
+		END_IF
+
+	40:		(* Calculate Angles *)
+		(* Angle between two vectors are: cos(theta) = [U*V / (||U|| * ||V||)]	=>	theta =cos^-1[U*V / (||U|| * ||V||)] 		*)
+		(* Assume both vectors start in 0	-->	Magnitude = arrVector[0..2]										*)
+
+		iOriVec[0] := iBottomPosX - iTopPosX;
+		iOriVec[1] := iBottomPosY - iTopPosY;
+		iOriVec[2] := iBottomPosZ - iTopPosZ;
+
+		rDotZY := (iOriVec[1] * iUnity[1]) + (iOriVec[2] * iUnity[2]);
+		rDotZX := (iOriVec[0] * iUnity[0]) + (iOriVec[2] * iUnity[2]);
+		rDotYX := (iOriVec[0] * iUnity[0]) + (iOriVec[1] * iUnity[1]);
+
+		rMagnitudeZY := SQRT((iOriVec[2] * iOriVec[2]) + (iOriVec[1] * iOriVec[1])) * SQRT((iUnity[2] * iUnity[2]) + (iUnity[1] * iUnity[1]));
+		rMagnitudeZX := SQRT((iOriVec[2] * iOriVec[2]) + (iOriVec[0] * iOriVec[0])) * SQRT((iUnity[2] * iUnity[2]) + (iUnity[0] * iUnity[0]));
+		rMagnitudeYX := SQRT((iOriVec[1] * iOriVec[1]) + (iOriVec[0] * iOriVec[0])) * SQRT((iUnity[1] * iUnity[1]) + (iUnity[0] * iUnity[0]));
+
+		(* Angle = ACOS(DOT_PRODUCT / MAGNITUDE) *)
+		(* Angle between Z and Y *)
+		iAngleZY := ACOS( (rDotZY) / rMagnitudeZY);
+		(* Angle between Z and X *)
+		iAngleZX := ACOS( (rDotZX) / rMagnitudeZX);
+		(* Angle between Y and X *)
+		iAngleYX := ACOS( (rDotYX) / rMagnitudeYX);
+
+		NewState := 45;
+
+	45:
+		(* Convert from radians to degrees *)
+		IF NOT bConverted THEN
+			iAngleZY := (iAngleZY * (180/3.1415)) - 180;
+			iAngleZX := (iAngleZX * (180/3.1415))  - 180;
+			iAngleYX := (iAngleYX * (180/3.1415)) - 180;
+			bConverted := TRUE;
+		END_IF
+		IF bConverted THEN
+			NewState := 50;
+		END_IF
+
+	50:		(* Send Pos to Robot *)
+		bConverted := FALSE;
+		GviX := iTopPosX;	(*(iBottomPosX + iTopPosX) / 2;*)
+		GviY := iTopPosY;	(*(iBottomPosY + iTopPosY) / 2;*)
+		GviZ := iTopPosZ;	(*(iBottomPosZ + iTopPosZ) / 2;*)
+		GviA := REAL_TO_INT(iRoll);
+		GviE := REAL_TO_INT(iPitch);
+		GviR :=REAL_TO_INT(stDataFromVision.ResultPar6);
+
+		(* GsendCoord			-->	Starter SendCoordinates sekvensen							-	Sender koordinater til robotterne 		*)
+		(* uiSignalOutShared.06	-->	Bekræftelse på at koordinaterne er sendt til udgangene i box 10	-	Acknowledge fra SendCoordinates	*)
+		GsendCoord := TRUE;
+		IF uiSignalOutShared.06 THEN
+			(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
+			uiSignalOutControl := Send_pos;
+		END_IF
+		IF uiSignalInAck = Send_pos THEN
+			uiSignalOutControl := 0;
+			NewState := 55;
+		END_IF
+
+	55:
+		IF uiSignalInAck = 0 THEN
+			NewState := 60;
+		END_IF
+
+	60:		(* Move Pick to the position *)
+		IF Cam THEN
+			uiSignalOutControl := Pick_Move_To_Pos;
+			IF uiSignalInAck = Pick_Move_To_Pos THEN
+				uiSignalOutControl := 0;
+				NewState := 65;
+			END_IF
+		ELSE
+			uiSignalOutControl := MOVE_CUT_TO_POS;
+			IF uiSignalInAck = MOVE_CUT_TO_POS THEN
+				uiSignalOutControl := 0;
+				NewState := 65;
+			END_IF
+		END_IF
+
+	65:
+		IF next THEN
+			next := FALSE;
+			uiSignalOutControl := 0;
+			NewState := 70;
+		END_IF
+
+	70:		(* Move to idle *)
+		uiSignalOutControl := Move_to_idle;
+		IF uiSignalInAck = Move_to_idle THEN
+			uiSignalOutControl := 0;
+			uiStatus := 0;
+			Cam := FALSE;
+			NewState := 0;
+		END_IF
+
+	1000:		(* RESET *)
+		test 					:= FALSE;
+		getPickCoords 		:= FALSE;
+		bWait 				:= FALSE;
+		bWait2 				:= FALSE;
+		bWait3 				:= FALSE;
+		uiSignalOutControl 	:= 0;
+		bTestCamPointCam1 	:= FALSE;
+		bTestCamPointCam2 	:= FALSE;
+		next 					:= FALSE;
+		uiSignalOutShared.06 	:= FALSE;
+
+		NewState := 0;
+
+	2000:
+		bStopped := TRUE;
+
+END_CASE
+
+IF State <> 2000 THEN
+	bStopped := FALSE;
+END_IF
+
+(*  ______________________________________________________________________ *)
+
+Wait		(IN:=  bWait		, PT:=t#200ms, Q=>, ET=>); 			(*Timer*)
+WaitCut	(IN:=  bWaitCut		, PT:=t#1000ms, Q=>, ET=>); 	(*Timer*)
+Wait2	(IN:=  bWait2		, PT:=t#2000ms, Q=>, ET=>); 		(*Timer*)
+Wait3	(IN:=  bWait3		, PT:=t#500ms, Q=>, ET=>); 		(*Timer*)]]></ST>
+    </Implementation>
+    <LineIds Name="ControlMoveToCalibPos">
+      <LineId Id="50" Count="230" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

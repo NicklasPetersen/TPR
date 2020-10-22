@@ -1,0 +1,479 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="Tools" Id="{878718d1-8434-4022-98b8-c2666761f333}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Tools
+VAR_INPUT
+	State: INT :=0;
+	NewState: INT := 0;
+
+END_VAR
+
+VAR
+
+
+	bValveTime: BOOL;
+	bDriveTime: BOOL;
+	bDriveTime2: BOOL;
+	bSaveData: BOOL := 0;
+
+	(* uiStepsToMove			-->	Antal pulser på tællerkort	:	24 Pulser pr mm * antal mm	*)
+	uiStepsToMove: UINT := 0;
+
+	(*Inputs*)
+
+
+	(*Outputs*)
+	bValve1Control : BOOL;
+	qValve1 AT %Q*: BOOL := FALSE;		(* Ventil 1 --> Load Cutter 			*)
+	qValve2	AT %Q*:BOOL := FALSE;		(* Ventil 2 --> Åben / Luk Cutter		*)
+	qValve3	AT %Q*:BOOL := FALSE;		(* Ventil 3 --> Lås Cutter 				*)
+	qValve4	AT %Q*:BOOL := FALSE;		(* Ventil 4 --> Luk Gripper			*)
+	qValve5 AT %Q*:BOOL := FALSE;		(* Ventil 5 --> Picker  				*)
+
+	qMotorRun AT %Q*:BOOL := FALSE;		(* Gripper arm ind					*)
+	qMotorDirection AT %Q*: BOOL := FALSE;		(* Gripper arm ud					*)
+
+	(*Triggers*)
+	bBtnPress: R_TRIG;
+
+	(*Timer*)
+	WaitValve:TON;
+	WaitMotorDrive: TON;
+	WaitMotorDrive2: TON;
+	encoderSteps: INT := 5;
+	InOrOut: BOOL;
+	maxValue: UDINT;
+	minValue: UDINT;
+	temp: BOOL;
+	timer: TON;
+	timer2: INT := 0;
+	testing: BOOL;
+	stepValue: UDINT;
+	next: BOOL;
+	WaitGrip2: TON;
+	bWaitGrip2: BOOL;
+	bWaitGrip: BOOL;
+	testStart: BOOL;
+	bReset: BOOL;
+	OnTime: UINT := 150;
+	OffTime: UINT := 150;
+	tonBlinkOn: TON;
+	tonBlinkOff: TON;
+	flag: BOOL;
+	Wait: TON;
+	bWait: BOOL;
+	bPickOpened: BOOL;
+	bCutOpened: BOOL;
+	bCutDeloaded: BOOL;
+	bBladesDown: BOOL;
+	bLoadReleased: BOOL;
+	bGripOpened: BOOL;
+	bGripHome: BOOL;
+	bOut: BOOL := TRUE;
+	bIn: BOOL := FALSE;
+	Wait2: TON;
+	bWait2: BOOL;
+	bStopped: BOOL;
+	bValve4Control: BOOL;
+	bbFlag: BOOL;
+	resetCount: UINT := 0;
+	
+	tempTime : STRING(255);
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE State OF
+
+	0:	(* Check hvilken kommando udføre *)
+		bValveTime := FALSE;
+		bSaveData := FALSE;
+		bAck := FALSE;						(* Acknowledge to control programs, that the tool operation has been executed *)
+
+		(* --------- RobotGrip --------- *)
+
+		IF GbGripStem THEN
+			GbGripStem	:= FALSE;
+			bAck := TRUE;
+			NewState	:= 100;
+		END_IF
+
+		IF GbReleaseStem THEN
+			GbReleaseStem	:= FALSE;
+			bAck := TRUE;
+			NewState	:= 150;
+		END_IF
+
+		IF GbHomeGripStem THEN
+			GbHomeGripStem	:= FALSE;
+			bAck := TRUE;
+			NewState	:= 200;
+		END_IF
+
+	(* -------------------------------------------------------------------------------- 		Grip		 -------------------------------------------------------------------------------- *)
+	(* ---------------------------------------- 	Grab stem and Pull in 	 ---------------------------------------- *)
+
+	100:		(*  MotorOut untill the encoder count Reaches *)
+
+		(* Direction TRUE	-->	Move in *)
+		(* Direction FALSE	-->	Move out *)
+		qMotorDirection := bOut;
+		qMotorRun := TRUE;
+		(* uiSignalInEncoderCount	-->	Antal pulser på tællerkort	: 	10 000 pulser = grip helt inde						*)
+		(* uiStepsToMove			-->	Antal pulser på tællerkort	:	24 Pulser pr mm * antal mm 						*)
+		(* uiSetCounterValue		-->	Max antal pulser			:	Når  uiSignalInEncoderCount = 0, er grip helt ude.	*)
+		IF uiSignalInEncoderCount < (uiSetCounterValue - uiStepsToMove) THEN
+			qMotorRun := FALSE;
+			(* minValue		-->	Der hvor gripper endte *)
+			minValue := uiSignalInEncoderCount;
+			NewState 	:= 110;
+		END_IF
+
+	110:		(*  Close grip *)
+		qValve4 := TRUE;
+		bValveTime := TRUE;
+
+		IF waitValve.Q THEN
+			bValveTime := FALSE;
+			NewState 	:=120;
+		END_IF
+
+	120:
+		(* stepValue		-->	Offset der blev skabt da der kørtes ud *)
+		IF NOT qMotorRun THEN
+			stepValue := uiSetCounterValue - (minValue - uiSignalInEncoderCount);		(* Slack distance the arm moves too far - Used for when moving back In *) (* + 60 *)
+		END_IF
+
+		qMotorDirection := bIn;
+		qMotorRun := TRUE;
+
+		(* bGripSensorStop	-->	Endestop					: 	Bruges til Homing						*)
+		(* maxValue			-->	Offset fra at bevæge arm ind	: 	Bruges til når planten igen skal afleveres	*)
+		IF  bGripSensorStop OR uiSignalInEncoderCount >= stepValue THEN
+			qMotorRun := FALSE;
+			maxValue := uiSignalInEncoderCount;
+
+			bWait2 := TRUE;
+			IF Wait2.Q THEN
+				bWait2 := FALSE;
+				NewState 	:=0;
+			END_IF
+		END_IF
+
+	(* ---------------------------------------- 	Release stem	 ---------------------------------------- *)
+	150:
+
+		(* Direction TRUE	-->	Move in *)
+		(* Direction FALSE	-->	Move out *)
+		qMotorDirection := bOut;
+		qMotorRun := TRUE;
+
+
+		(* uiSignalInEncoderCount	-->	Antal pulser på tællerkort	: 	10 000 pulser = grip helt inde						*)
+		(* uiStepsToMove			-->	Antal pulser på tællerkort	:	24 Pulser pr mm * antal mm 						*)
+		(* uiSetCounterValue		-->	Max antal pulser			:	Når  uiSignalInEncoderCount = 0, er grip helt ude.	*)
+		IF uiSignalInEncoderCount < (uiSetCounterValue - uiStepsToMove) THEN
+			qMotorRun := FALSE;
+			(* minValue		-->	Der hvor gripper endte *)
+			minValue := uiSignalInEncoderCount;
+			NewState 	:= 160;
+		END_IF
+
+	160:		(* Release the Stem *)
+
+		qValve4 := FALSE;
+		bValveTime := TRUE;
+
+		IF waitValve.Q THEN
+			bValveTime := FALSE;
+			NewState 	:=170;
+		END_IF
+
+	170:
+		(* stepValue		-->	Offset der blev skabt da der kørtes ud *)
+		IF NOT qMotorRun THEN
+			stepValue := uiSetCounterValue - (minValue - uiSignalInEncoderCount);		(* Slack distance the arm moves too far - Used for when moving back In *)
+		END_IF
+
+		qMotorDirection := bIn;
+		qMotorRun := TRUE;
+
+		(* bGripSensorStop	-->	Endestop					: 	Bruges til Homing						*)
+		(* maxValue			-->	Offset fra at bevæge arm ind	: 	Bruges til når planten igen skal afleveres	*)
+		IF  bGripSensorStop OR uiSignalInEncoderCount >= stepValue THEN
+			qMotorRun := FALSE;
+			maxValue := uiSignalInEncoderCount;
+			bWait2 := TRUE;
+			IF Wait2.Q THEN
+				bWait2 := FALSE;
+				NewState 	:=0;
+			END_IF
+		END_IF
+
+	(* ---------------------------------------- 	Homing Grip 	 ---------------------------------------- *)
+	200:		(* Homing *)
+		IF  bGripSensorStop THEN
+			bSetCounter := FALSE;
+			qMotorRun := FALSE;
+			bDriveTime := TRUE;
+			IF WaitMotorDrive.Q THEN
+				bSetCounter := TRUE;
+				bDriveTime := FALSE;
+				bHomeDone := TRUE;
+				NewState 	:= 0;
+			END_IF
+		ELSE
+			qMotorDirection := bIn;
+			qMotorRun := TRUE;
+		END_IF
+
+	1000:	(* RESET *)
+		IF NOT bbFlag THEN
+			bAck := FALSE;
+			bbFlag := TRUE;
+			resetCount := 0;
+		END_IF
+
+		(* Først Åben Pick *)
+		IF resetCount = 0 THEN
+			GbOpenPick := TRUE;
+			resetCount := resetCount + 1;
+		END_IF
+		IF FB_OPEN_PICK.Done THEN
+			bPickOpened := TRUE;
+			GbOpenPick := FALSE;
+		END_IF
+
+		(* Åben Cut *)
+		IF resetCount = 1 THEN
+			GbOpenCut := TRUE;
+			resetCount := resetCount + 1;
+		END_IF
+		IF FB_OPEN_CUT.Done THEN
+			bCutOpened := TRUE;
+			GbOpenCut := FALSE;
+		END_IF
+
+		(* Deload Cut *)
+		IF resetCount = 2 THEN
+			FB_DELOAD_CUT.Execute := TRUE;
+			resetCount := resetCount + 1;
+		END_IF
+		IF FB_DELOAD_CUT.Done THEN
+			bCutDeloaded := TRUE;
+			FB_DELOAD_CUT.Execute := FALSE;
+			resetCount := 0;
+		END_IF
+
+		(* Open Grip *)
+		IF bCutOpened AND NOT bGripOpened THEN
+			qValve4 := FALSE;
+			bGripOpened := TRUE;
+		END_IF
+
+		IF bGripOpened AND NOT bGripHome THEN
+			IF  bGripSensorStop THEN
+				bSetCounter := FALSE;
+				qMotorRun := FALSE;
+				bDriveTime := TRUE;
+				IF WaitMotorDrive.Q THEN
+					bSetCounter := TRUE;
+					bDriveTime := FALSE;
+					bGripHome := TRUE;
+				END_IF
+			ELSE
+				qMotorDirection := bIn;
+				qMotorRun := TRUE;
+			END_IF
+		END_IF
+
+		IF bPickOpened AND bCutOpened AND bCutDeloaded AND bGripOpened AND bGripHome AND NOT bAck THEN
+			FB_OPEN_CUT.		Execute := FALSE;
+			FB_CLOSE_CUT.		Execute := FALSE;
+			FB_RELEASE_CUT.	Execute := FALSE;
+			FB_OPEN_PICK.		Execute := FALSE;
+			FB_CLOSE_PICK.		Execute := FALSE;
+			FB_LOAD_CUT.		Execute := FALSE;
+			FB_DELOAD_CUT.	Execute := FALSE;
+			FB_OPEN_GRIP.		Execute := FALSE;
+			FB_CLOSE_GRIP.		Execute := FALSE;
+
+
+			GbDeloadCut := FALSE;
+			GbOpenCut := FALSE;
+			GbOpenPick := FALSE;
+
+			bLoadReleased := FALSE;
+			bBladesDown := FALSE;
+
+			bPickOpened := FALSE;
+			bCutOpened := FALSE;
+			bCutDeloaded := FALSE;
+			bGripOpened := FALSE;
+			bGripHome := FALSE;
+			bAck := FALSE;
+			bbFlag := FALSE;
+			NewState := 0;
+		END_IF
+
+	2000:
+		bStopped := TRUE;
+
+
+	3000:	(* RESET *)
+		IF NOT bbFlag THEN
+			bAck := FALSE;
+			bbFlag := TRUE;
+		END_IF
+
+		(* Først Åben Pick *)
+		GbOpenPick := TRUE;
+		IF FB_OPEN_PICK.Done THEN
+			bPickOpened := TRUE;
+			GbOpenPick := FALSE;
+		END_IF
+
+		(* Åben Cut *)
+		GbOpenCut := TRUE;
+		IF FB_OPEN_CUT.Done THEN
+			bCutOpened := TRUE;
+			GbOpenCut := FALSE;
+		END_IF
+
+		(* Open Grip *)
+		IF bCutOpened AND NOT bGripOpened THEN
+			qValve4 := FALSE;
+			bGripOpened := TRUE;
+		END_IF
+
+		IF bGripOpened AND NOT bGripHome THEN
+			IF  bGripSensorStop THEN
+				bSetCounter := FALSE;
+				qMotorRun := FALSE;
+				bDriveTime := TRUE;
+				IF WaitMotorDrive.Q THEN
+					bSetCounter := TRUE;
+					bDriveTime := FALSE;
+					bGripHome := TRUE;
+				END_IF
+			ELSE
+				qMotorDirection := bIn;
+				qMotorRun := TRUE;
+			END_IF
+		END_IF
+
+		IF bPickOpened AND bCutOpened AND bGripOpened AND bGripHome AND NOT bAck THEN
+			FB_OPEN_CUT.		Execute := FALSE;
+			FB_CLOSE_CUT.		Execute := FALSE;
+			FB_RELEASE_CUT.	Execute := FALSE;
+			FB_OPEN_PICK.		Execute := FALSE;
+			FB_CLOSE_PICK.		Execute := FALSE;
+			FB_LOAD_CUT.		Execute := FALSE;
+			FB_DELOAD_CUT.	Execute := FALSE;
+			FB_OPEN_GRIP.		Execute := FALSE;
+			FB_CLOSE_GRIP.		Execute := FALSE;
+
+
+			GbDeloadCut := FALSE;
+			GbOpenCut := FALSE;
+			GbOpenPick := FALSE;
+
+			bLoadReleased := FALSE;
+			bBladesDown := FALSE;
+
+			bPickOpened := FALSE;
+			bCutOpened := FALSE;
+			bCutDeloaded := FALSE;
+			bGripOpened := FALSE;
+			bGripHome := FALSE;
+			bAck := FALSE;
+			bbFlag := FALSE;
+			NewState := 0;
+		END_IF
+
+END_CASE
+
+IF bReset THEN
+	bReset := FALSE;
+	NewState := 0;
+END_IF
+
+IF State <> 2000 THEN
+	bStopped := FALSE;
+END_IF
+
+tempTime := CONCAT ('T#', UINT_TO_STRING(PROGRAM_DATA.uiValveDelay));
+
+(* Timer *)
+WaitValve		(IN:=  bValveTime, PT:=STRING_TO_TIME(CONCAT(tempTime, 'ms')), Q=>, ET=>); 		(*Timer*)		(* For waiting for Valves 				*)
+Wait			(IN:=  bWait			, PT:=T#200MS, Q=>, ET=>); 		(*Timer*)		(* For testing 							*)
+Wait2			(IN:=  bWait2			, PT:=T#2500MS, Q=>, ET=>);		(*Timer*)		(* For waiting for stem to stand still 	*)
+WaitMotorDrive	(IN:=  bDriveTime		, PT:=T#500MS, Q=>, ET=>);		(*Timer*)		(* For Homing 							*)
+
+(* uiStepsToMove			-->	Antal pulser på tællerkort	:	24 Pulser pr mm * antal mm 										*)
+uiStepsToMove := INT_TO_UINT(24 * uiDistToGrab);
+
+FB_OPEN_CUT		(ExecuteHmi := (sToolControl = 'cut-open') OR GbOpenCut, 	ControlType := 1,	Ack := uiSignalInToolAck.02, 	OutQ => uiSignalOutTool.02);
+FB_CLOSE_CUT	(ExecuteHmi := (sToolControl = 'cut-close'),	ControlType := 1,	Ack := uiSignalInToolAck.03, 	OutQ => uiSignalOutTool.03);
+FB_RELEASE_CUT	(ExecuteHmi := GbReleaseCut OR FB_RELEASE_CUT.Execute,	ControlType := 1,	Ack := uiSignalInToolAck.01, 	OutQ => );
+FB_OPEN_PICK	(ExecuteHmi := (sToolControl = 'pick-open') OR GbOpenPick,	ControlType := 1,	Ack := uiSignalInToolAck.04, 	OutQ => uiSignalOutTool.04);
+FB_CLOSE_PICK	(ExecuteHmi := (sToolControl = 'pick-close'),	ControlType := 1,	Ack := uiSignalInToolAck.05, 	OutQ => uiSignalOutTool.05);
+
+FB_LOAD_CUT		(ExecuteHmi := (sToolControl = 'cut-load'),		ControlType := 2, 	Ack := uiSignalInToolAck.00,	OutQ => uiSignalOutTool.00, 	OutQ2 => qValve1);
+FB_DELOAD_CUT	(ExecuteHmi := (sToolControl = 'cut-deload') OR GbDeloadCut,	ControlType := 2, 	Ack := uiSignalInToolAck.01,	OutQ => , 						OutQ2 => bValve1Control);
+
+FB_OPEN_GRIP	(ExecuteHmi := (sToolControl = 'grip-open'),	ControlType := 4,	OutQ =>,);
+FB_CLOSE_GRIP	(ExecuteHmi := (sToolControl = 'grip-close'),	ControlType := 3, 	OutQ => ,);
+
+IF (FB_RELEASE_CUT.Execute AND FB_RELEASE_CUT.State = 10) OR (FB_DELOAD_CUT.Execute AND FB_DELOAD_CUT.State = 110) THEN
+	uiSignalOutTool.01 := TRUE;
+ELSE
+	uiSignalOutTool.01 := FALSE;
+END_IF
+
+
+IF GbCloseGrip OR FB_CLOSE_GRIP.Execute THEN
+	FB_OPEN_GRIP.Execute := FALSE;
+	qValve4 := FB_CLOSE_GRIP.OutQ;
+	testing := FALSE;
+END_IF
+IF GbOpenGrip OR FB_OPEN_GRIP.Execute THEN
+	testing := TRUE;
+	FB_CLOSE_GRIP.Execute := FALSE;
+	qValve4 := NOT FB_OPEN_GRIP.OutQ;
+END_IF
+
+
+IF bValve1Control THEN
+	qValve1 := TRUE;
+END_IF
+
+IF sToolControl = 'cut-close' THEN
+	GbCloseCut := TRUE;
+	
+ELSE 
+	GbCloseCut := FALSE;
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="Tools">
+      <LineId Id="76" Count="147" />
+      <LineId Id="698" Count="0" />
+      <LineId Id="224" Count="2" />
+      <LineId Id="707" Count="2" />
+      <LineId Id="706" Count="0" />
+      <LineId Id="228" Count="5" />
+      <LineId Id="703" Count="0" />
+      <LineId Id="234" Count="0" />
+      <LineId Id="705" Count="0" />
+      <LineId Id="704" Count="0" />
+      <LineId Id="235" Count="5" />
+      <LineId Id="713" Count="2" />
+      <LineId Id="712" Count="0" />
+      <LineId Id="242" Count="2" />
+      <LineId Id="701" Count="0" />
+      <LineId Id="245" Count="160" />
+      <LineId Id="518" Count="0" />
+      <LineId Id="406" Count="21" />
+      <LineId Id="603" Count="5" />
+      <LineId Id="599" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+  <POU Name="ErrorHandle" Id="{9045efeb-fc7f-4c61-ace4-a310e1a228b2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM ErrorHandle
+VAR_INPUT
+	State: INT := 0;
+END_VAR
+
+VAR
+
+	uiSignalOutAlarm AT %Q*: BYTE;
+	uiSignalInAlarmCode AT %I*: UDINT;
+	uiSignalInAlarm AT %I*: BYTE;
+
+	NewState: INT := 0;
+
+	bCancelAlarm: BOOL;
+	bPickRobot: BOOL;
+	bCutRobot: BOOL;
+	bErrorWhere: INT;
+
+
+	(*Timer*)
+	TonWait : TON;
+
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE State OF
+
+	0:		(* Kig efter om der er opstået en fejl *)
+		IF uiSignalInAlarmCode <> 0 THEN
+			(* Hvis der er en fejl, sat HMI i alarm state *)
+			bAlarmState := TRUE;
+			(* Find ud af hvilken robot der kommer med fejlen *)
+			IF bErrorWhere = 1 THEN
+				bCutRobot := TRUE;
+			ELSIF bErrorWhere = 2 THEN
+				bPickRobot := TRUE;
+			END_IF
+
+			(* Stop running - Virker endnu ikke *)
+			uiSignalOut3.00 := TRUE;
+			bNoDriveOff := FALSE;
+
+			(* Vent på alarmen bliver godkendt *)
+			IF bAckAlarm THEN
+				bAckAlarm := FALSE;
+				bPickRobot := FALSE;
+				bCutRobot := FALSE;
+				NewState := 10;
+			END_IF
+
+		END_IF
+
+	10:
+		(* Reset, og gør klar til at køre igen *)
+		uiSignalOut3.00 := FALSE;
+		bNoDriveOff := TRUE;
+		bCancelAlarm := TRUE;
+		IF TonWait.Q THEN
+			bCancelAlarm := FALSE;
+			uiAlarm := 0;
+			bAlarmState := FALSE;
+			uiStatus := 0;
+			NewState  := 0;
+		END_IF
+
+END_CASE
+
+bErrorWhere := uiSignalInAlarm;
+uiAlarm := uiSignalInAlarmCode;
+uiSignalOutAlarm.00 := bCancelAlarm;
+
+IF uiSignalInAlarmCode = 0  AND NewState = 10THEN
+	bAckAlarm := FALSE;
+END_IF
+
+TonWait(IN:=State = 10,	PT:=t#1000ms ,	Q=> ,	ET=> );]]></ST>
+    </Implementation>
+    <LineIds Name="ErrorHandle">
+      <LineId Id="23" Count="50" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

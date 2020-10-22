@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="P_SqlGeneratTestData" Id="{346d790d-9874-4642-bc04-d94064a68e79}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_SqlGeneratTestData
+VAR
+	
+	fbSql : FB_EasySql;
+	sSql : STRING(1000);
+	sSqlInser : STRING(1000):='INSERT INTO myTable (myId,myCustomer,myValue) VALUES (1,$'Martin$',1.1),(2,$'Hans$',2.2),(3,$'Bjarne$',3.3),(4,$'Niels$',4.4),(5,$'Bo$',5.5),(6,$'Allan$',6.6),(7,$'Tom$',7.7),(8,$'Tom$',8.8),(9,$'Tom$',9.9),(10,$'Kurt$',10.1),(11,$'Kurt$',11.11)';	
+		
+	bDone : BOOL; //Command done
+	bError : BOOL; //Command error
+	sError : STRING(255);
+	
+	bStart : BOOL;
+	iState : INT;
+	
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Clean database and inserty test items.
+CASE iState OF
+	0:
+		fbSql.pData := 0;
+		fbSql.cbData := 0;
+		fbSql.cbData := 0;
+		fbSql.bExecute := FALSE;
+		iState := 10;
+		
+	10:
+		IF bStart THEN
+			bStart := FALSE;
+			iState := 100;
+		END_IF
+		
+	100: // Truncate database
+		sSql := 'DELETE FROM myTable'; //Normaly use TRUNCATE - but SqLite dont support TRUNCATE
+		fbSql.pData := 0;
+		fbSql.cbData := 0;
+		fbSql.cbData := 0;
+		fbSql.bExecute := TRUE;
+		iState := 110;
+		
+	110:
+		IF fbSql.bDone THEN
+			fbSql.bExecute := FALSE;
+			iState := 120;
+		END_IF
+		
+	120:
+		sSql := 'VACUUM'; //Normaly use TRUNCATE - but SqLite dont support TRUNCATE
+		fbSql.bExecute := TRUE;
+		iState := 130;
+		
+	130:
+		IF NOT fbSql.bDone THEN
+			fbSql.bExecute := FALSE;
+			iState := 140;
+		END_IF
+		
+	140:
+		sSql := sSqlInser;
+		fbSql.bExecute := TRUE;
+		iState := 150;
+		
+	150:
+		IF fbSql.bDone THEN
+			iState := 0;
+		END_IF
+		
+
+
+END_CASE
+
+
+
+fbSql(
+	bExecute:= , 
+	wDBID:= 1, 
+	pSql:= ADR(sSql), 
+	cbSql:= SIZEOF(sSql), 
+	pData:= , 
+	cbData:= , 
+	udiMaxOfRecord:= 0, 
+	udiNoOfRecords=> , 
+	bDone=> bDone, 
+	bBusy=> , 
+	bError=> bError, 
+	sError=> sError);]]></ST>
+    </Implementation>
+    <LineIds Name="P_SqlGeneratTestData">
+      <LineId Id="343" Count="1" />
+      <LineId Id="347" Count="0" />
+      <LineId Id="407" Count="1" />
+      <LineId Id="406" Count="0" />
+      <LineId Id="361" Count="0" />
+      <LineId Id="363" Count="1" />
+      <LineId Id="362" Count="0" />
+      <LineId Id="352" Count="1" />
+      <LineId Id="355" Count="0" />
+      <LineId Id="354" Count="0" />
+      <LineId Id="356" Count="1" />
+      <LineId Id="359" Count="0" />
+      <LineId Id="365" Count="3" />
+      <LineId Id="370" Count="0" />
+      <LineId Id="392" Count="2" />
+      <LineId Id="431" Count="0" />
+      <LineId Id="397" Count="0" />
+      <LineId Id="396" Count="0" />
+      <LineId Id="398" Count="1" />
+      <LineId Id="432" Count="0" />
+      <LineId Id="404" Count="0" />
+      <LineId Id="372" Count="0" />
+      <LineId Id="409" Count="3" />
+      <LineId Id="414" Count="0" />
+      <LineId Id="413" Count="0" />
+      <LineId Id="415" Count="9" />
+      <LineId Id="369" Count="0" />
+      <LineId Id="351" Count="0" />
+      <LineId Id="349" Count="0" />
+      <LineId Id="348" Count="0" />
+      <LineId Id="345" Count="1" />
+      <LineId Id="295" Count="12" />
+      <LineId Id="25" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
