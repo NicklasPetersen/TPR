@@ -33,7 +33,7 @@ VAR_OUTPUT
 	FB_DELEAF_STATE: INT;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[iAlive := iAlive + 1;
+      <ST><![CDATA[//iAlive := iAlive + 1;
 
 ///////////////////////////// INIT Function blocks to communication /////////////////////////////
 P_Mqtt();		// For pub/sub information to/from mosquitto broker

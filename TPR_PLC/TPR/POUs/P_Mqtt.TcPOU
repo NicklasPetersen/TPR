@@ -97,7 +97,7 @@ fbAdapterInfo(
 	nGet=> );
 	
 IF NOT fbAdapterInfo.bBusy THEN
-	IF fbAdapterInfo.arrAdapters[0].sIpAddr <> '0.0.0.0' THEN
+	IF fbAdapterInfo.arrAdapters[1].sIpAddr <> '0.0.0.0' THEN
 		bHaveNetwork:=TRUE;
 	ELSE
 		bHaveNetwork:=FALSE;
