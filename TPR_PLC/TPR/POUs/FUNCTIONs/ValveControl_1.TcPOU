@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="ValveControl_1" Id="{546d2bd8-3544-4e9c-8434-3d38cd7a67e6}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK ValveControl_1
+VAR_INPUT
+	ControlType: 	USINT;		(*	1: Controlling valves from Robot		2: Controlling valves from Robot and  PLC		3: Close only using PLC		4: Open only using PLC		*)
+	Ack: 			BOOL;
+	Execute: 		BOOL;
+	ExecuteHmi:		BOOL;
+
+END_VAR
+VAR_OUTPUT
+	OutQ: 		BOOL;
+	OutQ2: 		BOOL;
+END_VAR
+VAR
+	WaitValve:	TON;
+
+	State: 		INT;
+	NewState: 	INT;
+
+	Done: 		BOOL;
+	bValveTime: 	BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF State <> NewState THEN
+	State := NewState;
+END_IF
+
+CASE  State OF
+	0:
+		Done := FALSE;
+		IF Execute THEN
+			IF ControlType = 1 THEN
+				NewState	 :=10;
+			ELSIF ControlType = 2 THEN
+				NewState := 100;
+			ELSIF ControlType = 3 OR ControlType = 4 THEN
+				NewState := 200;
+			ELSE
+				NewState := 0;
+			END_IF
+		ELSIF ExecuteHmi THEN
+			ExecuteHmi := FALSE;
+			IF ControlType = 1 THEN
+				NewState	 :=10;
+			ELSIF ControlType = 2 THEN
+				NewState := 100;
+			ELSIF ControlType = 3 OR ControlType = 4 THEN
+				NewState := 200;
+			ELSE
+				NewState := 0;
+			END_IF
+		END_IF
+
+	10:
+		OutQ := TRUE;
+		IF Ack THEN
+			OutQ := FALSE;
+			NewState := 1000;
+		END_IF
+
+	100:
+		OutQ2 := TRUE;
+		bValveTime := TRUE;
+		IF waitValve.Q THEN
+			bValveTime := FALSE;
+			NewState 	:=110;
+		END_IF
+
+	110:
+
+		OutQ := TRUE;
+		IF Ack THEN
+			OutQ := FALSE;
+			NewState := 120;
+		END_IF
+
+	120:
+		OutQ2 := FALSE;
+		bValveTime := TRUE;
+		IF waitValve.Q THEN
+			bValveTime := FALSE;
+			NewState 	:= 1000;
+		END_IF
+
+	200:
+		IF ControlType = 3 THEN
+			OutQ := TRUE;
+			bValveTime := TRUE;
+			IF waitValve.Q THEN
+				bValveTime := FALSE;
+				NewState 	:=1000;
+			END_IF
+		ELSE
+			OutQ := TRUE;
+			bValveTime := TRUE;
+			IF waitValve.Q THEN
+				bValveTime := FALSE;
+				NewState 	:=1000;
+			END_IF
+		END_IF
+
+	1000:
+		Done := TRUE;
+		IF NOT Execute THEN
+			NewState := 0;
+		END_IF
+
+
+
+END_CASE
+
+(* Timer *)
+WaitValve		(IN:=  bValveTime		, PT:=t#500ms, Q=>, ET=>); 		(*Timer*)		(* For waiting for Valves 			*)]]></ST>
+    </Implementation>
+    <LineIds Name="ValveControl_1">
+      <LineId Id="20" Count="7" />
+      <LineId Id="130" Count="7" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="122" Count="7" />
+      <LineId Id="121" Count="0" />
+      <LineId Id="37" Count="61" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

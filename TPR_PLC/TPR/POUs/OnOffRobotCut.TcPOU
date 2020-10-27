@@ -1,0 +1,188 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="OnOffRobotCut" Id="{97653450-8c29-40cf-9757-0170d3743cb5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM OnOffRobotCut
+VAR_INPUT
+	State: INT := 0;
+END_VAR
+
+
+VAR
+
+
+
+	uiSignalIn1 AT %I*: BYTE;		(* For running status PLC *)
+	uiSignalIn3 AT %I*: BYTE;		(* For Online status *)
+
+	(* Physical Botton on PLC box *)
+	bStartBotton AT %I*: BOOL;
+
+	NewState: INT := 0;
+	StartUpRobot : BOOL;
+	ShoutdownRobot : BOOL;
+
+	(* Out *)
+	bStart : BOOL;
+
+	(*Timer*)
+	TonWait : TON;
+
+	byTest : ARRAY[0..1]OF BYTE;
+	nTest : UINT;
+
+
+	U1: BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(* Start connection to Robot Cut if physical botton or HMI button is pressed *)
+IF bRobotConnect OR bStartBottonHMI THEN
+	bRobotConnect := FALSE;
+	StartUpRobot := TRUE;
+END_IF
+
+IF bRobotDisconnect THEN
+	bRobotDisconnect := FALSE;
+	ShoutdownRobot := TRUE;
+END_IF
+
+CASE State OF
+
+	0:
+		IF StartUpRobot AND NOT bStartNoHold THEN
+			NewState  	:= 10;
+		END_IF
+
+		IF ShoutdownRobot AND NOT bNoDriveOff  THEN
+
+			NewState  	:= 100;
+		END_IF
+
+		(*IF bAckAlarm THEN
+			NewState := 200;
+		END_IF*)
+
+	10:(*NoHold And NoDriveOff*)
+		bNoHold 	:= TRUE;
+		bNoDriveOff	:= TRUE;
+
+		IF TonWait.Q THEN
+			NewState  := 20;
+		END_IF
+
+	20:(*Reset alarm*)
+		GbCancelAlarm 	:= TRUE;
+
+		IF bNoAlarm THEN
+			NewState	:= 30;
+		END_IF
+
+	30:(*DriveOn*)
+		GbCancelAlarm 	:= FALSE;
+		bDriveOn 	:= TRUE;
+
+		IF bDriveOnState THEN
+			NewState  	:= 40;
+		END_IF
+
+	40:(*Start*)
+		GbCancelAlarm := FALSE;
+		bStart := TRUE;
+
+		IF bStartNoHold THEN
+			NewState  	:= 50;
+		END_IF
+
+	50:(*DONE StartUp*)
+		bStart 		:= FALSE;
+		StartUpRobot := FALSE;
+		NewState  	:= 0;
+
+	100:
+		bNoHold		:= FALSE;
+
+		IF NOT bStartNoHold THEN
+			NewState  	:=110 ;
+		END_IF
+
+	110:
+		bNoHold		:= TRUE;
+		bNoDriveOff	:= FALSE;
+
+		IF NOT bDriveOnState THEN
+			NewState  	:=120 ;
+		END_IF
+
+	120: (*DONE Shoutdown *)
+		bNoDriveOff		:= TRUE;
+		ShoutdownRobot 	:= FALSE;
+		NewState  	:=0 ;
+
+	200:
+
+		IF NOT bDriveOnState THEN
+			bDriveOn := FALSE;
+			IF TonWait.Q THEN
+				NewState  := 210;
+			END_IF
+		ELSE
+			NewState := 0;
+		END_IF
+
+	210:
+		(* Reset, og gør klar til at køre igen *)
+		bDriveOn := TRUE;
+		IF TonWait.Q THEN
+			uiStatus := 0;
+			NewState  := 0;
+		END_IF
+
+
+
+END_CASE
+
+uiSignalOut1.00 := bDriveOn;
+uiSignalOut1.01 := bNoDriveOff;
+uiSignalOut1.02 := bStart;
+uiSignalOut1.03 := bNoHold;
+uiSignalOut1.04 := U1;
+uiSignalOut2.00 := GbCancelAlarm;
+
+
+(* Check if devices are running *)
+
+NewbPLCStatus := TRUE;
+IF uiSignalIn3.01 THEN
+	NewbRobotCutStatus := TRUE;
+ELSE
+	NewbRobotCutStatus := FALSE;
+END_IF
+IF uiSignalIn3.00 = TRUE THEN
+	NewbRobotPickStatus := TRUE;
+ELSE
+	NewbRobotPickStatus := FALSE;
+END_IF
+
+
+bNoAlarm 		:= uiSignalIn1.00;
+bDriveOnState	:= uiSignalIn1.01;
+bStartNoHold		:= uiSignalIn1.02;
+
+TonWait(IN:=State = 10 OR State = 200,	PT:=t#1000ms ,	Q=> ,	ET=> );]]></ST>
+    </Implementation>
+    <LineIds Name="OnOffRobotCut">
+      <LineId Id="32" Count="1" />
+      <LineId Id="239" Count="0" />
+      <LineId Id="34" Count="1" />
+      <LineId Id="241" Count="0" />
+      <LineId Id="240" Count="0" />
+      <LineId Id="242" Count="0" />
+      <LineId Id="244" Count="0" />
+      <LineId Id="243" Count="0" />
+      <LineId Id="36" Count="101" />
+      <LineId Id="192" Count="0" />
+      <LineId Id="138" Count="1" />
+      <LineId Id="207" Count="0" />
+      <LineId Id="140" Count="17" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

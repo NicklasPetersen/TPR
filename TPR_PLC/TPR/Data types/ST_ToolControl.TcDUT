@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+  <DUT Name="ST_ToolControl" Id="{72f4cf3b-2834-4a3e-9e75-7365ccbb9138}">
+    <Declaration><![CDATA[TYPE ST_ToolControl :
+STRUCT
+
+
+
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

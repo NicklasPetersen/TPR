@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="P_SqlDelete" Id="{fdca6acb-bf5c-4b2e-85f7-94d9358b9cec}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_SqlDelete
+VAR
+	fbSql : FB_EasySql;
+	sSql : STRING(1000);
+		
+	iId : INT; //ID to delete
+	
+	bDelete : BOOL; //Execute command
+	bDone : BOOL; //Command done
+	bError : BOOL; //Command error
+	sError : STRING(255);
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Delete items from database
+sSql := 'DELETE FROM myTable WHERE myId = ¤1¤';
+
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤1¤', sReplace:= TO_STRING(iId)); //Replace placeholder
+
+fbSql(
+	bExecute:= bDelete, 
+	wDBID:= 1, 
+	pSql:= ADR(sSql), 
+	cbSql:= SIZEOF(sSql), 
+	pData:= 0, 
+	cbData:= 0, 
+	udiMaxOfRecord:= 0, 
+	udiNoOfRecords=> , 
+	bDone=> bDone, 
+	bBusy=> , 
+	bError=> bError, 
+	sError=> sError);]]></ST>
+    </Implementation>
+    <LineIds Name="P_SqlDelete">
+      <LineId Id="341" Count="0" />
+      <LineId Id="343" Count="15" />
+      <LineId Id="25" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

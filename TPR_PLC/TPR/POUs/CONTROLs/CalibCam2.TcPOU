@@ -1,0 +1,227 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+  <POU Name="CalibCam2" Id="{89c5e521-11bc-4229-80b2-4cc22f9e2e73}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM CalibCam2
+VAR_INPUT
+	State: INT :=0;
+	NewState: INT := 0;
+END_VAR
+
+VAR
+
+	Wait: TON;
+	Wait2: TON;
+	bWait: BOOL;
+	bWait2: BOOL;
+	next: BOOL;
+	Wait3: TON;
+	bWait3: BOOL;
+	flag: BOOL;
+	bStopped: BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE State OF
+
+	0:		(* Init State - Wait for Calibration of camera 2 *)
+		uiSignalOut3.01 := FALSE;
+		IF uiprogNo = 2 AND startCalibCam2 AND State <> 2000  AND NOT bAlarmState THEN
+			bWait2 := FALSE;
+			uiCalibImgCount := 0;
+			uiSignalOut3.01 := TRUE;								(* Tells robot Cut to move to Calib cam 2 pos *)
+			startCalibCam2 := FALSE;
+			flag := FALSE;
+			NewState := 10;
+		END_IF
+
+	10:		(* Set velocity *)
+		uiSignalOutSpeedControl := UINT_TO_BYTE(uiSpeedSetting);
+		uiSignalOutControl := Set_Velocity;
+		IF uiSignalInAck = Set_Velocity THEN
+			uiSignalOutControl := 0;
+			NewState := 15;
+		END_IF
+
+	15:
+		IF uiSignalInAck = 0 THEN
+			NewState := 20;
+		END_IF
+
+	20:		(* Move to idle *)
+		uiSignalOutControl := Move_to_idle;
+		IF uiSignalInAck = Move_to_idle THEN
+			uiSignalOutControl := 0;
+			NewState := 25;
+		END_IF
+
+	25:
+		IF uiSignalInAck = 0 THEN
+			NewState := 30;
+		END_IF
+
+	30:		(* Move Robot cut to pos for calib *)
+		uiSignalOutControl := CalibCamOne;
+		IF uiSignalInAck = CalibCamOne THEN
+			uiSignalOutControl := 0;
+			NewState := 35;
+		END_IF
+
+	35:
+		IF uiSignalInAck = 0 THEN
+			NewState := 40;
+		END_IF
+
+	40:		(* Get robot cut pos and orientation *)
+		getCutCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_CUT_COORD.Execute = FALSE THEN
+			IF stDataToVision.CoordXR1G <> 0 THEN
+				bPosSentToPcCom := FALSE;
+				gResetPcCom := TRUE;
+				NewState := 45;
+			END_IF
+		END_IF
+
+	45:
+		IF uiSignalInAck = 0 THEN
+			GviX	:= stDataToVision.CoordXR1G / 10;
+			GviY	:= stDataToVision.CoordYR1G / 10;
+			GviZ	:= stDataToVision.CoordZR1G / 10;
+			GviA	:= - currentRobotA;
+			GviE	:= - currentRobotE;
+			GviR	 := 60;
+			gResetPcCom := TRUE;
+
+			NewState := 50;
+		END_IF
+
+	50:		(* Sends coordinates of calibration board to robot pick *)
+
+		bCalibCamTwoStart := TRUE;
+		(* GsendCoord			-->	Starter SendCoordinates sekvensen							-	Sender koordinater til robotterne 		*)
+		(* uiSignalOutShared.06	-->	Bekræftelse på at koordinaterne er sendt til udgangene i box 10	-	Acknowledge fra SendCoordinates	*)
+		GsendCoord := TRUE;
+		IF uiSignalOutShared.06 THEN
+			(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
+			uiSignalOutControl := Send_pos;
+		END_IF
+		IF uiSignalInAck = Send_pos THEN
+			uiSignalOutControl := 0;
+			NewState := 55;
+		END_IF
+
+	55:
+		IF uiSignalInAck = 0 THEN
+			IF stDataFromVision.CmdInProcess =  stDataToVision.CmdByte AND stDataToVision.CmdByte <> 0 THEN
+				bCalibCamTwoStart := FALSE;
+				gResetPcCom := TRUE;
+				NewState := 60;
+			END_IF
+		END_IF
+
+	60:		(* Call CALIB_CAM2 on robot Pick. This means that robot Pick move to a pos so that the camera can take a picture *)
+		uiSignalOutControl := CalibCamTwo;
+
+		IF uiSignalInAck = CalibCamTwo THEN
+			uiSignalOutControl := 0;
+			NewState := 65;
+		END_IF
+
+	65:
+		IF uiSignalInAck = 0 THEN
+			NewState := 70;
+		END_IF
+
+	70:		(* Before the picture is taken, call get pick coord *)
+		getPickCoords := TRUE;
+		IF uiSignalInAck = getCurrentPickCoords THEN
+			uiSignalOutControl := 0;
+			NewState := 75;
+		END_IF
+
+	75:
+		IF uiSignalInAck = 0 THEN
+			bWait2 := TRUE;
+			IF Wait2.Q THEN
+				bWait2 := FALSE;
+				NewState := 80;
+			END_IF
+		END_IF
+
+	80:		(* CmdByte 6 means that we want to take a picture *)
+		IF next5 THEN
+			bNewPosCalibCamTwo := TRUE;
+			IF stDataFromVision.CmdInProcess =  stDataToVision.CmdByte AND stDataToVision.CmdByte <> 0  THEN
+				next5 := FALSE;
+				bNewPosCalibCamTwo := FALSE;
+				NewState := 85;
+			END_IF
+		END_IF
+
+	85:		(* If there has not been taken enough pictures go to state 40 in order to take more picture. Else send CmdByte 7 to tell PC to stop calib *)
+		uiCalibImgCount := uiCalibImgCount + 1;
+		IF uiCalibImgCount < 11 THEN
+			gResetPcCom := TRUE;
+			NewState := 60;	(* 40 Before *)
+		ELSE
+			uiCalibImgCount := 0;
+			bEndCalibCamTwo := TRUE;
+			NewState := 90;
+		END_IF
+
+	90:		(* Reset CmdByte and go to init state *)
+		uiSignalOutControl := Move_to_idle;
+		IF uiSignalInAck = Move_to_idle AND NOT bAck THEN
+			uiSignalOutControl := 0;
+			IF stDataFromVision.CmdInProcess = stDataToVision.CmdByte  AND stDataToVision.CmdByte <> 0 THEN
+				bEndCalibCamTwo := FALSE;
+				uiStatus := 0;
+				NewState := 95;
+			END_IF
+		END_IF
+
+	95:
+		IF uiSignalInAck = 0 THEN
+			NewState := 0;
+		END_IF
+
+	1000: 		(* RESET *)
+		uiSignalOut3.01 			:= FALSE;
+		startCalibCam2 			:= FALSE;
+		flag 						:= FALSE;
+		uiSignalOutControl 		:= 0;
+		getCutCoords 			:= FALSE;
+		getPickCoords 			:= FALSE;
+		bCalibCamTwoStart 		:= FALSE;
+		GcoordSent 				:= FALSE;
+		bNewPosCalibCamTwo 	:= FALSE;
+		next5 					:= FALSE;
+		uiCalibImgCount 			:= 0;
+		bEndCalibCamTwo 		:= FALSE;
+		bWait2 					:= FALSE;
+
+		NewState := 0;
+
+	2000:
+		bStopped := TRUE;
+
+
+END_CASE
+
+IF bStart AND NOT bStop AND NOT bAlarmState AND uiprogNo = 2 AND State <> 2000 THEN
+	startCalibCam2 := TRUE;
+	bStart := FALSE;
+	uiStatus := 1;
+END_IF
+
+IF State <> 2000 THEN
+	bStopped := FALSE;
+END_IF
+
+Wait		(IN:=  bWait		, PT:=t#200ms, Q=>, ET=>); 		(*Timer*)
+Wait2	(IN:=  bWait2		, PT:=t#2000ms, Q=>, ET=>); 	(*Timer*)
+Wait3	(IN:=  bWait3		, PT:=t#2000ms, Q=>, ET=>); 	(*Timer*)]]></ST>
+    </Implementation>
+    <LineIds Name="CalibCam2">
+      <LineId Id="18" Count="198" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="DB_Conn" Id="{81ad97a1-492e-4622-a218-975a43441c7f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM DB_Conn
+VAR
+	iAlive: INT;
+	frameSum : DINT;
+	counter: INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[iAlive := iAlive + 1;
+
+IF P_SqlSelectRecipe.bDone THEN
+	P_SqlSelectRecipe.bRead := FALSE;
+	PROGRAM_DATA.uiCartheight		:= DINT_TO_UINT(P_SqlSelectRecipe.astData[0].recipe_cart_height);
+	PROGRAM_DATA.uiValveDelay		:= DINT_TO_UINT(P_SqlSelectRecipe.astData[0].recipe_valve_delay);
+	PROGRAM_DATA.usiImageRetryNo	:= DINT_TO_USINT(P_SqlSelectRecipe.astData[0].recipe_image_retry_no);
+	PROGRAM_DATA.usiOpMode			:= DINT_TO_USINT(P_SqlSelectRecipe.astData[0].Operation_mode_id);
+	PROGRAM_DATA.usiPackingPattern	:= DINT_TO_USINT(P_SqlSelectRecipe.astData[0].packing_pattern_id);
+	PROGRAM_DATA.usiNewVelocity		:= DINT_TO_USINT(P_SqlSelectRecipe.astData[0].recipe_velocity);
+	uiSpeedSetting					:= DINT_TO_USINT(P_SqlSelectRecipe.astData[0].recipe_velocity);
+END_IF
+
+frameSum := FRAME_DATA.ct_x + FRAME_DATA.ct_y + FRAME_DATA.ct_z + FRAME_DATA.ct_a + FRAME_DATA.ct_e + FRAME_DATA.ct_r + 
+			FRAME_DATA.pt_x + FRAME_DATA.pt_y + FRAME_DATA.pt_z + FRAME_DATA.pt_a + FRAME_DATA.pt_e + FRAME_DATA.pt_r + 
+			FRAME_DATA.cw_x + FRAME_DATA.cw_y + FRAME_DATA.cw_z + FRAME_DATA.cw_a + FRAME_DATA.cw_e + FRAME_DATA.cw_r + 
+			FRAME_DATA.pw_x + FRAME_DATA.pw_y + FRAME_DATA.pw_z + FRAME_DATA.pw_a + FRAME_DATA.pw_e + FRAME_DATA.pw_r;
+IF P_SqlSelectFrame.bDone OR frameSum = 1 THEN
+	P_SqlSelectFrame.bRead := TRUE;
+	
+	IF P_SqlSelectFrame.bDone THEN
+		FOR counter:=0 TO 3 BY 1 DO
+			IF P_SqlSelectFrame.astData[counter].sId = 'ct' THEN
+				FRAME_DATA.ct_x := P_SqlSelectFrame.astData[counter].diX;
+				FRAME_DATA.ct_y := P_SqlSelectFrame.astData[counter].diY;
+				FRAME_DATA.ct_z := P_SqlSelectFrame.astData[counter].diZ;
+				FRAME_DATA.ct_a := P_SqlSelectFrame.astData[counter].diA;
+				FRAME_DATA.ct_e := P_SqlSelectFrame.astData[counter].diE;
+				FRAME_DATA.ct_r := P_SqlSelectFrame.astData[counter].diR;
+			ELSIF P_SqlSelectFrame.astData[counter].sId = 'pt' THEN
+				FRAME_DATA.pt_x := P_SqlSelectFrame.astData[counter].diX;
+				FRAME_DATA.pt_y := P_SqlSelectFrame.astData[counter].diY;
+				FRAME_DATA.pt_z := P_SqlSelectFrame.astData[counter].diZ;
+				FRAME_DATA.pt_a := P_SqlSelectFrame.astData[counter].diA;
+				FRAME_DATA.pt_e := P_SqlSelectFrame.astData[counter].diE;
+				FRAME_DATA.pt_r := P_SqlSelectFrame.astData[counter].diR;
+			ELSIF P_SqlSelectFrame.astData[counter].sId = 'cw' THEN
+				FRAME_DATA.cw_x := P_SqlSelectFrame.astData[counter].diX;
+				FRAME_DATA.cw_y := P_SqlSelectFrame.astData[counter].diY;
+				FRAME_DATA.cw_z := P_SqlSelectFrame.astData[counter].diZ;
+				FRAME_DATA.cw_a := P_SqlSelectFrame.astData[counter].diA;
+				FRAME_DATA.cw_e := P_SqlSelectFrame.astData[counter].diE;
+				FRAME_DATA.cw_r := P_SqlSelectFrame.astData[counter].diR;
+			ELSIF P_SqlSelectFrame.astData[counter].sId = 'pw' THEN
+				FRAME_DATA.pw_x := P_SqlSelectFrame.astData[counter].diX;
+				FRAME_DATA.pw_y := P_SqlSelectFrame.astData[counter].diY;
+				FRAME_DATA.pw_z := P_SqlSelectFrame.astData[counter].diZ;
+				FRAME_DATA.pw_a := P_SqlSelectFrame.astData[counter].diA;
+				FRAME_DATA.pw_e := P_SqlSelectFrame.astData[counter].diE;
+				FRAME_DATA.pw_r := P_SqlSelectFrame.astData[counter].diR;
+			END_IF
+		END_FOR;
+		P_SqlSelectFrame.bRead := FALSE;
+	END_IF
+END_IF	
+]]></ST>
+    </Implementation>
+    <LineIds Name="DB_Conn">
+      <LineId Id="15" Count="1" />
+      <LineId Id="6" Count="7" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="21" Count="2" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="34" Count="1" />
+      <LineId Id="43" Count="4" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="48" Count="4" />
+      <LineId Id="38" Count="1" />
+      <LineId Id="53" Count="4" />
+      <LineId Id="40" Count="1" />
+      <LineId Id="58" Count="4" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="64" Count="1" />
+      <LineId Id="25" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,656 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+  <POU Name="ControlAuto" Id="{3bac02ea-ffe7-46a1-bd14-2de4c1deb69b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM ControlAuto
+VAR_INPUT
+	State: INT := 0;
+	NewState: INT := 0;
+END_VAR
+
+VAR
+	(* FUNCTION BLOCKS *)
+	FB_PLACE: PlaceCoordinates;
+
+	(* REALS *)
+
+	(* INTEGERS *)
+	(*uiTrunkPos: 		UINT;				(* Stamme position	-->	Afstand i mm.															*)
+	iBunchPosZ: 		UINT;
+	iStemAngle:		INT;
+
+	iStemPosX: 		UINT;				(* *)
+	iStemPosY: 		UINT;				(* *)
+	iStemPosZ: 		UINT;
+	iRoll: 			INT;
+	iPitch: 			UINT;
+	iYaw:			INT;
+	iPickAngle: 		INT;*)
+
+	iMoved: 			INT;					(* Hvor mange gange har cut bevæget sig efter iBundPosZ er nået *)
+	iCnfgChange:		INT := 0;
+	uiDeleaf: 		UINT;
+
+	(* BOOLS *)
+	bStopped: BOOL;
+
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE State OF
+
+	0:		(* init	-	Every important variables will be resat before the start of the sequence *)
+		IF bStart AND uiprogNo = 4 AND State <> 2000  AND NOT bAlarmState THEN
+			uiStatus := 1;
+
+			(* Init variables *)
+			uiCalibImgCount	:= 0;
+			iMoved := 0;
+			iImageZone := 0;
+			gJointFound := 0;
+			gResetPcCom 	:= TRUE;
+			iCnfgChange := 0;
+			uiDeleaf := 0;
+			bPosSentToPcCom := FALSE;
+
+			(* Before starting - Home *)
+			GbHomeGripStem := TRUE;
+			IF bHomeDone THEN
+				bStart := FALSE;
+				bHomeDone := FALSE;
+				NewState := 10;
+			END_IF
+		END_IF
+
+	10:		(* Set velocity *)
+		FB_SET_VELOCITY.Execute := TRUE;
+		uiSignalOutSpeedControl := UINT_TO_BYTE(uiSpeedSetting);
+		uiSignalOutControl := FB_SET_VELOCITY.OutQ;
+		IF FB_SET_VELOCITY.Done THEN
+			FB_SET_VELOCITY.Execute := FALSE;
+			NewState := 20;
+		END_IF
+
+	20:		(* Idle *)
+		FB_MOVE_TO_IDLE.Execute := TRUE;
+		uiSignalOutControl := FB_MOVE_TO_IDLE.OutQ;
+		IF FB_MOVE_TO_IDLE.Done THEN
+			FB_MOVE_TO_IDLE.Execute := FALSE;
+			NewState := 30;
+		END_IF
+
+	30:		(*  Load cutter *)
+		FB_LOAD_CUT.Execute := TRUE;
+		IF FB_LOAD_CUT.Done THEN
+			FB_LOAD_CUT.Execute := FALSE;
+			NewState := 40;
+		END_IF
+
+	40: 		(* Cam 1 Take image	-	parameters recieved from Vision = height of lowest ripe tomato and Y coord for lowest point of the stem *)
+
+		FB_CAM_ONE_CONTROL.Execute := TRUE;
+		IF FB_CAM_ONE_CONTROL.Done THEN
+			FB_CAM_ONE_CONTROL.Execute := FALSE;
+
+			(* uiDistToGrab 	-->		Distance from Joris Gripper to stem 			*)
+			uiDistToGrab	:= FB_CAM_ONE_CONTROL.TrunkDist;
+			(* iBunchPosZ	-->		Height of the lowest hanging red tomato		*)
+			iBunchPosZ 	:= FB_CAM_ONE_CONTROL.BunchHeight;
+			(* i StemAngle	-->		Heading direction from stem to lowest tomato	*)
+			iStemAngle	:= FB_CAM_ONE_CONTROL.StemHeading;
+			(* iImageZone	-->		Zone of lowest tomato						*)
+			iImageZone	:= FB_CAM_ONE_CONTROL.Zone;
+			NewState := 50;
+		END_IF
+
+	50:		(* Joris gripper retreives stem *)
+		(* Grab stem and pull in *)
+		IF NOT bAck THEN
+			(* HMI knap der kalder GribStem *)
+			GbGripStem := TRUE;
+		ELSIF bAck THEN
+			gResetPcCom := TRUE;
+			NewState := 55;
+		END_IF
+
+	55:
+		IF uiToolState = 0 THEN
+			NewState := 100;
+		END_IF
+
+	(* ---------------------------- Grab the stem ---------------------------- *)
+
+	100:		(* Robot Pick move to Image Pos *)
+		FB_PICK_TRUNK_IMAGE.Execute := TRUE;
+		uiSignalOutControl := FB_PICK_TRUNK_IMAGE.OutQ;
+		IF FB_PICK_TRUNK_IMAGE.Done THEN
+			FB_PICK_TRUNK_IMAGE.Execute := FALSE;
+			gResetPcCom := TRUE;
+			NewState := 110;
+		END_IF
+
+	110:		(* Send Robot Pick Position *)
+		getPickCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_PICK_COORD.Execute = FALSE THEN
+			bPosSentToPcCom := FALSE;
+			bGetCoordDone := FALSE;
+			NewState := 120;
+		END_IF
+
+	120:		(* Cam 2 take image *)
+		(* Take bottom Image *)
+		(* If pick coordinates are recieved, take an image *)
+		IF stDataToVision.CoordXR2G <> 0 AND stDataToVision.CoordYR2G <> 0 AND stDataToVision.CoordZR2G <> 0 THEN
+			FB_CAM_TWO_CONTROL.Execute := TRUE;
+			IF FB_CAM_TWO_CONTROL.Done THEN
+				FB_CAM_TWO_CONTROL.Execute := FALSE;
+				(* If the positionis unacceptable, reset 		-	Else, send position *)
+				IF FB_CAM_TWO_CONTROL.X > 420 OR FB_CAM_TWO_CONTROL.X < 125 OR FB_CAM_TWO_CONTROL.Y > 400 OR FB_CAM_TWO_CONTROL.Y < 125 THEN
+					NewState := 1000;
+				ELSE
+					GviX	:= FB_CAM_TWO_CONTROL.X;
+					GviY 	:= FB_CAM_TWO_CONTROL.Y;
+					GviZ 	:= FB_CAM_TWO_CONTROL.Z;
+					GviA 	:= FB_CAM_TWO_CONTROL.RotZ0;
+					GviE 	:= FB_CAM_TWO_CONTROL.RotY;
+					GviR 	:= FB_CAM_TWO_CONTROL.RotZ1;
+
+					GviX2 	:= FB_CAM_TWO_CONTROL.X;
+					GviY2 	:= (FB_CAM_TWO_CONTROL.Y + FB_CAM_TWO_CONTROL.Y + FB_CAM_ONE_CONTROL.Y)/3;
+					GviZ2 	:= FB_CAM_ONE_CONTROL.Z + 50;
+
+					iImageZone	:= FB_CAM_ONE_CONTROL.Zone;
+					gResetPcCom := TRUE;
+					NewState := 130;
+				END_IF
+			END_IF
+		END_IF
+
+	130:		(* Send Pos to Robot *)
+
+		(* GsendCoord			-->	Starter SendCoordinates sekvensen							-	Sender koordinater til robotterne 		*)
+		(* uiSignalOutShared.06	-->	Bekræftelse på at koordinaterne er sendt til udgangene i box 10	-	Acknowledge fra SendCoordinates	*)
+		GsendCoord := TRUE;
+		IF uiSignalOutShared.06 THEN
+			(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
+			uiSignalOutControl := Send_two_pos;
+		END_IF
+		IF uiSignalInAck = Send_two_pos THEN
+			uiSignalOutControl := 0;
+			uiCalibImgCount := uiCalibImgCount + 1;
+			NewState := 135;
+		END_IF
+
+	135:
+		IF uiSignalInAck = 0 THEN
+			NewState := 140;
+		END_IF
+
+	140: 		(* Grab the stem + Move to image pos *)
+		FB_IMAGE_GRAB.Execute := TRUE;
+		uiSignalOutControl := FB_IMAGE_GRAB.OutQ;
+		IF FB_IMAGE_GRAB.Done THEN
+			FB_IMAGE_GRAB.Execute := FALSE;
+			NewState := 150;
+		END_IF
+
+	150:
+		getPickCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_PICK_COORD.Execute = FALSE THEN
+			bPosSentToPcCom := FALSE;
+			bGetCoordDone := FALSE;
+			NewState := 200;
+		END_IF
+
+		(* ------------------------------------------ Move on stem ------------------------------------------ *)
+
+	200:
+		IF stDataToVision.CoordXR2G <> 0 AND stDataToVision.CoordYR2G <> 0 AND stDataToVision.CoordZR2G <> 0 THEN
+			FB_CAM_TWO_CONTROL.Execute := TRUE;
+			IF FB_CAM_TWO_CONTROL.Done THEN
+				FB_CAM_TWO_CONTROL.Execute := FALSE;
+				(* Check if the stem is found *)
+				IF FB_CAM_TWO_CONTROL.StemFound = 1 THEN
+					IF FB_CAM_TWO_CONTROL.X > 350 OR FB_CAM_TWO_CONTROL.X < 200 OR FB_CAM_TWO_CONTROL.Y > 350 OR FB_CAM_TWO_CONTROL.Y < 200 THEN
+						GviX := 320;
+						GviY := 320;
+						GviZ := FB_CAM_TWO_CONTROL.Z;
+						GviA := 0;
+						GviE := 0;
+						GviR := 40;
+						gResetPcCom := TRUE;
+						NewState := 240;
+					ELSE
+						GviX := FB_CAM_TWO_CONTROL.X;
+						GviY := FB_CAM_TWO_CONTROL.Y;
+						GviZ := FB_CAM_TWO_CONTROL.Z;
+						GviA := 0;
+						GviE := 0;
+						GviR := 40;
+						IF FB_CAM_TWO_CONTROL.JointFound = 1 THEN
+							GviPick := FB_CAM_TWO_CONTROL.PickAngle;
+							iImageZone := FB_CAM_TWO_CONTROL.Zone;
+							gResetPcCom := TRUE;
+							NewState := 310;
+						ELSE
+							gResetPcCom := TRUE;
+							NewState := 240;
+						END_IF
+					END_IF
+				ELSE
+					gResetPcCom := TRUE;
+					NewState := 345;
+				END_IF
+			END_IF
+		END_IF
+
+	240:		(* Send pos to Robots *)
+		(* GsendCoord			-->	Starter SendCoordinates sekvensen							-	Sender koordinater til robotterne 		*)
+		(* uiSignalOutShared.06	-->	Bekræftelse på at koordinaterne er sendt til udgangene i box 10	-	Acknowledge fra SendCoordinates	*)
+		GsendCoord := TRUE;
+		IF uiSignalOutShared.06 THEN
+			(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
+			uiSignalOutControl := Send_pos;
+		END_IF
+		IF uiSignalInAck = Send_pos THEN
+			uiSignalOutControl := 0;
+			uiCalibImgCount := uiCalibImgCount + 1;
+			NewState := 245;
+		END_IF
+
+	245:
+		IF uiSignalInAck = 0 THEN
+			NewState := 250;
+		END_IF
+
+	250:
+		FB_COMOVE_IMAGE.Execute := TRUE;
+		uiSignalOutControl := FB_COMOVE_IMAGE.OutQ;
+		IF FB_COMOVE_IMAGE.Done THEN
+			FB_COMOVE_IMAGE.Execute := FALSE;
+			NewState := 260;
+		END_IF
+
+	260:
+		(* Send Pick coordinate *)
+		(* Send Pick pos to PcCom for next image *)
+		getPickCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_PICK_COORD.Execute = FALSE THEN
+			bPosSentToPcCom := FALSE;
+			NewState := 300;
+		END_IF
+
+
+	(* ------------------------------------------ Find Joint ------------------------------------------ *)
+
+	300:		(* Take a picture *)
+		IF stDataToVision.CoordXR2G <> 0 AND stDataToVision.CoordYR2G <> 0 AND stDataToVision.CoordZR2G <> 0 THEN
+			FB_CAM_TWO_CONTROL.Execute := TRUE;
+			IF FB_CAM_TWO_CONTROL.Done THEN
+				IF FB_CAM_TWO_CONTROL.StemFound = 1 THEN
+					IF FB_CAM_TWO_CONTROL.X > 350 OR FB_CAM_TWO_CONTROL.X < 200 OR FB_CAM_TWO_CONTROL.Y > 350 OR FB_CAM_TWO_CONTROL.Y < 200 THEN
+						GviPick := FB_CAM_TWO_CONTROL.PickAngle;
+						IF FB_CAM_TWO_CONTROL.Zone <> 0 THEN
+							iImageZone := FB_CAM_TWO_CONTROL.Zone;
+						END_IF
+						IF FB_CAM_TWO_CONTROL.JointFound = 1 THEN
+							GviPick := FB_CAM_TWO_CONTROL.PickAngle;
+							FB_CAM_TWO_CONTROL.Execute := FALSE;
+							bPosSentToPcCom := FALSE;gResetPcCom := TRUE;
+							NewState := 305;
+						ELSE
+							GviX := 320;
+							GviY := 320;
+							GviZ := FB_CAM_TWO_CONTROL.Z;
+							GviA := 0;
+							GviE := 0;
+							GviR := 40;
+							FB_CAM_TWO_CONTROL.Execute := FALSE;
+							gResetPcCom := TRUE;
+							NewState := 310;
+						END_IF
+					ELSE
+						GviPick := FB_CAM_TWO_CONTROL.PickAngle;
+						IF FB_CAM_TWO_CONTROL.Zone <> 0 THEN
+							iImageZone := FB_CAM_TWO_CONTROL.Zone;
+						END_IF
+						IF FB_CAM_TWO_CONTROL.JointFound = 1 THEN
+							GviPick := FB_CAM_TWO_CONTROL.PickAngle;
+							bPosSentToPcCom := FALSE;
+							FB_CAM_TWO_CONTROL.Execute := FALSE;
+							gResetPcCom := TRUE;
+							NewState := 305;
+						ELSE
+							GviX := FB_CAM_TWO_CONTROL.X;
+							GviY := FB_CAM_TWO_CONTROL.Y;
+							GviZ := FB_CAM_TWO_CONTROL.Z;
+							GviA := 0;
+							GviE := 0;
+							GviR := 40;
+							FB_CAM_TWO_CONTROL.Execute := FALSE;
+							gResetPcCom := TRUE;
+							NewState := 310;
+						END_IF
+					END_IF
+				ELSE
+					FB_CAM_TWO_CONTROL.Execute := FALSE;
+					gResetPcCom := TRUE;
+					NewState := 345;
+				END_IF
+			END_IF
+		END_IF
+
+	305:
+		(* Get Cut coord *)
+		getCutCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_CUT_COORD.Execute = FALSE THEN
+			bPosSentToPcCom := FALSE;
+			NewState := 307;
+		END_IF
+
+	307:
+		IF uiSignalInAck = 0 THEN
+			GviX	:= stDataToVision.CoordXR1G / 10;
+			GviY	:= stDataToVision.CoordYR1G / 10;
+			GviZ	:= stDataToVision.CoordZR1G / 10;
+			gResetPcCom := TRUE;
+			NewState := 310;
+		END_IF
+
+
+	310:		(* Send pos *)
+		(* GsendCoord			-->	Starter SendCoordinates sekvensen							-	Sender koordinater til robotterne 		*)
+		(* uiSignalOutShared.06	-->	Bekræftelse på at koordinaterne er sendt til udgangene i box 10	-	Acknowledge fra SendCoordinates	*)
+		GsendCoord := TRUE;
+		IF uiSignalOutShared.06 THEN
+			(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
+			uiSignalOutControl := Send_pos;
+		END_IF
+		IF uiSignalInAck = Send_pos THEN
+			uiSignalOutControl := 0;
+			(*uiCalibImgCount := uiCalibImgCount + 1;*)
+			NewState := 315;
+		END_IF
+
+	315:
+		IF uiSignalInAck = 0 THEN
+			IF FB_CAM_TWO_CONTROL.JointFound = 1 THEN
+				NewState := 345;
+			ELSE
+				NewState := 320;
+			END_IF
+		END_IF
+
+	320:
+		FB_COMOVE_IMAGE.Execute := TRUE;
+		uiSignalOutControl := FB_COMOVE_IMAGE.OutQ;
+		IF FB_COMOVE_IMAGE.Done THEN
+			FB_COMOVE_IMAGE.Execute := FALSE;
+			NewState := 330;
+		END_IF
+
+	330: 		(* Send Pick coordinate *)
+		(* Send Pick pos to PcCom for next image *)
+		getPickCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_PICK_COORD.Execute = FALSE THEN
+			bPosSentToPcCom := FALSE;
+			NewState := 345;
+		END_IF
+
+	345:
+		IF uiSignalInAck = 0 THEN
+			IF stDataFromVision.gJointFound = 1  THEN
+				(* Grabbing sequence *)
+				gResetPcCom := TRUE;
+				NewState := 400;
+			ELSIF stDataFromVision.gStemFound = 1 AND stDataFromVision.gJointFound = 0 AND iMoved < 2 THEN
+				(* Move further Along stem *)
+				NewState := 300;
+			ELSIF stDataFromVision.gStemFound = 0 OR iMoved >= 2 THEN
+				(* Change configuration *)
+				iCnfgChange := iCnfgChange + 1;
+				IF uiCalibImgCount >= 50 AND uiCalibImgCount <= 200 THEN
+					NewState := 350;
+				ELSIF uiCalibImgCount = 250 THEN
+					NewState := 450;
+				END_IF
+				gResetPcCom := TRUE;
+				NewState := 350;
+			ELSIF stDataFromVision.gJointFound = 255 THEN 	(* If timeout *)
+				NewState := 1000;
+			END_IF
+		END_IF
+
+	(* ------------------------------------------ Change configuration ------------------------------------------ *)
+	350:
+		IF iCnfgChange <= 5 THEN
+			uiCalibImgCount := INT_TO_BYTE(iCnfgChange * 50);
+		ELSE
+			NewState := 600;
+		END_IF
+		(* Robot Pick to image pos *)
+		FB_PICK_TRUNK_IMAGE.Execute := TRUE;
+		uiSignalOutControl := FB_PICK_TRUNK_IMAGE.OutQ;
+		IF FB_PICK_TRUNK_IMAGE.Done THEN
+			FB_PICK_TRUNK_IMAGE.Execute := FALSE;
+			NewState := 360;
+		END_IF
+
+	360:		(* Send Pick coordinate *)
+		(* Send Pick pos to PcCom for next image *)
+		getPickCoords := TRUE;
+		IF bPosSentToPcCom THEN
+			bPosSentToPcCom := FALSE;
+			NewState := 300;
+		END_IF
+
+
+	(* ------------------------------------------ Grab tomatoes ------------------------------------------ *)
+	400:		(* Robot Pick grab *)
+		FB_PICK_GRAB.Execute := TRUE;
+		uiSignalOutControl := FB_PICK_GRAB.OutQ;
+		IF FB_PICK_GRAB.Done THEN
+			FB_PICK_GRAB.Execute := FALSE;
+			NewState := 420;
+		END_IF
+
+	420:		(* Cut *)
+		FB_RELEASE_CUT.Execute := TRUE;
+		IF FB_RELEASE_CUT.Done THEN
+			FB_RELEASE_CUT.Execute := FALSE;
+			NewState := 425;
+		END_IF
+
+	425:		(* Load Cut *)
+		FB_LOAD_CUT.Execute := TRUE;
+		IF FB_LOAD_CUT.Done THEN
+			FB_LOAD_CUT.Execute := FALSE;
+			NewState := 430;
+		END_IF
+
+	430:		(* Move from pick *)
+		FB_PICK_MOVE_FROM_PICK.Execute := TRUE;
+		uiSignalOutControl := FB_PICK_MOVE_FROM_PICK.OutQ;
+		IF FB_PICK_MOVE_FROM_PICK.Done THEN
+			FB_PICK_MOVE_FROM_PICK.Execute := FALSE;
+			iMoved := 1;
+			NewState := 500;
+		END_IF
+
+	(* --------------------------------- DELEAFING ------------------------------------ *)
+	500:		(* Image of LEAFS *)
+		uiCalibImgCount := INT_TO_BYTE(iMoved * 50);
+		FB_PICK_DELEAF_PROGRAM.Execute := TRUE;
+		uiSignalOutControl := FB_PICK_DELEAF_PROGRAM.OutQ;
+		IF FB_PICK_DELEAF_PROGRAM.Done THEN
+			iMoved := iMoved + 1;
+			FB_PICK_DELEAF_PROGRAM.Execute := FALSE;
+			NewState := 520;
+		END_IF
+
+	520:		(* Send Pick coordinate *)
+		getPickCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_PICK_COORD.Execute = FALSE THEN
+			bPosSentToPcCom := FALSE;
+			NewState := 530;
+		END_IF
+
+	530:
+		IF stDataToVision.CoordXR2G <> 0 AND stDataToVision.CoordYR2G <> 0 AND stDataToVision.CoordZR2G <> 0 THEN
+			FB_CAM_TWO_CONTROL.Execute := TRUE;
+			IF FB_CAM_TWO_CONTROL.Done THEN
+				IF FB_CAM_TWO_CONTROL.StemFound = 1 THEN
+					IF FB_CAM_TWO_CONTROL.X > 500 OR FB_CAM_TWO_CONTROL.X < 200 OR FB_CAM_TWO_CONTROL.Y > 425 OR FB_CAM_TWO_CONTROL.Y < 200 THEN
+						FB_CAM_TWO_CONTROL.Execute := FALSE;
+						NewState := 1000;
+					ELSE
+						IF FB_CAM_TWO_CONTROL.JointFound = 1 THEN
+							GviX := FB_CAM_TWO_CONTROL.X;
+							GviY := FB_CAM_TWO_CONTROL.Y;
+							GviZ := FB_CAM_TWO_CONTROL.Z;
+							GviA := 0;
+							GviE := 0;
+							GviR := 40;
+							GviPick := FB_CAM_TWO_CONTROL.PickAngle;
+							iImageZone := FB_CAM_TWO_CONTROL.Zone;
+							gJointFound := FB_CAM_TWO_CONTROL.JointFound;
+							FB_CAM_TWO_CONTROL.Execute := FALSE;
+							gResetPcCom := TRUE;
+							NewState := 540;
+						ELSE
+							gJointFound := FB_CAM_TWO_CONTROL.JointFound;
+							FB_CAM_TWO_CONTROL.Execute := FALSE;
+							gResetPcCom := TRUE;
+							NewState := 500;
+						END_IF
+					END_IF
+				ELSIF iMoved > 3 THEN
+					gJointFound := FB_CAM_TWO_CONTROL.JointFound;
+					FB_CAM_TWO_CONTROL.Execute := FALSE;
+					gResetPcCom := TRUE;
+					NewState := 540;
+				ELSE
+					FB_CAM_TWO_CONTROL.Execute := FALSE;
+					gResetPcCom := TRUE;
+					NewState := 500;
+				END_IF
+			END_IF
+		END_IF
+
+	540:		(* Send pos *)
+		FB_PLACE.Execute := TRUE;
+		IF FB_PLACE.Done THEN
+			GviX2 := FB_PLACE.X;
+			GviY2 := FB_PLACE.Y;
+			GviZ2 := FB_PLACE.Z;
+			(* GsendCoord			-->	Starter SendCoordinates sekvensen							-	Sender koordinater til robotterne 		*)
+			(* uiSignalOutShared.06	-->	Bekræftelse på at koordinaterne er sendt til udgangene i box 10	-	Acknowledge fra SendCoordinates	*)
+			GsendCoord := TRUE;
+			IF uiSignalOutShared.06 THEN
+				(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
+				uiSignalOutControl := Send_two_pos;
+			END_IF
+			IF uiSignalInAck = Send_two_pos THEN
+				uiSignalOutControl := 0;
+				uiCalibImgCount := uiCalibImgCount + 1;
+				FB_PLACE.Execute := FALSE;
+				NewState := 545;
+			END_IF
+		END_IF
+	545:
+		IF uiSignalInAck = 0 THEN
+			NewState := 550;
+		END_IF
+
+	550:
+		FB_PLACE_DELEAF.Execute := TRUE;
+		uiSignalOutControl := FB_PLACE_DELEAF.OutQ;
+		IF FB_PLACE_DELEAF.Done THEN
+			FB_PLACE_DELEAF.Execute := FALSE;
+			NewState := 580;
+		END_IF
+
+	580:		(* Load Cut *)
+		FB_LOAD_CUT.Execute := TRUE;
+		IF FB_LOAD_CUT.Done THEN
+			FB_LOAD_CUT.Execute := FALSE;
+			NewState := 585;
+		END_IF
+
+	585:
+		IF uiDeleaf < 0 THEN
+			uiDeleaf := uiDeleaf + 1;
+			NewState := 500;
+		ELSE
+			uiDeleaf := 0;
+			NewState := 600;
+		END_IF
+
+	600:		(*Open Cut*)
+		FB_OPEN_CUT.Execute := TRUE;
+		IF FB_OPEN_CUT.Done THEN
+			FB_OPEN_CUT.Execute := FALSE;
+			NewState := 610;
+		END_IF
+
+	610:		(*Move cut away from stem*)
+		FB_CUT_FROM_STEM.Execute := TRUE;
+		uiSignalOutControl := FB_CUT_FROM_STEM.OutQ;
+		IF FB_CUT_FROM_STEM.Done THEN
+			FB_CUT_FROM_STEM.Execute := FALSE;
+			NewState := 620;
+		END_IF
+
+
+	620:		(* GbReleaseStem *)
+		(* Grab stem and pull in *)
+		IF NOT bAck THEN
+			(* HMI knap der kalder GribStem *)
+			GbReleaseStem := TRUE;
+		ELSIF bAck THEN
+			NewState := 630;
+		END_IF
+
+	630:		(* Move to idle *)
+		FB_MOVE_TO_IDLE.Execute := TRUE;
+		uiSignalOutControl := FB_MOVE_TO_IDLE.OutQ;
+		IF FB_MOVE_TO_IDLE.Done THEN
+			FB_MOVE_TO_IDLE.Execute := FALSE;
+			uiStatus := 0;
+			NewState := 640;
+		END_IF
+
+	640:		(* Deload *)
+
+		FB_DELOAD_CUT.Execute := TRUE;
+		IF FB_DELOAD_CUT.Done THEN
+			FB_DELOAD_CUT.Execute := FALSE;
+			NewState := 0;
+		END_IF
+
+
+
+	1000:	(* Reset *)
+		uiSignalOutControl  := 0;		(* Stop sequences on ROBOTS *)
+		(* Reset timers *)
+		stDataToVision.ResultRead := 1;
+		gResetPcCom := TRUE;
+		iCnfgChange := 1;
+		uiCalibImgCount := 0;
+		uiDeleaf := 0;
+		NewState := 0;
+
+	2000:
+		bStopped := TRUE;
+
+END_CASE
+
+IF State <> 2000 THEN
+	bStopped := FALSE;
+END_IF
+
+FB_PLACE(Offset := 140,		Box_length := 450, 		Box_width := 400,		Box_height := 125,		Stem_length := 200,	Mode := uiPackingModeNo);]]></ST>
+    </Implementation>
+    <LineIds Name="ControlAuto">
+      <LineId Id="33" Count="612" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

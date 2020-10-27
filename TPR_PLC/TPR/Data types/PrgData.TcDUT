@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <DUT Name="PrgData" Id="{c1a30860-b727-4822-a73d-08fca131d690}">
+    <Declaration><![CDATA[TYPE PrgData :
+STRUCT
+	usiRecipe 			: USINT;
+	usiNewRecipe		: USINT := 1;
+	usiNewVelocity		: USINT;
+	usiProgram			: USINT;
+	usiNewProgram		: USINT;
+	
+	uiValveDelay		: UINT;
+	uiCartheight		: UINT;
+	usiVelocity			: USINT;
+	usiOpMode			: USINT;
+	usiPackingPattern	: USINT;
+	usiImageRetryNo		: USINT;	
+	
+
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

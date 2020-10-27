@@ -1,0 +1,249 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="SendCoordinates" Id="{da786685-abf7-4e95-b5b1-ae10bec64c68}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM SendCoordinates
+VAR_INPUT
+	State: INT :=0;
+END_VAR
+
+VAR
+
+	viX: INT;
+	viY: INT;
+	viZ: INT;
+	viA: INT;
+	viE: INT;
+	viR: INT;
+
+	NewState: INT := 0;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(* SendCoordinates	-->	Sender Koordinater fra PLC til Robot *)
+
+CASE State OF
+
+	0:
+		IF GsendCoord THEN		(* Resets values *)
+			(* uiSignalOutShared.00 & 01	--> X ekstra bits	: 00 --> +256 & 01 -->+512	*)
+			(* uiSignalOutShared.02 & 03	--> Y ekstra bits	: 02 --> +256 & 03 -->+512	*)
+			(* uiSignalOutShared.04 & 05	--> Z ekstra bits	: 04 --> +256 & 05 -->+512	*)
+
+			(* G variablerne bliver sat i Control programmerne *)
+			viX := GviX;						(*GviX - Global variable for Pos X *)
+			viY := GviY;						(*GviY - Global variable for Pos Y *)
+			viZ := GviZ;						(*GviZ - Global variable for Pos Z *)
+			viA := GviA;						(*GviA - Global variable for Pos A *)
+			viE := GviE;						(*GviE - Global variable for Pos E *)
+			viR := GviR;						(*GviR - Global variable for Pos R *)
+
+			(* ------------------------------ Negative Check ------------------------------ *)
+			IF viX < 0 THEN							(* If X is negative, set orientation bit high *)
+				uiSignalOutOrientation.03 := TRUE;
+				viX := ABS(viX);
+			ELSE
+				uiSignalOutOrientation.03 := FALSE;
+			END_IF
+			IF viY < 0 THEN							(* If Y is negative, set orientation bit high *)
+				uiSignalOutOrientation.04 := TRUE;
+				viY := ABS(viY);
+			ELSE
+				uiSignalOutOrientation.04 := FALSE;
+			END_IF
+			IF viZ < 0 THEN							(* If Z is negative, set orientation bit high *)
+				uiSignalOutOrientation.05 := TRUE;
+				viZ := ABS(viZ);
+			ELSE
+				uiSignalOutOrientation.05 := FALSE;
+			END_IF
+			GsendCoord := FALSE;
+			NewState := 10;
+		END_IF
+
+	10:		(* X Koordinat *)
+		IF viX <> 0 THEN
+			uiSignalOutShared.00 := FALSE;
+			uiSignalOutShared.01 := FALSE;
+			IF viX < 256 THEN
+				(* Hvis koordinate er under 255 *)
+				uiSignalOutX := INT_TO_BYTE(viX);
+			ELSIF viX > 255 AND viX < 512THEN
+				(* Hvis koordinat er mellem 255 og 511 *)
+				uiSignalOutShared.00 := TRUE;
+				uiSignalOutX := INT_TO_BYTE(viX  - 256);
+			ELSE
+				(* Hvis koordinat er over 512 *)
+				IF viX - 512 > 255 THEN
+					(* Hvis koordinat er over 768 skal begge ekstra bit vær høj*)
+					uiSignalOutX := INT_TO_BYTE(viX  -  512 - 256);
+					uiSignalOutShared.00 := TRUE;
+					uiSignalOutShared.01 := TRUE;
+				ELSE
+					(* Hvis koordinat er mellem 512 og 767*)
+					uiSignalOutX := INT_TO_BYTE(viX  -  512);
+					uiSignalOutShared.01 := TRUE;
+				END_IF
+			END_IF
+		END_IF
+		NewState := 20;
+
+	20:		(* Y Koordinat *)
+		IF viY <> 0 THEN
+			uiSignalOutShared.02 := FALSE;
+			uiSignalOutShared.03 := FALSE;
+			IF viY < 256 THEN
+				(* Hvis koordinate er under 255 *)
+				uiSignalOutY := INT_TO_BYTE(viY);
+			ELSIF viY > 255 AND viY < 512THEN
+				(* Hvis koordinat er mellem 255 og 511 *)
+				uiSignalOutShared.02 := TRUE;
+				uiSignalOutY := INT_TO_BYTE(viY  - 256);
+			ELSE
+				(* Hvis koordinat er over 512 *)
+				IF viY - 512 > 255 THEN
+					(* Hvis koordinat er over 768 skal begge ekstra bit vær høj*)
+					uiSignalOutY := INT_TO_BYTE(viY  -  512 - 256);
+					uiSignalOutShared.02 := TRUE;
+					uiSignalOutShared.03 := TRUE;
+				ELSE
+					(* Hvis koordinat er mellem 512 og 767*)
+					uiSignalOutY := INT_TO_BYTE(viY  -  512);
+					uiSignalOutShared.03 := TRUE;
+				END_IF
+			END_IF
+		END_IF
+		NewState := 30;
+
+	30:		(* Z Koordinat *)
+		IF viZ <> 0 THEN
+			uiSignalOutShared.04 := FALSE;
+			uiSignalOutShared.05 := FALSE;
+			IF viZ < 256 THEN
+				(* Hvis koordinate er under 255 *)
+				uiSignalOutZ := INT_TO_BYTE(viZ);
+			ELSIF viZ > 255 AND viZ < 512THEN
+				(* Hvis koordinat er mellem 255 og 511 *)
+				uiSignalOutShared.04 := TRUE;
+				uiSignalOutZ := INT_TO_BYTE(viZ  - 256);
+			ELSE
+				(* Hvis koordinat er over 512 *)
+				IF viZ - 512 > 255 THEN
+					(* Hvis koordinat er over 768 skal begge ekstra bit vær høj*)
+					uiSignalOutZ := INT_TO_BYTE(viZ  -  512 - 256);
+					uiSignalOutShared.04 := TRUE;
+					uiSignalOutShared.05 := TRUE;
+				ELSE
+					(* Hvis koordinat er mellem 512 og 767*)
+					uiSignalOutZ := INT_TO_BYTE(viZ  -  512);
+					uiSignalOutShared.05 := TRUE;
+				END_IF
+			END_IF
+		END_IF
+		NewState := 40;
+
+	40:		(* A Orientering *)
+		(* Hvis negativ vinkel *)
+		(* viA := viA / 100; *)
+		IF viA < 0 THEN
+			uiSignalOutA := INT_TO_BYTE(viA * -1);
+			uiSignalOutOrientation.00 := TRUE;
+		ELSE
+			uiSignalOutA := INT_TO_BYTE(viA);
+			uiSignalOutOrientation.00 := FALSE;
+		END_IF
+
+		NewState := 50;
+
+	50:
+		(* Hvis negativ vinkel *)
+		(* viE := viE / 100; *)
+		IF viE < 0 THEN
+			uiSignalOutE := INT_TO_BYTE(viE * -1);
+			uiSignalOutOrientation.01 := TRUE;
+		ELSE
+			uiSignalOutE := INT_TO_BYTE(viE);
+			uiSignalOutOrientation.01 := FALSE;
+		END_IF
+		NewState := 60;
+
+	60:
+		(* Hvis negativ vinkel*)
+		(* viR := viR / 100; *)
+		IF viR < 0 THEN
+			uiSignalOutR := INT_TO_BYTE(viR * -1);
+			uiSignalOutOrientation.02 := TRUE;
+		ELSE
+			uiSignalOutR := INT_TO_BYTE(viR);
+			uiSignalOutOrientation.02 := FALSE;
+		END_IF
+
+		NewState := 70;
+
+	70:		(* Pick angle *)
+		(* Hvis negativ vinkel*)
+		(* viR := viR / 100; *)
+		IF GviPick < 0 THEN
+			uiSignalOutPick := INT_TO_BYTE(ABS(GviPick));
+			uiSignalOutOrientation.06 := TRUE;
+		ELSE
+			uiSignalOutPick := INT_TO_BYTE(GviPick);
+			uiSignalOutOrientation.06 := FALSE;
+		END_IF
+
+		NewState := 80;
+
+	80:		(* X2  *)
+		(* Hvis negativ *)
+		IF GviX2 < 0 THEN
+			uiSignalOutX2 := ABS(GviX2);
+		ELSE
+			uiSignalOutX2 := GviX2;
+		END_IF
+
+		NewState := 90;
+
+	90:		(* Y2  *)
+		(* Hvis negativ *)
+		IF GviY2 < 0 THEN
+			uiSignalOutY2 := ABS(GviY2);
+		ELSE
+			uiSignalOutY2 := GviY2;
+		END_IF
+
+		NewState := 100;
+
+	100:		(* Z2  *)
+		(* Hvis negativ *)
+		IF GviZ2 < 0 THEN
+			uiSignalOutZ2 := ABS(GviZ2);
+		ELSE
+			uiSignalOutZ2 := GviZ2;
+		END_IF
+
+		NewState := 1000;
+
+
+	1000:		(* Reset global variable Pos efter robot Cut har modtaget den *)
+		uiSignalOutShared.06 := TRUE;			(* Acknowledge that Pos is sent *)
+		GcoordSent := TRUE;
+		GsendCoord := FALSE;
+		(* IF the position has been recieved and maybe sent to Pick --> Reset variables *)
+		IF uiSignalIn4.00 THEN
+			uiSignalOutShared.06 := FALSE;		(* Pos sent Acknowledge *)
+			GviX := 0;
+			GviY := 0;
+			GviZ := 0;
+			GviA := 0;
+			GviE := 0;
+			GviR := 0;
+			NewState := 0;
+		END_IF
+
+END_CASE
+]]></ST>
+    </Implementation>
+    <LineIds Name="SendCoordinates">
+      <LineId Id="16" Count="8" />
+      <LineId Id="29" Count="212" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

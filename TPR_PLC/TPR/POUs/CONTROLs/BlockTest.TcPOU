@@ -1,0 +1,334 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="BlockTest" Id="{e6e5a053-3e63-41fb-91d6-ed282c897174}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM BlockTest
+VAR_INPUT
+	State: INT := 0;
+	NewState: INT := 0;
+
+	InternalState: INT := 0;
+	InternalNewState: INT := 0;
+END_VAR
+
+VAR
+	(* FUNCTION BLOCKS *)
+	(*FB_PLACE: 		PlaceCoordinates;
+	FB_GET_STEM:	GetStem;*)
+
+	(* REALS *)
+
+	(* INTEGERS *)
+
+
+	ImageRetryHeight:	INT;
+
+	iMoved: 			INT;					(* Hvor mange gange har cut bevæget sig efter iBunchPosZ er nået *)
+	iCnfgChange:		INT := 0;
+	uiDeleaf: 		UINT;
+
+	(* BOOLS *)
+	bStopped: BOOL;
+	bRobotFail: BOOL;
+
+	bRetry: INT;
+	bStemGrabbed: BOOL;
+
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE State OF
+
+	0:		(* init	-	Every important variables will be resat before the start of the sequence *)
+		IF bStart AND uiprogNo = 7 AND State <> 2000  AND NOT bAlarmState THEN
+			uiStatus := 1;
+
+			(* Init variables *)
+			bRetry := 0;
+			uiCalibImgCount	:= 0;
+			iMoved := 0;
+			iImageZone := 0;
+			gJointFound := 0;
+			gResetPcCom 	:= TRUE;
+			iCnfgChange := 0;
+			uiDeleaf := 0;
+			bPosSentToPcCom := FALSE;
+
+			(* Before starting - Home *)
+			GbHomeGripStem := TRUE;
+			IF bHomeDone THEN
+				bStart := FALSE;
+				bHomeDone := FALSE;
+				NewState := 10;
+			END_IF
+		END_IF
+
+	10:		(* Set velocity *)
+		FB_SET_VELOCITY.Execute := TRUE;
+		uiSignalOutSpeedControl := UINT_TO_BYTE(uiSpeedSetting);
+		uiSignalOutControl := FB_SET_VELOCITY.OutQ;
+		IF FB_SET_VELOCITY.Done THEN
+			FB_SET_VELOCITY.Execute := FALSE;
+			NewState := 20;
+		END_IF
+
+	20:		(* Idle *)
+		FB_MOVE_TO_IDLE.Execute := TRUE;
+		uiSignalOutControl := FB_MOVE_TO_IDLE.OutQ;
+		IF FB_MOVE_TO_IDLE.Done THEN
+			FB_MOVE_TO_IDLE.Execute := FALSE;
+			NewState := 30;
+		END_IF
+
+
+
+
+		(* ------------------------------------------------------------------- Get Stem  ------------------------------------------------------------------- *)
+	30:				(*  Load cutter *)
+		FB_LOAD_CUT.Execute := TRUE;
+		IF FB_LOAD_CUT.Done THEN
+			FB_LOAD_CUT.Execute := FALSE;
+			NewState := 40;
+		END_IF
+
+
+		(* Get stem SEQUENCE *)
+	40:
+		FB_GET_STEM.Execute := TRUE;
+		IF FB_GET_STEM.Done THEN
+			IF FB_GET_STEM.Fail THEN
+				FB_GET_STEM.Execute := FALSE;
+				bBackToZero := TRUE;
+			ELSE
+				FB_GET_STEM.Execute := FALSE;
+				NewState := 100;
+			END_IF
+		END_IF
+
+
+
+
+
+
+
+
+
+
+
+	(* ------------------------------------------------------------------- Grab Stem  ------------------------------------------------------------------- *)
+	100:
+		FB_GRAB_STEM.Execute := TRUE;
+		IF FB_GRAB_STEM.Done THEN
+			IF FB_GRAB_STEM.Fail THEN
+				FB_GRAB_STEM.Execute := FALSE;
+				bBackToZero := TRUE;
+			ELSE
+				FB_GRAB_STEM.Execute := FALSE;
+				NewState := 200;
+			END_IF
+		END_IF
+
+
+
+
+
+
+
+
+
+
+	(* ------------------------------------------------------------------- Move On Stem  ------------------------------------------------------------------- *)
+	200:
+		FB_MOVE_ON_STEM.Execute := TRUE;
+		IF FB_MOVE_ON_STEM.Done THEN
+			IF FB_MOVE_ON_STEM.Fail THEN
+				bBackToZero := TRUE;
+				FB_MOVE_ON_STEM.Execute := FALSE;
+			ELSIF FB_MOVE_ON_STEM.JointReached THEN
+				FB_MOVE_ON_STEM.Execute := FALSE;
+				(* Grabbing sequence *)
+				gResetPcCom := TRUE;
+				IF uimodeNo <= 1 THEN
+					NewState := 400;
+				ELSE
+					NewState := 420;
+				END_IF
+			ELSE
+				FB_MOVE_ON_STEM.Execute := FALSE;
+				NewState := 300;
+			END_IF
+		END_IF
+
+
+
+
+
+
+
+
+
+
+
+
+	(* ------------------------------------------------------------------- Find Joint  ------------------------------------------------------------------- *)
+	300:
+		FB_FIND_JOINT.Execute := TRUE;
+		IF FB_FIND_JOINT.Done THEN
+			IF FB_FIND_JOINT.Fail THEN
+				FB_FIND_JOINT.Execute := FALSE;
+				bBackToZero := TRUE;
+			ELSE
+				FB_FIND_JOINT.Execute := FALSE;
+				NewState := 400;
+			END_IF
+		END_IF
+
+
+
+	(* ------------------------------------------ Grab tomatoes ------------------------------------------ *)
+	400:		(* Robot Pick grab *)
+
+		FB_GRAB_JOINT.Execute := TRUE;
+		IF FB_GRAB_JOINT.Done THEN
+			IF FB_GRAB_JOINT.bRetry <> 0 THEN
+				FB_GRAB_JOINT.Execute := FALSE;
+				NewState := 300;
+			ELSIF FB_GRAB_JOINT.Fail THEN
+				FB_GRAB_JOINT.Execute := FALSE;
+				bBackToZero := TRUE;
+			ELSE
+				FB_GRAB_JOINT.Execute := FALSE;
+				NewState := 500;
+			END_IF
+		END_IF
+
+
+
+	(* --------------------------------- DELEAFING ------------------------------------ *)
+	500:
+		FB_DELEAF_PLACE.Execute := TRUE;
+		IF FB_DELEAF_PLACE.Done THEN
+			FB_DELEAF_PLACE.Execute := FALSE;
+			NewState := 600;
+		END_IF
+
+
+	600:		(*Open Cut*)
+		FB_OPEN_CUT.Execute := TRUE;
+		IF FB_OPEN_CUT.Done THEN
+			FB_OPEN_CUT.Execute := FALSE;
+			NewState := 610;
+		END_IF
+
+	610:		(*Move cut away from stem*)
+		FB_CUT_FROM_STEM.Execute := TRUE;
+		uiSignalOutControl := FB_CUT_FROM_STEM.OutQ;
+		IF FB_CUT_FROM_STEM.Done THEN
+			FB_CUT_FROM_STEM.Execute := FALSE;
+			NewState := 620;
+		END_IF
+
+
+	620:		(* GbReleaseStem *)
+		(* Grab stem and pull in *)
+		IF NOT bAck THEN
+			(* HMI knap der kalder GribStem *)
+			GbReleaseStem := TRUE;
+		ELSIF bAck THEN
+			NewState := 630;
+		END_IF
+
+	630:		(* Move to idle *)
+		FB_MOVE_TO_IDLE.Execute := TRUE;
+		uiSignalOutControl := FB_MOVE_TO_IDLE.OutQ;
+		IF FB_MOVE_TO_IDLE.Done THEN
+			FB_MOVE_TO_IDLE.Execute := FALSE;
+			uiStatus := 0;
+			NewState := 640;
+		END_IF
+
+	640:		(* Deload *)
+
+		FB_DELOAD_CUT.Execute := TRUE;
+		IF FB_DELOAD_CUT.Done THEN
+			FB_DELOAD_CUT.Execute := FALSE;
+			NewState := 0;
+		END_IF
+
+
+
+
+	1000:	(* Reset *)
+
+		uiSignalOutControl  := 0;		(* Stop sequences on ROBOTS *)
+
+		(* Reset timers *)
+		bRetry := 0;
+		stDataToVision.ResultRead := 1;
+		gResetPcCom := TRUE;
+		iCnfgChange := 1;
+		uiCalibImgCount := 0;
+		uiDeleaf := 0;
+		InternalNewState := 0;
+		NewState := 0;
+
+	2000:
+		bStopped := TRUE;
+
+
+	(* ----------------------------- FAILED WHEN MOVING ON STEM ----------------------------- *)
+	3000:		(* First figure out if cut is under the lowest tomato *)
+		(* Get Cut coord *)
+		getCutCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_CUT_COORD.Execute = FALSE THEN
+			bPosSentToPcCom := FALSE;
+			gResetPcCom := TRUE;
+			NewState := 3005;
+		END_IF
+
+	3005:
+		IF uiSignalInAck = 0 THEN
+			uiCutCoordX	:= stDataToVision.CoordXR1G / 10;
+			uiCutCoordY	:= stDataToVision.CoordYR1G / 10;
+			uiCutCoordZ	:= stDataToVision.CoordZR1G / 10;
+
+			NewState := 3010;
+		END_IF
+
+	3010:
+
+		IF uiCutCoordZ > iBunchPosZ THEN
+			(* Then cut must have reached the joint*)
+			NewState := 330;
+
+		ELSE
+			(* It must be a too big of a stick-out *)
+			FB_RELEASE_CUT.Execute := TRUE;
+			IF FB_RELEASE_CUT.Done THEN
+				FB_RELEASE_CUT.Execute := FALSE;
+				NewState := 3020;
+			END_IF
+		END_IF
+
+	3020:
+		FB_LOAD_CUT.Execute := TRUE;
+		IF FB_LOAD_CUT.Done THEN
+			FB_LOAD_CUT.Execute := FALSE;
+			NewState := 320;
+		END_IF
+
+
+
+END_CASE
+
+IF State <> 2000 THEN
+	bStopped := FALSE;
+END_IF
+
+bRobotFail := uiSignalIn2.07;
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="BlockTest">
+      <LineId Id="33" Count="290" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

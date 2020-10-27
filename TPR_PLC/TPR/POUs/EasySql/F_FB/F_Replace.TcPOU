@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="F_Replace" Id="{960985d1-2f5d-48f4-98b6-f2ad67e638d8}" SpecialFunc="None">
+    <Declaration><![CDATA[//------------------------------------------------------------------------------------------
+//                                                                                        	
+//***************************** Beckhoff TwinCAT Examples **********************************
+//                                                                                        	
+//************************************* WARNING ********************************************
+// This program is only an example. If it is used as a control program in any real        	
+// application, Beckhoff is not responsible for any malfunction, loss or damage           	
+// which could arise by using this program!                                               	
+//                                                                                        	
+//*************************************  Program Info. *************************************
+//                                                                                        	
+// PLC program name:       	F_Replace (Function)               	                           	
+// Software platform:      	TwinCat v3.1.4024.10				                          	
+// Modified by:            	Per Søgaard Carlsen 			                                  	
+// Email:					p.carlsen@beckhoff.com	                                  	
+//                                                                                        	
+// ======================================================================================== 
+//         Version       Date                        Remarks                              	
+// ======================================================================================== 
+//         1.0           10 july 2020                 First release of this example        	
+// ======================================================================================== 
+//                                                                                        	
+//******************************* Aims OF this PLC PROGRAM *********************************
+//                                                                                        	
+// Compleate search and replace function in long strings						 			                             
+//                                                                                        	
+//-----------------------------------------------------------------------------------------
+FUNCTION F_Replace : bool
+VAR_INPUT
+	pString : POINTER TO STRING; //Pointer to source and destination string.
+	cbStringLen : UDINT; //Lenght of source and destination string
+	sSearch : STRING(255); //Search in string
+	sReplace : STRING(255); //Releace in string
+END_VAR
+VAR
+	udiStartPos : UDINT; //Start position for found search result
+	udiFindPos : UDINT; //Search start position in string
+	bFoundOne : BOOL; //One ore more replace done
+	bFoundThis : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[bFoundOne := FALSE; //Min one item replaced
+udiFindPos := 0; //Search from position in string
+
+REPEAT
+	bFoundThis := FALSE;
+	udiStartPos := udiFindPos;
+	
+	IF 	udiFindPos <= LEN2(pSTRING:= pString) THEN
+		//Search
+		udiFindPos := FIND2(pSrcString:= pString+udiStartPos, pFindString:= ADR(sSearch));
+	ELSE
+		//No match found
+		udiFindPos := 0;
+	END_IF
+	
+	IF udiFindPos <> 0 THEN
+		//Replace item
+		REPLACE2(
+		pSrcString:= pString+udiStartPos, 
+		pInsertString:= ADR(sReplace), 
+		pDstString:= pString, 
+		nDstSize:= cbStringLen-udiStartPos, 
+		nLen:= Tc2_Utilities.LEN2(ADR(sSearch)), 
+		nPos:= udiFindPos);
+		bFoundOne := TRUE;
+		bFoundThis := TRUE;	
+		
+		udiFindPos := udiFindPos + TO_UDINT(Tc2_Standard.LEN(sReplace)); //Update search from position
+		
+		
+	END_IF
+	
+	UNTIL NOT bFoundThis //Repeat until all item found and replaced
+END_REPEAT
+
+F_Replace := bFoundOne;
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="F_Replace">
+      <LineId Id="40" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="227" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="134" Count="0" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="228" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="184" Count="0" />
+      <LineId Id="229" Count="0" />
+      <LineId Id="185" Count="1" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="22" Count="5" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="139" Count="3" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="53" Count="1" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

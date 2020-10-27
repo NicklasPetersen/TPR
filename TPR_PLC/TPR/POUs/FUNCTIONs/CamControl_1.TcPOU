@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="CamControl_1" Id="{c17a783c-dbff-4b80-8340-19980d5aa72a}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK CamControl_1
+VAR_INPUT
+	NewState : 	INT;
+	ControlType: 	USINT;		(*	1: Controlling valves from Robot		2: Controlling valves from Robot and  PLC		3: Close only using PLC		4: Open only using PLC		*)
+	CommandNo:	USINT;		(*	Command to Robot		*)
+	Ack: 		BYTE;		(*	Acknowledge from Robot	*)
+	Execute: 		BOOL;
+
+	TrunkPosX:		INT;
+	TrunkPosY:		INT;			(*	Distance to the stem 					*)
+	TrunkPosZ:		INT;
+	BunchPosX:		INT;
+	BunchPosY:		INT;
+	BunchPosZ:		INT;			(*	The height of the lowest hangiung tomato	*)
+	StemAngle:		INT;
+END_VAR
+VAR_OUTPUT
+	TrunkDist:		INT;			(*	Distance to the stem 					*)
+	BunchHeight:		INT;			(*	The height of the lowest hangiung tomato	*)
+	StemHeading:	INT;
+	X:				INT;
+	Y:				INT;
+	Z: 				INT;
+
+	Zone:			USINT;
+
+	Command:		BOOL;
+END_VAR
+VAR
+	trigger : 		R_TRIG;
+	R_Execute : 	R_TRIG;
+	Wait:		TON;
+
+	State : 		INT;
+	
+	Offset:		INT := 220;
+
+	Done: 		BOOL;
+	bValveTime: 	BOOL;
+	Retry: BOOL;
+	Fail: BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF State <> NewState THEN
+	State := NewState;
+END_IF
+
+CASE  State OF
+	0:
+		Done := FALSE;
+		IF Execute  THEN
+			IF ControlType = 1 THEN
+				NewState	 :=10;
+			ELSIF ControlType = 2 THEN
+				NewState := 50;
+			ELSE
+				NewState := 0;
+			END_IF
+		END_IF
+
+	10:		(* Send CmdByte  to PC	-	Stationary cam takes picture *)
+		Wait.IN := FALSE;
+		Command := TRUE;
+		IF CommandNo = Ack AND Ack <> 0 THEN			(* When the PC  has sent the position, prepare to send the position to robot pick *)
+			IF (TrunkPosY > 600  OR BunchPosY > 600 OR TrunkPosY < 100 OR BunchPosY < 100 OR TrunkPosX > 500) AND NOT Retry THEN
+				Command := FALSE;
+				NewState := 30;
+			ELSIF (TrunkPosY > 600  OR BunchPosY > 600 OR TrunkPosY < 100 OR BunchPosY < 100 OR TrunkPosX > 500) AND Retry THEN
+				Command := FALSE;
+				Fail := TRUE;
+				NewState := 1000;
+			ELSE
+				Retry := FALSE;
+				(* uiTrunkPos		-->	Distance to trunk in mm								 	-								*)
+				(* uiDistToGrab	-->	Tells Tools program how far Grip has to move				-	Global Variabel Tool looks at	*)
+				(* uiGripOffset		-->	Distance from Workframe Y=0 to grip Y pos 												*)
+				TrunkDist := TrunkPosY - Offset;
+
+				(* iBunchPosZ	-->	The height will be used to know how far to move before looking for joint							*)
+				BunchHeight := BunchPosZ;
+				StemHeading := StemAngle;
+
+				X := BunchPosX;
+				Y := BunchPosY;
+				Z := BunchPosZ;
+	
+				IF (StemHeading < -125 AND StemHeading >=-180) OR (StemHeading >135 AND StemHeading < 180) THEN
+					Zone := 1;
+				ELSIF (StemHeading <= 135 AND StemHeading >= 35) THEN
+					Zone := 2;
+				ELSIF (StemHeading >= -125 AND StemHeading <= -45) THEN
+					Zone := 3;
+				ELSIF (StemHeading > -45 AND StemHeading < 35) THEN
+					Zone := 4;
+				ELSE
+					Zone := 0;
+				END_IF
+	
+				Command := FALSE;
+				NewState := 20;
+
+			END_IF
+		END_IF
+
+	20:
+		(* When Ack is 0, the command has been executed *)
+		IF Ack = 0 THEN
+			NewState := 1000;
+		END_IF
+	30:
+		IF Wait.Q THEN
+			Retry := TRUE;
+			NewState := 10;
+		END_IF
+
+	1000:
+		Done := TRUE;
+		IF NOT Execute THEN
+			Fail := FALSE;
+			Retry := FALSE;
+			NewState := 0;
+		END_IF
+
+
+
+END_CASE
+
+Wait		(IN:=  State = 30		, PT:=t#500ms, Q=>, ET=>); 		(*Timer*)		(* For waiting for Valves 			*)]]></ST>
+    </Implementation>
+    <LineIds Name="CamControl_1">
+      <LineId Id="41" Count="84" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

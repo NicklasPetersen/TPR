@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <DUT Name="frameData" Id="{5d74c60d-0cff-47da-9010-a49191b6c547}">
+    <Declaration><![CDATA[TYPE frameData :
+STRUCT
+	ct_x	: DINT := 0;
+	ct_y	: DINT := 0;
+	ct_z	: DINT := 0;
+	ct_a	: DINT := 0;
+	ct_e	: DINT := 0;
+	ct_r	: DINT := 0;
+	
+	cw_x	: DINT := 0;
+	cw_y	: DINT := 0;
+	cw_z	: DINT := 0;
+	cw_a	: DINT := 0;
+	cw_e	: DINT := 0;
+	cw_r	: DINT := 0;
+	
+	pt_x	: DINT := 0;
+	pt_y	: DINT := 0;
+	pt_z	: DINT := 0;
+	pt_a	: DINT := 0;
+	pt_e	: DINT := 0;
+	pt_r	: DINT := 0;
+	
+	pw_x	: DINT := 0;
+	pw_y	: DINT := 0;
+	pw_z	: DINT := 0;
+	pw_a	: DINT := 0;
+	pw_e	: DINT := 0;
+	pw_r	: DINT := 0;
+
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

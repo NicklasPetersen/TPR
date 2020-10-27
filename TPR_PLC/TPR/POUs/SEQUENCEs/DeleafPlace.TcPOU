@@ -1,0 +1,212 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+  <POU Name="DeleafPlace" Id="{80df2cee-f7ba-4ce8-a7a1-c206ae67a39c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK DeleafPlace
+VAR_INPUT
+	Execute: 		BOOL;
+	State : 		INT;
+	NewState : 	INT;
+
+END_VAR
+VAR_OUTPUT
+
+
+END_VAR
+VAR
+
+	Done: 		BOOL;
+	Fail: BOOL;
+	bRetry: USINT;
+	iMoved: USINT;
+	uiDeleaf: USINT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF State <> NewState THEN
+	State := NewState;
+END_IF
+
+CASE  State OF
+	0:
+		Done := FALSE;
+		IF Execute  THEN
+			IF uimodeNo = 1 THEN
+				NewState := 40;
+			ELSE
+				NewState	 :=10;
+			END_IF
+		END_IF
+
+	10:		(* Image of LEAFS *)
+		uiCalibImgCount := INT_TO_BYTE(iMoved * 50);
+		FB_PICK_DELEAF_PROGRAM.Execute := TRUE;
+		uiSignalOutControl := FB_PICK_DELEAF_PROGRAM.OutQ;
+		IF FB_PICK_DELEAF_PROGRAM.Done THEN
+			iMoved := iMoved + 1;
+			FB_PICK_DELEAF_PROGRAM.Execute := FALSE;
+			NewState := 20;
+		END_IF
+
+	20:		(* Send Pick coordinate *)
+		getPickCoords := TRUE;
+		IF bPosSentToPcCom AND FB_GET_PICK_COORD.Execute = FALSE THEN
+			bPosSentToPcCom := FALSE;
+			NewState := 30;
+		END_IF
+
+	30:
+		IF stDataToVision.CoordXR2G <> 0 AND stDataToVision.CoordYR2G <> 0 AND stDataToVision.CoordZR2G <> 0 THEN
+			FB_CAM_TWO_CONTROL.Execute := TRUE;
+			IF FB_CAM_TWO_CONTROL.Done THEN
+				IF FB_CAM_TWO_CONTROL.StemFound = 1 THEN
+					IF FB_CAM_TWO_CONTROL.PickAngle <> 0 AND FB_CAM_TWO_CONTROL.JointFound = 1 THEN
+						GviX 		:= FB_CAM_TWO_CONTROL.X;
+						GviY 		:= FB_CAM_TWO_CONTROL.Y;
+						GviZ 		:= FB_CAM_TWO_CONTROL.Z;
+						GviA 		:= 0;
+						GviE 		:= 0;
+						GviR 		:= 40;
+						GviPick 		:= FB_CAM_TWO_CONTROL.PickAngle;
+						iImageZone 	:= FB_CAM_TWO_CONTROL.Zone;
+						gJointFound 	:= FB_CAM_TWO_CONTROL.JointFound;
+
+						FB_CAM_TWO_CONTROL.Execute := FALSE;
+						gResetPcCom := TRUE;
+						NewState := 40;
+
+					ELSE
+						FB_CAM_TWO_CONTROL.Execute := FALSE;
+						gResetPcCom := TRUE;
+						NewState := 10;
+
+					END_IF
+				ELSE
+					FB_CAM_TWO_CONTROL.Execute := FALSE;
+					gResetPcCom := TRUE;
+					NewState := 10;
+				END_IF
+			END_IF
+		END_IF
+
+	40:		(* Send pos *)
+		IF uiModeNo = 0 AND uiDeleaf  = 0 THEN
+			FB_PLACE.Execute := TRUE;
+			IF FB_PLACE.Done THEN
+				GviX2 := FB_PLACE.X;
+				GviY2 := FB_PLACE.Y;
+				GviZ2 := FB_PLACE.Z;
+				(* GsendCoord			-->	Starter SendCoordinates sekvensen							-	Sender koordinater til robotterne 		*)
+				(* uiSignalOutShared.06	-->	Bekræftelse på at koordinaterne er sendt til udgangene i box 10	-	Acknowledge fra SendCoordinates	*)
+				GsendCoord := TRUE;
+				IF uiSignalOutShared.06 THEN
+					(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
+					uiSignalOutControl := Send_two_pos;
+				END_IF
+				IF uiSignalInAck = Send_two_pos THEN
+					uiSignalOutControl := 0;
+					uiCalibImgCount := uiCalibImgCount + 1;
+					FB_PLACE.Execute := FALSE;
+					NewState := 45;
+				END_IF
+			END_IF
+		ELSIF uiModeNo = 1 AND uiDeleaf  = 0 THEN
+			FB_PLACE.Execute := TRUE;
+			IF FB_PLACE.Done THEN
+				GviX := FB_PLACE.X;
+				GviY := FB_PLACE.Y;
+				GviZ := FB_PLACE.Z;
+				(* GsendCoord			-->	Starter SendCoordinates sekvensen							-	Sender koordinater til robotterne 		*)
+				(* uiSignalOutShared.06	-->	Bekræftelse på at koordinaterne er sendt til udgangene i box 10	-	Acknowledge fra SendCoordinates	*)
+				GsendCoord := TRUE;
+				IF uiSignalOutShared.06 THEN
+					(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
+					uiSignalOutControl := Send_pos;
+				END_IF
+				IF uiSignalInAck = Send_pos THEN
+					uiSignalOutControl := 0;
+					uiCalibImgCount := uiCalibImgCount + 1;
+					FB_PLACE.Execute := FALSE;
+					NewState := 45;
+				END_IF
+			END_IF
+		ELSIF uiModeNo = 2 OR uiDeleaf  > 0 THEN
+			(* GsendCoord			-->	Starter SendCoordinates sekvensen							-	Sender koordinater til robotterne 		*)
+			(* uiSignalOutShared.06	-->	Bekræftelse på at koordinaterne er sendt til udgangene i box 10	-	Acknowledge fra SendCoordinates	*)
+			GsendCoord := TRUE;
+			IF uiSignalOutShared.06 THEN
+				(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
+				uiSignalOutControl := Send_pos;
+			END_IF
+			IF uiSignalInAck = Send_pos THEN
+				uiSignalOutControl := 0;
+				uiCalibImgCount := uiCalibImgCount + 1;
+				FB_PLACE.Execute := FALSE;
+				NewState := 45;
+			END_IF
+		END_IF
+
+
+
+	45:
+		IF uiSignalInAck = 0 THEN
+			NewState := 50;
+		END_IF
+
+	50:
+		IF uimodeNo = 0 AND uiDeleaf  = 0 THEN
+			FB_PLACE_DELEAF.Execute := TRUE;
+			uiSignalOutControl := FB_PLACE_DELEAF.OutQ;
+			IF FB_PLACE_DELEAF.Done THEN
+				FB_PLACE_DELEAF.Execute := FALSE;
+				NewState := 80;
+			END_IF
+		ELSIF uimodeNo = 1 AND uiDeleaf  = 0 THEN
+			FB_PICK_PLACE.Execute := TRUE;
+			uiSignalOutControl := FB_PICK_PLACE.OutQ;
+			IF FB_PICK_PLACE.Done THEN
+				FB_PICK_PLACE.Execute := FALSE;
+				NewState := 1000;
+			END_IF
+		ELSE
+			FB_PICK_DELEAF_PROGRAM.Execute := TRUE;
+			uiSignalOutControl := FB_PICK_DELEAF_PROGRAM.OutQ;
+			IF FB_PICK_DELEAF_PROGRAM.Done THEN
+				FB_PICK_DELEAF_PROGRAM.Execute := FALSE;
+				NewState := 80;
+			END_IF
+		END_IF
+
+
+	80:		(* Load Cut *)
+		FB_LOAD_CUT.Execute := TRUE;
+		IF FB_LOAD_CUT.Done THEN
+			FB_LOAD_CUT.Execute := FALSE;
+			NewState := 85;
+		END_IF
+
+	85:
+		IF uiDeleaf < 0 THEN
+			uiDeleaf := uiDeleaf + 1;
+			NewState := 10;
+		ELSE
+			uiDeleaf := 0;
+			NewState := 1000;
+		END_IF
+
+
+	1000:
+		Done := TRUE;
+		IF NOT Execute THEN
+			bRetry := 0;
+			Fail := FALSE;
+			NewState := 0;
+		END_IF
+
+
+
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="DeleafPlace">
+      <LineId Id="19" Count="182" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

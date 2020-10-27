@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="P_SqlInsertRowConstructor" Id="{52295266-3c2f-446f-a265-26b07495cd63}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_SqlInsertRowConstructor
+VAR
+	
+	fbSql : FB_EasySql;
+	sSql : STRING(1000);
+		
+	aiId : ARRAY[0..1] OF INT; //Insert data
+	asCustomer : ARRAY[0..1] OF STRING; //Insert data
+	arValue : ARRAY[0..1] OF REAL; //Insert data
+		
+	bInsert : BOOL; //Execute command
+	bDone : BOOL; //Command done
+	bError : BOOL; //Command error
+	sError : STRING(255);
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Insert more than one record set, using row constructor
+sSql := 'INSERT INTO myTable (myId,myCustomer,myValue) VALUES (¤1¤,$'¤2¤$',¤3¤),(¤4¤,$'¤5¤$',¤6¤)';
+
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤1¤', sReplace:= TO_STRING(aiId[0])); //Replace placeholder
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤2¤', sReplace:= asCustomer[0]); //Replace placeholder
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤3¤', sReplace:= TO_STRING(arValue[0])); //Replace placeholder
+
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤4¤', sReplace:= TO_STRING(aiId[1])); //Replace placeholder
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤5¤', sReplace:= asCustomer[1]); //Replace placeholder
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤6¤', sReplace:= TO_STRING(arValue[1])); //Replace placeholder
+
+
+
+fbSql(
+	bExecute:= bInsert, 
+	wDBID:= 1, 
+	pSql:= ADR(sSql), 
+	cbSql:= SIZEOF(sSql), 
+	pData:= 0, 
+	cbData:= 0, 
+	udiMaxOfRecord:= 0, 
+	udiNoOfRecords=> , 
+	bDone=> bDone, 
+	bBusy=> , 
+	bError=> bError, 
+	sError=> sError);]]></ST>
+    </Implementation>
+    <LineIds Name="P_SqlInsertRowConstructor">
+      <LineId Id="436" Count="5" />
+      <LineId Id="458" Count="2" />
+      <LineId Id="457" Count="0" />
+      <LineId Id="442" Count="14" />
+      <LineId Id="25" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

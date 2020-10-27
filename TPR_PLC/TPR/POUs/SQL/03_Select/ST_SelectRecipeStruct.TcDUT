@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <DUT Name="ST_SelectRecipeStruct" Id="{e49f03a1-1353-4c83-a7e2-5c65fc2e3f8b}">
+    <Declaration><![CDATA[TYPE ST_SelectRecipeStruct :
+STRUCT
+	recipe_id				: DINT;
+	recipe_name				: STRING(199);
+	recipe_velocity			: DINT;
+	Operation_mode_id		: DINT;
+	packing_pattern_id		: DINT;
+	recipe_valve_delay		: DINT;
+	recipe_cart_height		: DINT;
+	recipe_image_retry_no	: DINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

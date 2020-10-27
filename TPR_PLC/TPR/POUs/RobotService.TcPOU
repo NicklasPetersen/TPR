@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="RobotService" Id="{bac4a442-1121-4bf0-9045-0943fb6d3a62}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM RobotService
+VAR_INPUT
+	State: 		INT := 0;
+	NewState:	INT := 0;
+END_VAR
+VAR
+
+
+	timer : TON;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+CASE State OF
+
+	0:
+		IF bRobotServiceStart THEN
+			NewState  	:= 10;
+		END_IF
+
+	10:		(* Reset the tools *)
+		Tools.NewState := 1000;
+		IF Tools.NewState = 0 THEN
+			NewState := 20;
+		END_IF
+
+	20:
+		FB_ROBOT_SERVICE.Execute := TRUE;
+		uiSignalOutControl := FB_ROBOT_SERVICE.Command;
+		IF FB_ROBOT_SERVICE.Done THEN
+			FB_ROBOT_SERVICE.Execute := FALSE;
+			NewState := 30;
+		END_IF
+
+	30:
+		IF bRobotServiceStop THEN
+			NewState := 40;
+		END_IF
+
+	40:
+		FB_MOVE_TO_IDLE.Execute := TRUE;
+		uiSignalOutControl := FB_MOVE_TO_IDLE.Command;
+		IF FB_MOVE_TO_IDLE.Done THEN
+			FB_MOVE_TO_IDLE.Execute := FALSE;
+			uiSignalOutControl := 0;
+			NewState := 0;
+		END_IF
+
+
+	90:		(* RESET VALUES AND CHANGE STATE TO 0 *)
+
+
+
+		NewState := 0;
+
+
+END_CASE
+]]></ST>
+    </Implementation>
+    <LineIds Name="RobotService">
+      <LineId Id="10" Count="46" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

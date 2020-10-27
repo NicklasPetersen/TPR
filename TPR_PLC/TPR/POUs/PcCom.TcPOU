@@ -1,0 +1,163 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="PcCom" Id="{d54c6360-411f-41c0-81ab-d437506f8f76}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PcCom
+VAR_INPUT
+	State: INT := 0;
+END_VAR
+
+
+VAR
+
+	NewState: INT := 0;
+
+
+	byTest : ARRAY[0..1]OF BYTE;
+	nTest : UINT;
+
+	setToNull: BOOL;
+
+	bCut: BOOL;
+END_VAR
+VAR_OUTPUT
+	bPick: BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(* Til at sende og modtage data Mellem PLC og PC *)
+
+CASE State OF
+
+
+0: (*INIT*)
+(*Output*)
+
+	(* Reset data sent to PC *)
+	stDataToVision.CmdByte		:= 0;
+	stDataToVision.CmdIdOut		:= 0;
+	stDataToVision.ResultRead	:= 0;
+	stDataToVision.CoordXR1G	:= 0;
+	stDataToVision.CoordYR1G	:= 0;
+	stDataToVision.CoordZR1G	:= 0;
+	stDataToVision.CoordXR2G	:= 0;
+	stDataToVision.CoordYR2G	:= 0;
+	stDataToVision.CoordZR2G	:= 0;
+	stDataToVision.CoordRRA		:= 0;
+	stDataToVision.CoordRRE		:= 0;
+	stDataToVision.CoordRRR		:= 0;
+
+	gResetPcCom 	:= FALSE;
+	NewState 		:= 10;
+
+10:
+		(*	------------------------------Cut position------------------------------	*)
+		(* If Cut pos needs to be sent to PC *)
+		IF getCutCoords  AND NOT getPickCoords THEN
+			FB_GET_CUT_COORD.Execute := TRUE;
+			uiSignalOutControl := FB_GET_CUT_COORD.OutQ;		(* Retreives Pick pos from robotPick *)
+			IF FB_GET_CUT_COORD.Done THEN	(* Check for pos sent. When acknowledge the pos is sent to PLC *)
+				FB_GET_CUT_COORD.Execute := FALSE;
+				GgetCoord := TRUE;						(* Starts GetCoordinates *)
+				getCutCoords := FALSE;
+			END_IF
+		END_IF
+
+		(*	------------------------------Pick position------------------------------	*)
+		IF getPickCoords  AND NOT getCutCoords THEN
+			FB_GET_PICK_COORD.Execute := TRUE;
+			uiSignalOutControl := FB_GET_PICK_COORD.OutQ;		(* Retreives Pick pos from robotPick *)
+			IF FB_GET_PICK_COORD.Done THEN	(* Check for pos sent. When acknowledge the pos is sent to PLC *)
+				FB_GET_PICK_COORD.Execute := FALSE;
+				GgetCoord := TRUE;						(* Starts GetCoordinates *)
+				getPickCoords := FALSE;
+			END_IF
+		END_IF
+
+		IF CutCoord THEN									(* If coordinates from cut has sbeen recieved, send to PC *)
+			(* CoordRG	--> Mapped to fieldbus Com to PC *)
+			stDataToVision.CoordXR1G := currentRobotX;
+			stDataToVision.CoordYR1G := currentRobotY;
+			stDataToVision.CoordZR1G := currentRobotZ;
+			stDataToVision.CoordRRA:= currentRobotA;
+			stDataToVision.CoordRRE := currentRobotE;
+			stDataToVision.CoordRRR := currentRobotR;
+			bPosSentToPcCom := TRUE;
+			CutCoord := FALSE;
+		END_IF
+
+		IF PickCoord THEN								(* If coordinates from pick has sbeen recieved, send to PC *)
+			(* CoordRG	--> Mapped to fieldbus Com to PC *)
+			stDataToVision.CoordXR2G := currentRobotX;
+			stDataToVision.CoordYR2G := currentRobotY;
+			stDataToVision.CoordZR2G := currentRobotZ;
+			stDataToVision.CoordRRA:= currentRobotA;
+			stDataToVision.CoordRRE := currentRobotE;
+			stDataToVision.CoordRRR := currentRobotR;
+			bPosSentToPcCom := TRUE;
+			FB_GET_PICK_COORD.Execute := FALSE;
+			PickCoord := FALSE;
+		END_IF
+
+		IF gResetPcCom THEN
+			NewState := 0;
+		END_IF
+
+END_CASE
+
+(* When PC has read the Command *)
+IF stDataToVision.ResultRead = 1 THEN
+	stDataToVision.CmdByte := 0;
+END_IF
+
+(* HMI bottons for controlling PC *)
+IF bHelloWorld THEN
+	stDataToVision.CmdByte := 1;
+ELSIF bCalibCamOneStart THEN
+	stDataToVision.CmdByte := 2;
+ELSIF bNewPosCalibCamOne THEN
+	stDataToVision.CmdByte := 3;
+ELSIF bEndCalibCamOne THEN
+	stDataToVision.CmdByte := 4;
+ELSIF bCalibCamTwoStart THEN
+	stDataToVision.CmdByte := 5;
+ELSIF bNewPosCalibCamTwo THEN
+	stDataToVision.CmdByte := 6;
+ELSIF bEndCalibCamTwo THEN
+	stDataToVision.CmdByte := 7;
+ELSIF bStartStopPlantCheck THEN
+	stDataToVision.CmdByte := 8;
+ELSIF bStopCheck THEN
+	stDataToVision.CmdByte := 9;
+ELSIF bGetPlantDataCamOne THEN
+	stDataToVision.CmdByte := 10;
+ELSIF bGetPlantDataCamTwo THEN
+	stDataToVision.CmdByte := 12;
+ELSIF bRestart THEN
+	stDataToVision.CmdByte := 14;
+ELSIF bShutdown THEN
+
+	stDataToVision.CmdByte := 15;
+ELSIF bTestCamPointCam2 THEN
+
+	stDataToVision.CmdByte := 13;
+ELSIF bTestCamPointCam1 THEN
+
+	stDataToVision.CmdByte := 11;
+ELSIF usiVisionCmd <> 0 THEN
+	stDataToVision.CmdByte := usiVisionCmd;
+ELSIF usiVisionCmd = 0 THEN
+	stDataToVision.CmdByte := 0;
+END_IF
+
+FB_CAM_ONE_CONTROL(ControlType := 1,			Command => bTestCamPointCam1,	CommandNo := stDataFromVision.CmdInProcess, 	Ack := stDataToVision.CmdByte, 	TrunkPosY := stDataFromVision.ResultPar2,
+							BunchPosX := stDataFromVision.ResultPar4,		BunchPosY := stDataFromVision.ResultPar5,		BunchPosZ := stDataFromVision.ResultPar6,		StemAngle := stDataFromVision.ResultPar7);
+FB_CAM_TWO_CONTROL(ControlType := 1,			Command => bTestCamPointCam2,	CommandNo := stDataFromVision.CmdInProcess,	Ack := stDataToVision.CmdByte,	X := stDataFromVision.ResultPar1, 	Y := stDataFromVision.ResultPar2, 	Z := stDataFromVision.ResultPar3,
+							RotZ0 := stDataFromVision.ResultPar4,	RotY := stDataFromVision.ResultPar5,	RotZ1 := stDataFromVision.ResultPar6, 	StemHeading := stDataFromVision.ResultPar7,	StemFound :=stDataFromVision.gStemFound,	JointFound := stDataFromVision.gJointFound);]]></ST>
+    </Implementation>
+    <LineIds Name="PcCom">
+      <LineId Id="21" Count="118" />
+      <LineId Id="168" Count="0" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="140" Count="7" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
