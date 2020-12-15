@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <DUT Name="ST_SelectAlarmLogStruct" Id="{5803ce95-ebf8-47b1-9239-6510435b404e}">
+    <Declaration><![CDATA[TYPE ST_SelectAlarmLogStruct :
+STRUCT
+	dtTime				: DT;
+	alarmId				: DINT;
+	deviceWhich			: STRING(50);
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <DUT Name="ST_SelectCurrentStruct" Id="{47b33052-0ac2-485a-861d-d6f7843b24e5}">
+    <Declaration><![CDATA[TYPE ST_SelectCurrentStruct :
+STRUCT
+	recipe_id				: DINT;
+	program_no				: DINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

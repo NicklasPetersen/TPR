@@ -24,6 +24,7 @@ VAR
 	FB_MOVE_ON_STEM_STATE: INT;
 	FB_GRAB_STEM_STATE: INT;
 	FB_GRAB_JOINT_STATE: INT;
+	turnOn: BOOL;
 END_VAR
 VAR_INPUT
 	FB_GET_STEM_STATE: INT;
@@ -33,7 +34,7 @@ VAR_OUTPUT
 	FB_DELEAF_STATE: INT;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[//iAlive := iAlive + 1;
+      <ST><![CDATA[iAlive := iAlive + 1;
 
 ///////////////////////////// INIT Function blocks to communication /////////////////////////////
 P_Mqtt();		// For pub/sub information to/from mosquitto broker
@@ -43,11 +44,17 @@ P_SqlGeneratTestData();
 
 P_SqlSelect();
 P_SqlSelectRecipe();
+P_SqlSelectCurrent();
+P_SqlSelectAlarm();
+P_SqlSelectAlarmLog();
 P_SqlSelectFrame();
 P_SqlSelectTop();
 P_SqlInsert();
+P_SqlInsertAlarmLog();
+P_SqlInsertLog();
 P_SqlInsertRowConstructor();
 P_SqlUpdate();
+P_SqlUpdateAlarmLog();
 P_SqlInsertRowConstructor();
 P_SqlInsertUnionAll();
 P_SqlDelete();
@@ -61,6 +68,11 @@ DB_Conn();
 OnOffRobotCut();
 IF  OnOffRobotCut.State <> OnOffRobotCut.NewState THEN
 	OnOffRobotCut.State := OnOffRobotCut.NewState;
+END_IF
+
+LogProgram();
+IF  LogProgram.State <> LogProgram.NewState THEN
+	LogProgram.State := LogProgram.NewState;
 END_IF
 
 Control();
@@ -136,8 +148,24 @@ IF BlockTest.State <> BlockTest.NewState THEN
 	BlockTest.State := BlockTest.NewState;
 END_IF
 
+(*Lukker griber ved opstart, så den ikke hænger fast i planterne on indkøring*)
+IF NOT turnOn THEN 
+	FB_CLOSE_GRIP.Execute := TRUE;
+	IF FB_CLOSE_GRIP.Done THEN
+		FB_CLOSE_GRIP.Execute := FALSE;
+		turnOn := TRUE;
+	END_IF
+END_IF
+
+IF BlockTest.State = 0 AND CalibCam1.State = 0 AND CalibCam2.State = 0 AND Control.State = 0 AND ControlAuto.State = 0 AND ControlGrabAuto.State = 0 AND ControlMoveToCalibPos.State = 0 AND Tools.State = 0 THEN
+	allZero := TRUE;
+ELSE
+	allZero := FALSE;
+END_IF
+
 ///////////////////////////// Reset sequence /////////////////////////////
 IF bResetButton THEN
+	bResetButton := FALSE;
 	Control.NewState := 1000;
 
 	ControlAuto.NewState := 1000;
@@ -194,18 +222,20 @@ IF bResetButton THEN
 	FB_CUT_TO_ZERO.			Execute := FALSE;
 	FB_PICK_TO_ZERO.		Execute := FALSE;
 
-	FB_CAM_ONE_CONTROL.	Execute := FALSE;
-	FB_CAM_ONE_CONTROL.	NewState := 1000;
-	FB_CAM_TWO_CONTROL.	Execute := FALSE;
-	FB_CAM_TWO_CONTROL.	NewState := 1000;
+	FB_CAM_ONE_CONTROL.	Execute 	:= FALSE;
+	FB_CAM_ONE_CONTROL.	NewState 	:= 1000;
+	FB_CAM_TWO_CONTROL.	Execute 	:= FALSE;
+	FB_CAM_TWO_CONTROL.	NewState 	:= 1000;
 	
-
+	gResetPcCom						:= TRUE;
+	
 	bService := FALSE;
 	gResetPcCom := TRUE;
 
 END_IF
 
 IF bResetButton2 THEN
+	bResetButton2 := FALSE;
 	Control.NewState := 1000;
 	BlockTest.NewState := 1000;
 	ControlAuto.NewState := 1000;
@@ -333,7 +363,13 @@ IF bStop OR bStopped THEN
 END_IF
 
 
-//uiprogNo := PROGRAM_DATA.usiProgram;
+uiprogNo := PROGRAM_DATA.usiProgram;
+IF PROGRAM_DATA.usiVelocity = 0 THEN
+	uiSignalOutSpeedControl := 1;
+ELSE
+	uiSignalOutSpeedControl := PROGRAM_DATA.usiVelocity;
+END_IF
+
 
 ///////////////////////////// FUNCTIONBLOCK CALL /////////////////////////////
 FB_SEND_POS				(ControlType := 1,		Command := Send_pos,					Ack := uiSignalInAck);
@@ -361,6 +397,8 @@ FB_RETRY_GRAB_STEM		(ControlType := 1,		Command := RETRY_GRAB_STEM,				Ack := ui
 FB_ROBOT_SERVICE		(ControlType := 1,		Command := ROBOT_SERVICE,				ACK := uiSignalInAck, Execute := bRobotServiceStart OR FB_ROBOT_SERVICE.Execute);
 FB_CUT_TO_ZERO			(ControlType := 1,		Command := CUT_BACK_TO_ZERO,			Ack := uiSignalInAck);
 FB_PICK_TO_ZERO			(ControlType := 1,		Command := PICK_BACK_TO_ZERO,			Ack := uiSignalInAck);
+FB_CUT_TO_IDLE			(ControlType := 1,		Command := CUT_TO_IDLE,					Ack := uiSignalInAck);
+FB_PICK_TO_IDLE			(ControlType := 1,		Command := PICK_TO_IDLE,				Ack := uiSignalInAck);
 
 FB_PLACE(Offset := 140,		Box_length := uiBoxLength, 		Box_width := uiBoxWidth,	Box_height := uiBoxHeight,		Stem_length := 200,	Mode := uiPackingModeNo);
 
@@ -371,29 +409,11 @@ FB_FIND_JOINT();
 FB_GRAB_JOINT();
 FB_DELEAF_PLACE();
 
-uiProgNo := PROGRAM_DATA.usiProgram;
 
 uiSignalOutBoxWidth		:= INT_TO_BYTE(uiBoxWidth/10);
 uiSignalOutBoxLength 	:= INT_TO_BYTE(uiBoxLength/10);
 uiSignalOutBoxHeight 	:= INT_TO_BYTE(uiBoxHeight/10);
 uiSignalOutPackingMode 	:= INT_TO_BYTE(uiPackingModeNo);
-
-///////////////////////////// MQTT /////////////////////////////
-// P_MQTT function block are always looking for the topic "mqtt-php/hmi2plc/opState"
-// If the value is either 'start', 'stop' or 'pause', publish the same value
-
-
-/////////////////////////// NOGET TIL GAMLE HMI /////////////////////////////////
-sprogName := sprogNameArray[uiprogNo+1];
-uiToolState := Tools.NewState;
-uiSignalOutSpeedControl := UINT_TO_BYTE(uiSpeedSetting);
-
-smodeName := smodeNameArray[uimodeNo+1];
-
-sPackingModeName := sPackingModeNameArray[uiPackingModeNo+1];
-
-
-
 ]]></ST>
     </Implementation>
     <LineIds Name="MAIN">
@@ -407,10 +427,16 @@ sPackingModeName := sPackingModeNameArray[uiPackingModeNo+1];
       <LineId Id="674" Count="0" />
       <LineId Id="459" Count="0" />
       <LineId Id="848" Count="0" />
+      <LineId Id="1132" Count="1" />
+      <LineId Id="1242" Count="0" />
       <LineId Id="887" Count="0" />
       <LineId Id="460" Count="0" />
-      <LineId Id="462" Count="1" />
-      <LineId Id="465" Count="2" />
+      <LineId Id="462" Count="0" />
+      <LineId Id="1134" Count="1" />
+      <LineId Id="463" Count="0" />
+      <LineId Id="465" Count="0" />
+      <LineId Id="1243" Count="0" />
+      <LineId Id="466" Count="1" />
       <LineId Id="469" Count="0" />
       <LineId Id="471" Count="0" />
       <LineId Id="473" Count="0" />
@@ -419,39 +445,58 @@ sPackingModeName := sPackingModeNameArray[uiPackingModeNo+1];
       <LineId Id="456" Count="0" />
       <LineId Id="30" Count="0" />
       <LineId Id="475" Count="0" />
-      <LineId Id="31" Count="41" />
+      <LineId Id="1124" Count="2" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="1128" Count="3" />
+      <LineId Id="1127" Count="0" />
+      <LineId Id="35" Count="37" />
       <LineId Id="74" Count="4" />
       <LineId Id="80" Count="9" />
       <LineId Id="91" Count="19" />
+      <LineId Id="1060" Count="0" />
+      <LineId Id="1051" Count="0" />
+      <LineId Id="1050" Count="0" />
+      <LineId Id="1055" Count="2" />
+      <LineId Id="1059" Count="0" />
+      <LineId Id="1052" Count="1" />
+      <LineId Id="1237" Count="0" />
+      <LineId Id="1092" Count="0" />
+      <LineId Id="1238" Count="0" />
+      <LineId Id="1240" Count="1" />
+      <LineId Id="1239" Count="0" />
       <LineId Id="540" Count="1" />
-      <LineId Id="544" Count="57" />
+      <LineId Id="544" Count="0" />
+      <LineId Id="986" Count="0" />
+      <LineId Id="545" Count="56" />
       <LineId Id="918" Count="0" />
       <LineId Id="602" Count="0" />
       <LineId Id="920" Count="0" />
+      <LineId Id="1019" Count="0" />
+      <LineId Id="1018" Count="0" />
       <LineId Id="919" Count="0" />
-      <LineId Id="603" Count="70" />
+      <LineId Id="604" Count="5" />
+      <LineId Id="987" Count="0" />
+      <LineId Id="610" Count="63" />
       <LineId Id="542" Count="1" />
       <LineId Id="677" Count="57" />
       <LineId Id="675" Count="0" />
       <LineId Id="850" Count="1" />
       <LineId Id="854" Count="0" />
+      <LineId Id="1200" Count="1" />
+      <LineId Id="1204" Count="1" />
+      <LineId Id="1202" Count="0" />
+      <LineId Id="1168" Count="0" />
       <LineId Id="737" Count="1" />
       <LineId Id="741" Count="16" />
       <LineId Id="760" Count="3" />
       <LineId Id="765" Count="0" />
       <LineId Id="767" Count="0" />
-      <LineId Id="769" Count="9" />
+      <LineId Id="769" Count="1" />
+      <LineId Id="955" Count="0" />
+      <LineId Id="953" Count="0" />
+      <LineId Id="771" Count="7" />
       <LineId Id="739" Count="0" />
-      <LineId Id="120" Count="0" />
-      <LineId Id="951" Count="0" />
-      <LineId Id="121" Count="5" />
-      <LineId Id="815" Count="2" />
-      <LineId Id="127" Count="0" />
-      <LineId Id="258" Count="1" />
-      <LineId Id="809" Count="5" />
-      <LineId Id="318" Count="1" />
-      <LineId Id="358" Count="0" />
-      <LineId Id="424" Count="0" />
+      <LineId Id="120" Count="5" />
       <LineId Id="423" Count="0" />
     </LineIds>
   </POU>

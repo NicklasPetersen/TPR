@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
   <POU Name="ErrorHandle" Id="{9045efeb-fc7f-4c61-ace4-a310e1a228b2}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM ErrorHandle
 VAR_INPUT
@@ -8,9 +8,9 @@ END_VAR
 
 VAR
 
-	uiSignalOutAlarm AT %Q*: BYTE;
-	uiSignalInAlarmCode AT %I*: UDINT;
-	uiSignalInAlarm AT %I*: BYTE;
+	uiSignalOutAlarm : BYTE;
+	uiSignalInAlarmCode : UDINT;
+	uiSignalInAlarm : BYTE;
 
 	NewState: INT := 0;
 
@@ -19,47 +19,100 @@ VAR
 	bCutRobot: BOOL;
 	bErrorWhere: INT;
 
+	sSeverity: STRING;
+	iLen: INT;
+	iSeverity: USINT;
 
 	(*Timer*)
 	TonWait : TON;
 
+	ilentemp: INT;
+	sString: STRING(255);
+	updateFlag: BOOL;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[CASE State OF
 
 	0:		(* Kig efter om der er opstået en fejl *)
 		IF uiSignalInAlarmCode <> 0 THEN
+			robotAlarmId := uiSignalInAlarmCode;
 			(* Hvis der er en fejl, sat HMI i alarm state *)
 			bAlarmState := TRUE;
 			(* Find ud af hvilken robot der kommer med fejlen *)
 			IF bErrorWhere = 1 THEN
+				sDeviceWhich := 'Robot Cut';
 				bCutRobot := TRUE;
 			ELSIF bErrorWhere = 2 THEN
+				sDeviceWhich := 'Robot Pick';
 				bPickRobot := TRUE;
 			END_IF
-
-			(* Stop running - Virker endnu ikke *)
-			uiSignalOut3.00 := TRUE;
-			bNoDriveOff := FALSE;
-
-			(* Vent på alarmen bliver godkendt *)
-			IF bAckAlarm THEN
-				bAckAlarm := FALSE;
-				bPickRobot := FALSE;
-				bCutRobot := FALSE;
-				NewState := 10;
-			END_IF
-
+			NewState := 10;
 		END_IF
-
-	10:
-		(* Reset, og gør klar til at køre igen *)
+		
+	10:		(* Look in DB for alarm severity *)
+		P_SqlSelectAlarm.bRead := TRUE;
+		IF P_SqlSelectAlarm.bDone THEN
+			P_SqlSelectAlarm.bRead := FALSE;
+			
+			// Get alarm description and find severity
+			sString		:= RIGHT(P_SqlSelectAlarm.astData[0].alarmDesc, LEN(P_SqlSelectAlarm.astData[0].alarmDesc) - 1);
+			iLen 		:= FIND(sString, '-');
+			ilentemp := iLen;
+			sSeverity 	:= LEFT( P_SqlSelectAlarm.astData[0].alarmDesc, iLen);
+			iSeverity 	:= TO_USINT(sSeverity);
+			IF iSeverity >= 4 THEN
+				bStop := TRUE;
+				NewState := 20;
+			ELSE
+				NewState := 30; //30
+			END_IF
+		END_IF
+		
+	20:		(* Send alarm ID to MQTT broker *)
+		(* Stop running - Virker endnu ikke *)
+		gSeverity := iSeverity;
+		uiSignalOut3.00 := TRUE;
+		bNoDriveOff := FALSE;
+		bAlarm := TRUE;
+		NewState := 30;
+	
+		
+	30:		(* Input alarm in DB table alarmLog *)
+		IF (sDeviceWhich <> '') THEN
+			P_SqlInsertAlarmLog.bInsert := TRUE;
+			IF P_SqlInsertAlarmLog.bDone THEN
+				P_SqlInsertAlarmLog.bInsert := FALSE;
+				NewState := 40;
+			END_IF
+		ELSE
+			robotAlarmId := 999; // Unknown PLC error
+			sDeviceWhich := 'PLC';
+			P_SqlInsertAlarmLog.bInsert := TRUE;
+			IF P_SqlInsertAlarmLog.bDone THEN
+				P_SqlInsertAlarmLog.bInsert := FALSE;
+				NewState := 40;
+			END_IF
+		END_IF
+		
+	40:		(* Wait for alarm to be acknowledged *)
+		IF NOT bAlarm THEN
+			sDeviceWhich := '';
+			robotAlarmId := 0;
+			bAlarmAck := TRUE;
+			NewState := 50;
+		END_IF
+		
+	50:		(* Reset, og gør klar til at køre igen *)
+		bAlarmAck := FALSE;
 		uiSignalOut3.00 := FALSE;
 		bNoDriveOff := TRUE;
 		bCancelAlarm := TRUE;
+		TonWait.IN := TRUE;
 		IF TonWait.Q THEN
+			TonWait.IN := FALSE;
 			bCancelAlarm := FALSE;
 			uiAlarm := 0;
+			gSeverity := 0; 
 			bAlarmState := FALSE;
 			uiStatus := 0;
 			NewState  := 0;
@@ -67,18 +120,79 @@ END_VAR]]></Declaration>
 
 END_CASE
 
+bErrorWhere := WhichRobot;
+uiSignalInAlarmCode := ErrorNum;
+uiAlarm := uiSignalInAlarmCode;
+CancelAlarm := BOOL_TO_BYTE(bCancelAlarm);
+
+(*
 bErrorWhere := uiSignalInAlarm;
 uiAlarm := uiSignalInAlarmCode;
-uiSignalOutAlarm.00 := bCancelAlarm;
+uiSignalOutAlarm.00 := bCancelAlarm;*)
 
-IF uiSignalInAlarmCode = 0  AND NewState = 10THEN
+IF uiSignalInAlarmCode = 0  AND NewState = 10 THEN
 	bAckAlarm := FALSE;
 END_IF
 
-TonWait(IN:=State = 10,	PT:=t#1000ms ,	Q=> ,	ET=> );]]></ST>
+TonWait(IN:=State = 50,	PT:=t#1000ms ,	Q=> ,	ET=> );]]></ST>
     </Implementation>
     <LineIds Name="ErrorHandle">
-      <LineId Id="23" Count="50" />
+      <LineId Id="23" Count="3" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="27" Count="3" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="31" Count="1" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="100" Count="1" />
+      <LineId Id="103" Count="3" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="112" Count="1" />
+      <LineId Id="303" Count="0" />
+      <LineId Id="114" Count="0" />
+      <LineId Id="299" Count="0" />
+      <LineId Id="117" Count="0" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="393" Count="4" />
+      <LineId Id="358" Count="0" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="339" Count="0" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="129" Count="0" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="130" Count="0" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="127" Count="0" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="377" Count="0" />
+      <LineId Id="109" Count="0" />
+      <LineId Id="107" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="142" Count="3" />
+      <LineId Id="132" Count="2" />
+      <LineId Id="136" Count="3" />
+      <LineId Id="141" Count="0" />
+      <LineId Id="140" Count="0" />
+      <LineId Id="135" Count="0" />
+      <LineId Id="146" Count="2" />
+      <LineId Id="150" Count="1" />
+      <LineId Id="212" Count="0" />
+      <LineId Id="152" Count="2" />
+      <LineId Id="51" Count="1" />
+      <LineId Id="213" Count="0" />
+      <LineId Id="53" Count="1" />
+      <LineId Id="184" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="185" Count="0" />
+      <LineId Id="56" Count="1" />
+      <LineId Id="272" Count="0" />
+      <LineId Id="58" Count="5" />
+      <LineId Id="239" Count="2" />
+      <LineId Id="244" Count="0" />
+      <LineId Id="243" Count="0" />
+      <LineId Id="245" Count="0" />
+      <LineId Id="64" Count="9" />
     </LineIds>
   </POU>
 </TcPlcObject>

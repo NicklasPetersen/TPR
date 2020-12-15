@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+<VarLinks>
+	<OwnerA Name="InputDst" Prefix="TIPC^TPR^TPR Instance" Type="1">
+		<OwnerB Name="TIID^Device 2 (EtherCAT)^Term 1 (EK1200)^Term 2 (EL1859)">
+			<Link VarA="Global_Variables.bGripSensorStop" GrpA="PLC Inputs" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 2^Input" Size="1"/>
+			<Link VarA="OnOffRobotCut.bStartBotton" GrpA="PLC Inputs" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 1^Input" Size="1"/>
+		</OwnerB>
+		<OwnerB Name="TIID^Device 2 (EtherCAT)^Term 1 (EK1200)^Term 4 (EL5151)">
+			<Link VarA="Global_Variables.uiSignalInEncoderCount" GrpA="PLC Inputs" TypeA="UDINT" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000008}" VarB="ENC Inputs^Counter value" Size="16"/>
+		</OwnerB>
+		<OwnerB Name="TIID^Device 3 (EL6751)^Box 7 (CX2xxx CANopen Slave)">
+			<Link VarA="ErrorVar.ErrorNum" GrpA="PLC Inputs" TypeA="DWORD" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000007}" VarB="TxPDO 4^Inputs^Byte_Input_30" Size="8"/>
+			<Link VarA="ErrorVar.ErrorNum" GrpA="PLC Inputs" TypeA="DWORD" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000007}" VarB="TxPDO 4^Inputs^Byte_Input_31" Size="8" OffsA="8"/>
+			<Link VarA="ErrorVar.ErrorNum" GrpA="PLC Inputs" TypeA="DWORD" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000007}" VarB="TxPDO 4^Inputs^Byte_Input_32" Size="8" OffsA="16"/>
+			<Link VarA="ErrorVar.WhichRobot" GrpA="PLC Inputs" TypeA="BYTE" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="TxPDO 4^Inputs^Byte_Input_29"/>
+			<Link VarA="Global_Variables.uiSignalIn2" GrpA="PLC Inputs" TypeA="BYTE" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="TxPDO 1^Inputs^Byte_Input_2"/>
+			<Link VarA="Global_Variables.uiSignalIn4" GrpA="PLC Inputs" TypeA="BYTE" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="TxPDO 1^Inputs^Byte_Input_4"/>
+			<Link VarA="Global_Variables.uiSignalInA" GrpA="PLC Inputs" TypeA="INT" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="TxPDO 2^Inputs^Byte_Input_13" Size="8"/>
+			<Link VarA="Global_Variables.uiSignalInA" GrpA="PLC Inputs" TypeA="INT" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="TxPDO 2^Inputs^Byte_Input_14" Size="8" OffsA="8"/>
+			<Link VarA="Global_Variables.uiSignalInAck" GrpA="PLC Inputs" TypeA="BYTE" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="TxPDO 1^Inputs^Byte_Input_5"/>
+			<Link VarA="Global_Variables.uiSignalInE" GrpA="PLC Inputs" TypeA="INT" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="TxPDO 2^Inputs^Byte_Input_15" Size="8"/>
+			<Link VarA="Global_Variables.uiSignalInE" GrpA="PLC Inputs" TypeA="INT" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="TxPDO 2^Inputs^Byte_Input_16" Size="8" OffsA="8"/>
+			<Link VarA="Global_Variables.uiSignalInOrientation" GrpA="PLC Inputs" TypeA="BYTE" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="TxPDO 3^Inputs^Byte_Input_19"/>
+			<Link VarA="Global_Variables.uiSignalInR" GrpA="PLC Inputs" TypeA="INT" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="TxPDO 3^Inputs^Byte_Input_17" Size="8"/>
+			<Link VarA="Global_Variables.uiSignalInR" GrpA="PLC Inputs" TypeA="INT" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="TxPDO 3^Inputs^Byte_Input_18" Size="8" OffsA="8"/>
+			<Link VarA="Global_Variables.uiSignalInRobotFail" GrpA="PLC Inputs" TypeA="BYTE" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="TxPDO 4^Inputs^Byte_Input_27"/>
+			<Link VarA="Global_Variables.uiSignalInShared" GrpA="PLC Inputs" TypeA="BYTE" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="TxPDO 2^Inputs^Byte_Input_12"/>
+			<Link VarA="Global_Variables.uiSignalInToolAck" GrpA="PLC Inputs" TypeA="BYTE" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="TxPDO 3^Inputs^Byte_Input_20"/>
+			<Link VarA="Global_Variables.uiSignalInX" GrpA="PLC Inputs" TypeA="INT" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="TxPDO 3^Inputs^Byte_Input_21" Size="8"/>
+			<Link VarA="Global_Variables.uiSignalInX" GrpA="PLC Inputs" TypeA="INT" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="TxPDO 3^Inputs^Byte_Input_22" Size="8" OffsA="8"/>
+			<Link VarA="Global_Variables.uiSignalInY" GrpA="PLC Inputs" TypeA="INT" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="TxPDO 3^Inputs^Byte_Input_23" Size="8"/>
+			<Link VarA="Global_Variables.uiSignalInY" GrpA="PLC Inputs" TypeA="INT" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="TxPDO 3^Inputs^Byte_Input_24" Size="8" OffsA="8"/>
+			<Link VarA="Global_Variables.uiSignalInZ" GrpA="PLC Inputs" TypeA="INT" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="TxPDO 4^Inputs^Byte_Input_25" Size="8"/>
+			<Link VarA="Global_Variables.uiSignalInZ" GrpA="PLC Inputs" TypeA="INT" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="TxPDO 4^Inputs^Byte_Input_26" Size="8" OffsA="8"/>
+			<Link VarA="OnOffRobotCut.uiSignalIn1" GrpA="PLC Inputs" TypeA="BYTE" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="TxPDO 1^Inputs^Byte_Input_1"/>
+			<Link VarA="OnOffRobotCut.uiSignalIn3" GrpA="PLC Inputs" TypeA="BYTE" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="TxPDO 1^Inputs^Byte_Input_3"/>
+		</OwnerB>
+	</OwnerA>
+	<OwnerA Name="OutputSrc" Prefix="TIPC^TPR^TPR Instance" Type="2">
+		<OwnerB Name="TIID^Device 2 (EtherCAT)^Term 1 (EK1200)^Term 2 (EL1859)">
+			<Link VarA="Tools.qValve1" GrpA="PLC Outputs" TypeA="BOOL" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 9^Output" Size="1"/>
+			<Link VarA="Tools.qValve2" GrpA="PLC Outputs" TypeA="BOOL" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 10^Output" Size="1"/>
+			<Link VarA="Tools.qValve3" GrpA="PLC Outputs" TypeA="BOOL" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 11^Output" Size="1"/>
+			<Link VarA="Tools.qValve4" GrpA="PLC Outputs" TypeA="BOOL" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 13^Output" Size="1"/>
+			<Link VarA="Tools.qValve5" GrpA="PLC Outputs" TypeA="BOOL" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 12^Output" Size="1"/>
+		</OwnerB>
+		<OwnerB Name="TIID^Device 2 (EtherCAT)^Term 1 (EK1200)^Term 3 (EL2809)">
+			<Link VarA="CartControls.CartBackward" GrpA="PLC Outputs" TypeA="BOOL" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 8^Output" Size="1"/>
+			<Link VarA="CartControls.CartDown" GrpA="PLC Outputs" TypeA="BOOL" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 6^Output" Size="1"/>
+			<Link VarA="CartControls.CartForward" GrpA="PLC Outputs" TypeA="BOOL" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 7^Output" Size="1"/>
+			<Link VarA="CartControls.CartUp" GrpA="PLC Outputs" TypeA="BOOL" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 5^Output" Size="1"/>
+			<Link VarA="CartControls.WheelsChange" GrpA="PLC Outputs" TypeA="BOOL" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 10^Output" Size="1"/>
+			<Link VarA="Tools.qMotorDirection" GrpA="PLC Outputs" TypeA="BOOL" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 2^Output" Size="1"/>
+			<Link VarA="Tools.qMotorRun" GrpA="PLC Outputs" TypeA="BOOL" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 1^Output" Size="1"/>
+		</OwnerB>
+		<OwnerB Name="TIID^Device 2 (EtherCAT)^Term 1 (EK1200)^Term 4 (EL5151)">
+			<Link VarA="Global_Variables.bSetCounter" GrpA="PLC Outputs" TypeA="BOOL" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="ENC Outputs^Control^Set counter" Size="1"/>
+			<Link VarA="Global_Variables.uiSetCounterValue" GrpA="PLC Outputs" TypeA="UDINT" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000008}" VarB="ENC Outputs^Set counter value" Size="16"/>
+		</OwnerB>
+		<OwnerB Name="TIID^Device 3 (EL6751)^Box 7 (CX2xxx CANopen Slave)">
+			<Link VarA="ErrorVar.CancelAlarm" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 4^Outputs^Byte_Output_32"/>
+			<Link VarA="ErrorVar.gSeverity" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 4^Outputs^Byte_Output_31"/>
+			<Link VarA="Global_Variables.gJointFound" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 3^Outputs^Byte_Output_18"/>
+			<Link VarA="Global_Variables.gTomatoHeading" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 4^Outputs^Byte_Output_29"/>
+			<Link VarA="Global_Variables.iImageZone" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 2^Outputs^Byte_Output_16"/>
+			<Link VarA="Global_Variables.uiCalibImgCount" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 2^Outputs^Byte_Output_14"/>
+			<Link VarA="Global_Variables.uiSignalOut1" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 1^Outputs^Byte_Output_1"/>
+			<Link VarA="Global_Variables.uiSignalOut2" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 1^Outputs^Byte_Output_2"/>
+			<Link VarA="Global_Variables.uiSignalOut3" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 1^Outputs^Byte_Output_3"/>
+			<Link VarA="Global_Variables.uiSignalOutA" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 2^Outputs^Byte_Output_9"/>
+			<Link VarA="Global_Variables.uiSignalOutBoxHeight" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 4^Outputs^Byte_Output_28"/>
+			<Link VarA="Global_Variables.uiSignalOutBoxLength" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 4^Outputs^Byte_Output_26"/>
+			<Link VarA="Global_Variables.uiSignalOutBoxWidth" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 4^Outputs^Byte_Output_27"/>
+			<Link VarA="Global_Variables.uiSignalOutControl" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 1^Outputs^Byte_Output_8"/>
+			<Link VarA="Global_Variables.uiSignalOutE" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 2^Outputs^Byte_Output_10"/>
+			<Link VarA="Global_Variables.uiSignalOutOrientation" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 2^Outputs^Byte_Output_12"/>
+			<Link VarA="Global_Variables.uiSignalOutPackingMode" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 4^Outputs^Byte_Output_25"/>
+			<Link VarA="Global_Variables.uiSignalOutPick" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 3^Outputs^Byte_Output_17"/>
+			<Link VarA="Global_Variables.uiSignalOutR" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 2^Outputs^Byte_Output_11"/>
+			<Link VarA="Global_Variables.uiSignalOutShared" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 1^Outputs^Byte_Output_7"/>
+			<Link VarA="Global_Variables.uiSignalOutSpeedControl" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 2^Outputs^Byte_Output_13"/>
+			<Link VarA="Global_Variables.uiSignalOutTool" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 2^Outputs^Byte_Output_15"/>
+			<Link VarA="Global_Variables.uiSignalOutX" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 1^Outputs^Byte_Output_4"/>
+			<Link VarA="Global_Variables.uiSignalOutX2" GrpA="PLC Outputs" TypeA="INT" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="RxPDO 3^Outputs^Byte_Output_19" Size="8"/>
+			<Link VarA="Global_Variables.uiSignalOutX2" GrpA="PLC Outputs" TypeA="INT" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="RxPDO 3^Outputs^Byte_Output_20" Size="8" OffsA="8"/>
+			<Link VarA="Global_Variables.uiSignalOutY" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 1^Outputs^Byte_Output_5"/>
+			<Link VarA="Global_Variables.uiSignalOutY2" GrpA="PLC Outputs" TypeA="INT" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="RxPDO 3^Outputs^Byte_Output_21" Size="8"/>
+			<Link VarA="Global_Variables.uiSignalOutY2" GrpA="PLC Outputs" TypeA="INT" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="RxPDO 3^Outputs^Byte_Output_22" Size="8" OffsA="8"/>
+			<Link VarA="Global_Variables.uiSignalOutZ" GrpA="PLC Outputs" TypeA="BYTE" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000001}" VarB="RxPDO 1^Outputs^Byte_Output_6"/>
+			<Link VarA="Global_Variables.uiSignalOutZ2" GrpA="PLC Outputs" TypeA="INT" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="RxPDO 3^Outputs^Byte_Output_23" Size="8"/>
+			<Link VarA="Global_Variables.uiSignalOutZ2" GrpA="PLC Outputs" TypeA="INT" InOutA="1" GuidA="{18071995-0000-0000-0000-000000000006}" VarB="RxPDO 3^Outputs^Byte_Output_24" Size="8" OffsA="8"/>
+		</OwnerB>
+	</OwnerA>
+</VarLinks>

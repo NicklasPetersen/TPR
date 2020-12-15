@@ -19,7 +19,6 @@ IF P_SqlSelectRecipe.bDone THEN
 	PROGRAM_DATA.usiOpMode			:= DINT_TO_USINT(P_SqlSelectRecipe.astData[0].Operation_mode_id);
 	PROGRAM_DATA.usiPackingPattern	:= DINT_TO_USINT(P_SqlSelectRecipe.astData[0].packing_pattern_id);
 	PROGRAM_DATA.usiNewVelocity		:= DINT_TO_USINT(P_SqlSelectRecipe.astData[0].recipe_velocity);
-	uiSpeedSetting					:= DINT_TO_USINT(P_SqlSelectRecipe.astData[0].recipe_velocity);
 END_IF
 
 frameSum := FRAME_DATA.ct_x + FRAME_DATA.ct_y + FRAME_DATA.ct_z + FRAME_DATA.ct_a + FRAME_DATA.ct_e + FRAME_DATA.ct_r + 
@@ -64,12 +63,21 @@ IF P_SqlSelectFrame.bDone OR frameSum = 1 THEN
 		P_SqlSelectFrame.bRead := FALSE;
 	END_IF
 END_IF	
+
+IF (PROGRAM_DATA.usiProgram = 0) OR (PROGRAM_DATA.usiRecipe = 0 ) THEN
+	P_SqlSelectCurrent.bRead := TRUE;
+	IF P_SqlSelectCurrent.bDone THEN
+		P_SqlSelectCurrent.bRead 	:= FALSE;
+		PROGRAM_DATA.usiNewProgram 	:= DINT_TO_USINT(P_SqlSelectCurrent.astData[0].program_no);
+		PROGRAM_DATA.usiNewRecipe	:= DINT_TO_USINT(P_SqlSelectCurrent.astData[0].recipe_id);
+		P_SqlSelectRecipe.bRead := TRUE;
+	END_IF
+END_IF
 ]]></ST>
     </Implementation>
     <LineIds Name="DB_Conn">
       <LineId Id="15" Count="1" />
       <LineId Id="6" Count="7" />
-      <LineId Id="73" Count="0" />
       <LineId Id="5" Count="0" />
       <LineId Id="19" Count="0" />
       <LineId Id="18" Count="0" />
@@ -92,6 +100,12 @@ END_IF
       <LineId Id="30" Count="0" />
       <LineId Id="66" Count="0" />
       <LineId Id="64" Count="1" />
+      <LineId Id="73" Count="2" />
+      <LineId Id="77" Count="1" />
+      <LineId Id="80" Count="1" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="76" Count="0" />
       <LineId Id="25" Count="0" />
     </LineIds>
   </POU>

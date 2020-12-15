@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
   <POU Name="GetCoordinates" Id="{73f5f780-e16c-4fb8-b594-72e6c78ff255}" SpecialFunc="None">
     <Declaration><![CDATA[ PROGRAM GetCoordinates
 VAR_INPUT
@@ -91,6 +91,7 @@ CASE State OF
 				PickCoord := TRUE;
 			END_IF
 			bGetCoordDone := TRUE;
+			bGetCutCoordDone:= TRUE;
 			NewState := 0;
 
 
@@ -99,7 +100,9 @@ END_CASE
 Wait		(IN:=  bWait		, PT:=t#400ms, Q=>, ET=>); 	(*Timer*)]]></ST>
     </Implementation>
     <LineIds Name="GetCoordinates">
-      <LineId Id="12" Count="82" />
+      <LineId Id="12" Count="76" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="89" Count="5" />
     </LineIds>
   </POU>
 </TcPlcObject>

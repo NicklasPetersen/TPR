@@ -20,11 +20,11 @@ END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[//Update record i database.
-sSql := 'UPDATE myTable SET myCustomer = $'¤1¤$', myValue = ¤2¤ WHERE myId = ¤3¤';
+sSql := 'UPDATE alarmLog SET time = CURRENT_TIMESTAMP WHERE time = ¤1¤';
 
-F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤1¤', sReplace:= sCustomer);  //Replace placeholder
-F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤2¤', sReplace:= TO_STRING(rValue)); //Replace placeholder
-F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤3¤', sReplace:= TO_STRING(iId)); //Replace placeholder
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤1¤', sReplace:= TO_STRING(P_SqlSelectAlarmLog.astData[0].dtTime));  //Replace placeholder
+//F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤2¤', sReplace:= TO_STRING(rValue)); //Replace placeholder
+//F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤3¤', sReplace:= TO_STRING(iId)); //Replace placeholder
 
 
 

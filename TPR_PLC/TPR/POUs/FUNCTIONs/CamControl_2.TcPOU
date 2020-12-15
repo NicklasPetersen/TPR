@@ -14,6 +14,8 @@ VAR_INPUT
 
 	StemFound:		USINT;
 	JointFound:		USINT;
+	TomatoFound:   	USINT;
+	TrussFound:		USINT;
 
 	ControlType: 		USINT;		(*	1: Controlling valves from Robot		2: Controlling valves from Robot and  PLC		3: Close only using PLC		4: Open only using PLC		*)
 	CommandNo:		USINT;		(*	Command to Robot		*)

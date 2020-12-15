@@ -12,6 +12,7 @@ END_VAR
 VAR_OUTPUT
 	OutQ: 		BOOL;
 	OutQ2: 		BOOL;
+	OutQ3: 		BOOL;
 END_VAR
 VAR
 	WaitValve:	TON;
@@ -33,7 +34,7 @@ CASE  State OF
 		IF Execute THEN
 			IF ControlType = 1 THEN
 				NewState	 :=10;
-			ELSIF ControlType = 2 THEN
+			ELSIF ControlType = 2 OR ControlType = 5 THEN
 				NewState := 100;
 			ELSIF ControlType = 3 OR ControlType = 4 THEN
 				NewState := 200;
@@ -41,10 +42,10 @@ CASE  State OF
 				NewState := 0;
 			END_IF
 		ELSIF ExecuteHmi THEN
-			ExecuteHmi := FALSE;
+			//ExecuteHmi := FALSE;
 			IF ControlType = 1 THEN
 				NewState	 :=10;
-			ELSIF ControlType = 2 THEN
+			ELSIF ControlType = 2 OR ControlType = 5 THEN
 				NewState := 100;
 			ELSIF ControlType = 3 OR ControlType = 4 THEN
 				NewState := 200;
@@ -78,8 +79,25 @@ CASE  State OF
 
 	120:
 		OutQ2 := FALSE;
+		IF ControlType = 5 THEN
+			NewState := 130;
+		ELSE
+			NewState := 140;
+		END_IF
+		
+	130:
+		OutQ3 := TRUE;
 		bValveTime := TRUE;
 		IF waitValve.Q THEN
+			bValveTime := FALSE;
+			NewState 	:=140;
+		END_IF
+		
+	140:
+		//OutQ3 := FALSE;
+		bValveTime := TRUE;
+		IF waitValve.Q THEN
+			OutQ3 := FALSE;
 			bValveTime := FALSE;
 			NewState 	:= 1000;
 		END_IF
@@ -112,7 +130,7 @@ CASE  State OF
 END_CASE
 
 (* Timer *)
-WaitValve		(IN:=  bValveTime		, PT:=t#500ms, Q=>, ET=>); 		(*Timer*)		(* For waiting for Valves 			*)]]></ST>
+WaitValve		(IN:=  bValveTime		, PT:=T#1500MS, Q=>, ET=>); 		(*Timer*)		(* For waiting for Valves 			*)]]></ST>
     </Implementation>
     <LineIds Name="ValveControl_1">
       <LineId Id="20" Count="7" />
@@ -122,7 +140,18 @@ WaitValve		(IN:=  bValveTime		, PT:=t#500ms, Q=>, ET=>); 		(*Timer*)		(* For wai
       <LineId Id="138" Count="0" />
       <LineId Id="122" Count="7" />
       <LineId Id="121" Count="0" />
-      <LineId Id="37" Count="61" />
+      <LineId Id="37" Count="26" />
+      <LineId Id="185" Count="1" />
+      <LineId Id="188" Count="1" />
+      <LineId Id="187" Count="0" />
+      <LineId Id="190" Count="1" />
+      <LineId Id="193" Count="4" />
+      <LineId Id="192" Count="0" />
+      <LineId Id="183" Count="1" />
+      <LineId Id="198" Count="0" />
+      <LineId Id="64" Count="1" />
+      <LineId Id="213" Count="0" />
+      <LineId Id="66" Count="32" />
     </LineIds>
   </POU>
 </TcPlcObject>

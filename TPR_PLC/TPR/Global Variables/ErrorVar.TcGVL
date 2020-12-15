@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <GVL Name="ErrorVar" Id="{d13f19be-7c01-43c2-8686-271816ff2dc5}">
+    <Declaration><![CDATA[//{attribute 'qualified_only'}
+VAR_GLOBAL
+	ErrorNum 			AT %I*: DWORD; (* Error/warning received from the robots *)
+	WhichRobot			AT %I*: BYTE; (* 1:Cut 2:Pick *)
+	CancelAlarm			AT %Q*: BYTE; (* 0:Waiting for cancel alarm 1:Cancel Alarm*)
+	gSeverity			AT %Q*: BYTE; (* 0:No Alarm 1:Warning 2:Error *)
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

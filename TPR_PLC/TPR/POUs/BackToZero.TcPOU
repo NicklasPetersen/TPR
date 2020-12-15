@@ -21,6 +21,10 @@ VAR
 	uiCutCoordZ: UINT;
 
 	timer : TON;
+	CoordZR2G: INT;
+	PICKMOVED: BOOL;
+	CUTMOVED: BOOL;
+	whatState: INT;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[(* Start connection to Robot Cut if physical botton or HMI button is pressed *)
@@ -39,6 +43,7 @@ CASE State OF
 
 	10:		(* RESET ALL SEQUENCES *)
 		IF NOT bReset THEN
+			whatState :=  Control.State;
 			bReset := TRUE;
 			BlockTest.				NewState := 1000;
 			Control.					NewState := 1000;
@@ -136,9 +141,45 @@ CASE State OF
 				NewState := 50;
 			END_IF
 		END_IF
+		
+	50:		(* MOVE THE FIRST ROBOT AWAY *)
+		IF whatState >= 400 AND whatState <=500 THEN
+			FB_PICK_TO_ZERO.Execute := TRUE;
+			uiSignalOutControl := FB_PICK_TO_ZERO.OutQ;
+			IF FB_PICK_TO_ZERO.Done THEN
+				PICKMOVED := TRUE;
+				FB_PICK_TO_ZERO.Execute := FALSE;
+				NewState := 60;
+			END_IF
+		ELSE
+			FB_CUT_TO_ZERO.Execute := TRUE;
+			uiSignalOutControl := FB_CUT_TO_ZERO.OutQ;
+			IF FB_CUT_TO_ZERO.Done THEN
+				CUTMOVED := TRUE;
+				FB_CUT_TO_ZERO.Execute := FALSE;
+				NewState := 60;
+			END_IF
+		END_IF
 
-	50:		(* MOVE THE LOWEST ROBOT AWAY *)
-		IF uiCutCoordZ < (uiPickCoordZ - 50) THEN
+	60:		(* MOVE THE LAST ROBOT *)
+		IF PICKMOVED THEN
+			FB_CUT_TO_ZERO.Execute := TRUE;
+			uiSignalOutControl := FB_CUT_TO_ZERO.OutQ;
+			IF FB_CUT_TO_ZERO.Done THEN
+				FB_CUT_TO_ZERO.Execute := FALSE;
+				NewState := 70;
+			END_IF
+		ELSE
+			FB_PICK_TO_ZERO.Execute := TRUE;
+			uiSignalOutControl := FB_PICK_TO_ZERO.OutQ;
+			IF FB_PICK_TO_ZERO.Done THEN
+				FB_PICK_TO_ZERO.Execute := FALSE;
+				NewState := 70;
+			END_IF
+		END_IF
+
+	(*50:		(* MOVE THE LOWEST ROBOT AWAY *)
+		IF uiCutCoordZ < (uiPickCoordZ - 20) THEN
 			FB_CUT_TO_ZERO.Execute := TRUE;
 			uiSignalOutControl := FB_CUT_TO_ZERO.OutQ;
 			IF FB_CUT_TO_ZERO.Done THEN
@@ -155,7 +196,7 @@ CASE State OF
 		END_IF
 
 	60:		(* MOVE THE LAST ROBOT *)
-		IF uiCutCoordZ > (uiPickCoordZ - 50) THEN
+		IF uiCutCoordZ > (uiPickCoordZ - 20) THEN
 			FB_CUT_TO_ZERO.Execute := TRUE;
 			uiSignalOutControl := FB_CUT_TO_ZERO.OutQ;
 			IF FB_CUT_TO_ZERO.Done THEN
@@ -169,7 +210,7 @@ CASE State OF
 				FB_PICK_TO_ZERO.Execute := FALSE;
 				NewState := 70;
 			END_IF
-		END_IF
+		END_IF*)
 
 	70:		(* MOVE BACK TO IDLE *)
 		FB_MOVE_TO_IDLE.Execute := TRUE;
@@ -195,6 +236,9 @@ CASE State OF
 	90:		(* RESET VALUES AND CHANGE STATE TO 0 *)
 		bBackToZero := FALSE;
 		CANCEL_MOVE := FALSE;
+		PICKMOVED := FALSE;
+		CUTMOVED := FALSE;
+		whatState := 0;
 
 		uiCutCoordX	:= 0;
 		uiCutCoordY	:= 0;
@@ -202,7 +246,7 @@ CASE State OF
 		uiPickCoordX	:= 0;
 		uiPickCoordY := 0;
 		uiPickCoordZ := 0;
-
+		gStopped := TRUE;
 		NewState := 0;
 
 
@@ -212,18 +256,43 @@ uiSignalOut2.03 := CANCEL_MOVE;
  timer( PT:=t#500ms, Q=>, ET=>);]]></ST>
     </Implementation>
     <LineIds Name="BackToZero">
-      <LineId Id="19" Count="57" />
+      <LineId Id="19" Count="15" />
+      <LineId Id="453" Count="0" />
+      <LineId Id="35" Count="41" />
       <LineId Id="210" Count="0" />
       <LineId Id="212" Count="6" />
       <LineId Id="211" Count="0" />
-      <LineId Id="77" Count="91" />
+      <LineId Id="77" Count="37" />
+      <LineId Id="247" Count="0" />
+      <LineId Id="116" Count="6" />
+      <LineId Id="371" Count="0" />
+      <LineId Id="373" Count="1" />
+      <LineId Id="407" Count="2" />
+      <LineId Id="423" Count="0" />
+      <LineId Id="410" Count="1" />
+      <LineId Id="405" Count="0" />
+      <LineId Id="412" Count="0" />
+      <LineId Id="418" Count="2" />
+      <LineId Id="426" Count="0" />
+      <LineId Id="421" Count="1" />
+      <LineId Id="387" Count="17" />
+      <LineId Id="372" Count="0" />
+      <LineId Id="123" Count="9" />
+      <LineId Id="345" Count="4" />
+      <LineId Id="336" Count="0" />
+      <LineId Id="139" Count="29" />
       <LineId Id="223" Count="0" />
       <LineId Id="225" Count="0" />
       <LineId Id="222" Count="0" />
       <LineId Id="224" Count="0" />
       <LineId Id="169" Count="0" />
       <LineId Id="226" Count="0" />
-      <LineId Id="170" Count="21" />
+      <LineId Id="170" Count="6" />
+      <LineId Id="428" Count="1" />
+      <LineId Id="455" Count="0" />
+      <LineId Id="177" Count="6" />
+      <LineId Id="269" Count="0" />
+      <LineId Id="185" Count="6" />
     </LineIds>
   </POU>
 </TcPlcObject>

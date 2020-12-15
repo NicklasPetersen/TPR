@@ -1,0 +1,6 @@
+{
+    "require": {
+        "spatie/async": "^1.5",
+        "symfony/apache-pack": "^1.0"
+    }
+}

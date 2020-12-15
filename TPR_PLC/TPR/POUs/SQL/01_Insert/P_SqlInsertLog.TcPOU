@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="P_SqlInsertLog" Id="{5e98ec26-c651-4378-bf48-dd94fcd16dde}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_SqlInsertLog
+VAR_INPUT
+	bInsert : BOOL; //Execute command
+END_VAR
+VAR
+	
+	fbSql : FB_EasySql;
+	sSql : STRING(1000);
+		
+	iId : INT; //Insert data
+	sCustomer : STRING; //Insert data
+	rValue : REAL; //Insert data
+		
+	
+	bDone : BOOL; //Command done
+	bError : BOOL; //Command error
+	sError : STRING(255);
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Insert new items to database
+sSql := 'INSERT INTO tpr_db.log (runTime, imageAmount, stickoutCut, retry, imgCnfgChange, success) VALUES (¤1¤, ¤2¤, ¤3¤, ¤4¤, ¤5¤, ¤6¤);';
+
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤1¤', sReplace:= TO_STRING(uiElapsedTime)); //Replace placeholder
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤2¤', sReplace:= TO_STRING(usiImageLog)); //Replace placeholder
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤3¤', sReplace:= TO_STRING(usiStickoutCutLog)); //Replace placeholder
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤4¤', sReplace:= TO_STRING(usiRetryLog)); //Replace placeholder
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤5¤', sReplace:= TO_STRING(usiImageRetry)); //Replace placeholder
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤6¤', sReplace:= TO_STRING(bLogSucces)); //Replace placeholder
+
+fbSql(
+	bExecute:= bInsert, 
+	wDBID:= 1, 
+	pSql:= ADR(sSql), 
+	cbSql:= SIZEOF(sSql), 
+	pData:= 0, 
+	cbData:= 0, 
+	udiMaxOfRecord:= 0, 
+	udiNoOfRecords=> , 
+	bDone=> bDone, 
+	bBusy=> , 
+	bError=> bError, 
+	sError=> sError);]]></ST>
+    </Implementation>
+    <LineIds Name="P_SqlInsertLog">
+      <LineId Id="289" Count="4" />
+      <LineId Id="324" Count="0" />
+      <LineId Id="363" Count="2" />
+      <LineId Id="295" Count="12" />
+      <LineId Id="25" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

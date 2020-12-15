@@ -46,13 +46,21 @@ VAR
 	bRetry: INT;
 	bStemGrabbed: BOOL;
 
+	cartMoved: BOOL;
+	cartX: USINT;
+	testbreak: BOOL;
+	distCutJoint: INT;
+	cutMin: INT;
+	testFail: BOOL;
+	break: BOOL;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[CASE State OF
 
-	0:		(* init	-	Every important variables will be resat before the start of the sequence *)
+	0: (* init - Every important variables will be resat before the start of the sequence *)
 		IF bStart AND uiprogNo = 6 AND State <> 2000  AND NOT bAlarmState THEN
 			uiStatus := 1;
+			FB_BRAKE.Execute := TRUE;
 
 			(* Init variables *)
 			bRetry := 0;
@@ -64,6 +72,7 @@ END_VAR]]></Declaration>
 			iCnfgChange := 0;
 			uiDeleaf := 0;
 			bPosSentToPcCom := FALSE;
+			gStopped := FALSE;
 
 			(* Before starting - Home *)
 			GbHomeGripStem := TRUE;
@@ -74,16 +83,18 @@ END_VAR]]></Declaration>
 			END_IF
 		END_IF
 
-	10:		(* Set velocity *)
+	10:	(* Set velocity - Both Cut and Pick *)
+		bLog := TRUE;	// Starts logging of data in this Control sequence
+	
 		FB_SET_VELOCITY.Execute := TRUE;
-		uiSignalOutSpeedControl := UINT_TO_BYTE(uiSpeedSetting);
+		uiSignalOutSpeedControl := PROGRAM_DATA.usiVelocity;
 		uiSignalOutControl := FB_SET_VELOCITY.OutQ;
 		IF FB_SET_VELOCITY.Done THEN
 			FB_SET_VELOCITY.Execute := FALSE;
 			NewState := 20;
 		END_IF
 
-	20:		(* Idle *)
+	20:	(* Idle - Both Cut and Pick *)
 		FB_MOVE_TO_IDLE.Execute := TRUE;
 		uiSignalOutControl := FB_MOVE_TO_IDLE.OutQ;
 		IF FB_MOVE_TO_IDLE.Done THEN
@@ -95,14 +106,22 @@ END_VAR]]></Declaration>
 
 
 		(* ------------------------------------------------------------------- Get Stem  ------------------------------------------------------------------- *)
-	30:				(*  Load cutter *)
+	30:	(*  Load cutter *)
 		FB_LOAD_CUT.Execute := TRUE;
 		IF FB_LOAD_CUT.Done THEN
 			FB_LOAD_CUT.Execute := FALSE;
+			NewState := 35;
+		END_IF
+		
+	35:
+		(* Close grip - for it not to be in the images from CutCam *)
+		FB_CLOSE_GRIP.Execute := TRUE;
+		IF FB_CLOSE_GRIP.Done THEN
+			FB_CLOSE_GRIP.Execute := FALSE;
 			NewState := 40;
 		END_IF
 
-	40: 		(* Cam 1 Take image	-	parameters recieved from Vision = height of lowest ripe tomato and Y coord for lowest point of the stem *)
+	40: (* Cam 1 Take image	-	parameters recieved from Vision = height of lowest ripe tomato and Y coord for lowest point of the stem *)
 
 		FB_CAM_ONE_CONTROL.Execute := TRUE;
 		IF FB_CAM_ONE_CONTROL.Done THEN
@@ -119,15 +138,17 @@ END_VAR]]></Declaration>
 				iStemAngle	:= FB_CAM_ONE_CONTROL.StemHeading;
 				(* iImageZone	-->		Zone of lowest tomato						*)
 				iImageZone	:= FB_CAM_ONE_CONTROL.Zone;
-				NewState := 50;
+				usiImageLog := usiImageLog + 1;
+				NewState := 45;
 			END_IF
 		END_IF
 
-	45:
-		IF bRetry = 0 THEN
+	45: (* Open gripper after  *)
+		IF bRetry < 3 THEN
 			FB_OPEN_GRIP.Execute := TRUE;
 			IF FB_OPEN_GRIP.Done THEN
 				bRetry := bRetry + 1;
+				usiRetryLog := usiRetryLog + 1;
 				FB_OPEN_GRIP.Execute := FALSE;
 				NewState := 50;
 			END_IF
@@ -147,14 +168,57 @@ END_VAR]]></Declaration>
 		END_IF
 
 	55:
-		(* Needs an option To move cart a bit, to take a new photo *)
+		(* Check if stem is grabed *)
 		IF uiToolState = 0 THEN
+			(* Retry to grab the stem with a larger uiDistToGrab *)
 			IF bJorisSensor THEN
-				uiDistToGrab := uiDistToGrab + 50;
-				NewState := 45;
+				CASE bRetry OF
+					0:
+						// Retry 50mm further aways
+						uiDistToGrab := uiDistToGrab + 50;
+						NewState := 45;
+						
+					1:
+						// Why?
+						uiDistToGrab := uiDistToGrab - 50;
+						NewState := 60;
+						
+					2:
+						(* Keep trying intil the stem is grabed *)
+						bRetry := 0;
+						
+				ELSE
+					NewState := 1000;
+				END_CASE
 			ELSE
 				bRetry := 0;
 				NewState := 100;
+			END_IF
+		END_IF
+		
+	60:
+		(* Move cart so that the *)
+		IF FB_CAM_ONE_CONTROL.TrunkPosX > 280 THEN
+			(* Move cart forward *)
+			(* Move cart FB_CAM_ONE_CONTROL.TrunkPosX - 280 *)
+			cartMoved := TRUE;
+		ELSE
+			(* Move cart backward *)
+			(* Move cart 280 - FB_CAM_ONE_CONTROL.TrunkPosX *)
+			cartMoved := TRUE;
+		END_IF
+		NewState := 70;
+	
+	70:
+		IF cartMoved THEN
+			(* Take a new photo and retry *)
+			IF bRetry < 2 THEN
+				cartMoved := FALSE;
+				usiRetryLog := usiRetryLog + 1;
+				NewState := 40;
+			ELSE
+				cartMoved := FALSE;
+				NewState := 45;
 			END_IF
 		END_IF
 
@@ -173,12 +237,34 @@ END_VAR]]></Declaration>
 
 	(* ------------------------------------------------------------------- Grab Stem  ------------------------------------------------------------------- *)
 	100:		(* Robot Pick move to Image Pos *)
+		
+		IF (ABS(iStemAngle) >= 90) THEN
+			IF iStemAngle < 0 THEN
+				gTomatoHeading := INT_TO_BYTE(270 - ABS(iStemAngle));
+			ELSE
+				gTomatoHeading := INT_TO_BYTE(ABS(iStemAngle) - 90);
+			END_IF
+		ELSE
+			gTomatoHeading := 0;
+		END_IF
+		
+		(*IF iStemAngle < 0 THEN
+			gTomatoHeading := INT_TO_BYTE(ABS(iStemAngle));
+		ELSE
+			gTomatoHeading := 0;
+		END_IF*)
+		
 		FB_PICK_TRUNK_IMAGE.Execute := TRUE;
 		uiSignalOutControl := FB_PICK_TRUNK_IMAGE.OutQ;
 		IF FB_PICK_TRUNK_IMAGE.Done THEN
-			FB_PICK_TRUNK_IMAGE.Execute := FALSE;
-			gResetPcCom := TRUE;
-			NewState := 110;
+			IF uiSignalInRobotFail.00 AND testFail THEN		// Hvad er testFail?
+				NewState := 1000;
+				bBackToZero := TRUE;
+			ELSE
+				FB_PICK_TRUNK_IMAGE.Execute := FALSE;
+				gResetPcCom := TRUE;
+				NewState := 110;
+			END_IF
 		END_IF
 
 	110:		(* Send Robot Pick Position *)
@@ -214,32 +300,51 @@ END_VAR]]></Declaration>
 						FB_CAM_TWO_CONTROL.Execute := FALSE;
 						uiSignalOutControl := 0;
 						uiCalibImgCount := uiCalibImgCount + 1;
+						usiImageLog := usiImageLog + 1;
 						NewState := 130;
 					END_IF
 				ELSE
 					(* If positions are acceptable and stem is found, Send the posiotions to the robots *)
 					FB_CAM_TWO_CONTROL.Execute := FALSE;
 					IF stDataFromVision.gStemFound = 1 THEN
-						GviX	:= FB_CAM_TWO_CONTROL.X;
-						GviY 	:= FB_CAM_TWO_CONTROL.Y;
-						GviZ 	:= FB_CAM_TWO_CONTROL.Z;
-						GviA 	:= FB_CAM_TWO_CONTROL.RotZ0;
-						GviE 	:= FB_CAM_TWO_CONTROL.RotY;
-						GviR 	:= FB_CAM_TWO_CONTROL.RotZ1;
-
-						GviX2 	:= FB_CAM_TWO_CONTROL.X;
-						GviY2 	:= (FB_CAM_TWO_CONTROL.Y + FB_CAM_TWO_CONTROL.Y + FB_CAM_ONE_CONTROL.Y)/3;
-						GviZ2 	:= FB_CAM_ONE_CONTROL.Z + 50;
-
-						iImageZone	:= FB_CAM_ONE_CONTROL.Zone;
-						NewState := 150;
+						IF (FB_CAM_TWO_CONTROL.X < 400) AND (FB_CAM_TWO_CONTROL.Y < 450) AND (FB_CAM_TWO_CONTROL.Z < 1000) and (FB_CAM_TWO_CONTROL.X > 0) AND (FB_CAM_TWO_CONTROL.Y > 150) AND (FB_CAM_TWO_CONTROL.Z > 200) THEN
+							GviX	:= FB_CAM_TWO_CONTROL.X;
+							GviY 	:= FB_CAM_TWO_CONTROL.Y;
+							//Hvis joint fundet, tag fat 10cm længere nede.
+							IF stDataFromVision.gJointFound = 1 THEN
+								GviZ 	:= FB_CAM_TWO_CONTROL.Z - 100;
+							ELSE
+								GviZ 	:= FB_CAM_TWO_CONTROL.Z;
+							END_IF
+							//Tjek om klasen hænger i vejen for CutTool. Hvis ja, tag fat længere nede.
+							IF iStemAngle < -75 AND iStemAngle > -105 AND FB_CAM_TWO_CONTROL.Z > iBunchPosZ THEN
+								GviZ := iBunchPosZ;
+							END_IF
+							IF GviZ < 200 THEN
+								GviZ := 200;
+							END_IF
+							GviA 	:= FB_CAM_TWO_CONTROL.RotZ0;
+							GviE 	:= FB_CAM_TWO_CONTROL.RotY;
+							GviR 	:= FB_CAM_TWO_CONTROL.RotZ1;
+	
+							GviX2 	:= FB_CAM_TWO_CONTROL.X;
+							GviY2 	:= (FB_CAM_TWO_CONTROL.Y + FB_CAM_TWO_CONTROL.Y + FB_CAM_ONE_CONTROL.Y)/3;
+							GviZ2	:= GviZ;
+							(*GviZ2 	:= FB_CAM_ONE_CONTROL.Z + 50;*)
+	
+							iImageZone	:= FB_CAM_ONE_CONTROL.Zone;
+							usiImageLog := usiImageLog + 1;
+							NewState := 150;
+						END_IF
 					(* IF the stem cannot be found, retry grabbing the stem with Joris gripper *)
 					ELSE
 						IF bRetry = 0 THEN
 							bRetry := 1;
+							usiRetryLog := usiRetryLog + 1;
 							gResetPcCom := TRUE;
 							NewState := 110;
 						ELSE
+							gResetPcCom := TRUE;
 							bRetry := 1000;
 							bBackToZero := TRUE;
 						END_IF
@@ -253,6 +358,7 @@ END_VAR]]></Declaration>
 		IF uiSignalInAck = 0 THEN
 			IF bRetry = 0 THEN
 				bRetry := bRetry + 1;
+				usiRetryLog := usiRetryLog + 1;
 				NewState := 100;
 			ELSE
 				bRetry := 1000;
@@ -276,6 +382,7 @@ END_VAR]]></Declaration>
 			NewState := 155;
 		END_IF
 
+
 	155:
 		IF uiSignalInAck = 0 THEN
 			NewState := 160;
@@ -286,8 +393,13 @@ END_VAR]]></Declaration>
 		uiSignalOutControl := FB_IMAGE_GRAB.OutQ;
 
 		IF FB_IMAGE_GRAB.Done THEN
-			FB_IMAGE_GRAB.Execute := FALSE;
-			NewState := 200;
+			IF uiSignalInRobotFail.00 AND testFail THEN
+				NewState := 1000;
+				bBackToZero := TRUE;
+			ELSE
+				FB_IMAGE_GRAB.Execute := FALSE;
+				NewState := 200;
+			END_IF
 		END_IF
 
 
@@ -310,6 +422,7 @@ END_VAR]]></Declaration>
 			(* Move to pos 50mm above normal image pos, then retry												*)
 			IF bRetry  < 2 THEN
 				bRetry := bRetry + 1;
+				usiRetryLog := usiRetryLog + 1;
 				(*uiCalibImgCount := 0;*)
 				GviZ2 := stDataToVision.CoordZR2G/10 + 100;
 				NewState := 220;
@@ -378,28 +491,38 @@ END_VAR]]></Declaration>
 					IF FB_CAM_TWO_CONTROL.X > 350 OR FB_CAM_TWO_CONTROL.X < 200 OR FB_CAM_TWO_CONTROL.Y > 350 OR FB_CAM_TWO_CONTROL.Y < 200 THEN
 						GviX := 320;
 						GviY := 320;
-						GviZ := FB_CAM_TWO_CONTROL.Z;
+						IF (stDataFromVision.ResultPar3 < iBunchPosZ) THEN
+							GviZ := FB_CAM_TWO_CONTROL.Z;
+						ELSE
+							GviZ := iBunchPosZ;
+						END_IF
 						GviA := 0;
 						GviE := 0;
 						GviR := 40;
 					ELSE
 						GviX := (FB_CAM_TWO_CONTROL.X + 320) / 2;
 						GviY := (FB_CAM_TWO_CONTROL.Y + 320) / 2;
-						GviZ := FB_CAM_TWO_CONTROL.Z;
+						IF (stDataFromVision.ResultPar3 < iBunchPosZ) THEN
+							GviZ := FB_CAM_TWO_CONTROL.Z;
+						ELSE
+							GviZ := iBunchPosZ;
+						END_IF
 						GviA := 0;
 						GviE := 0;
 						GviR := 40;
 					END_IF
-					IF FB_CAM_TWO_CONTROL.JointFound = 1 THEN
+					(*IF FB_CAM_TWO_CONTROL.JointFound = 1 THEN
 						GviPick := FB_CAM_TWO_CONTROL.PickAngle;
 						iImageZone := FB_CAM_TWO_CONTROL.Zone;
 						gResetPcCom := TRUE;
 						NewState := 310;
-					ELSE
+					ELSE*)
+					usiImageLog := usiImageLog + 1;
 						gResetPcCom := TRUE;
 						NewState := 270;
-					END_IF
+					(*END_IF*)
 				ELSE
+					usiImageLog := usiImageLog + 1;
 					gResetPcCom := TRUE;
 					NewState := 345;
 				END_IF
@@ -430,11 +553,16 @@ END_VAR]]></Declaration>
 		FB_COMOVE_IMAGE.Execute := TRUE;
 		uiSignalOutControl := FB_COMOVE_IMAGE.OutQ;
 		IF FB_COMOVE_IMAGE.Done THEN
-			FB_COMOVE_IMAGE.Execute := FALSE;
-			IF bRobotFail THEN
-				NewState := 3000;
+			IF uiSignalInRobotFail.00 AND testFail THEN
+				NewState := 1000;
+				bBackToZero := TRUE;
 			ELSE
-				NewState := 290;
+				FB_COMOVE_IMAGE.Execute := FALSE;
+				IF bRobotFail THEN
+					NewState := 3000;
+				ELSE
+					NewState := 290;
+				END_IF
 			END_IF
 		END_IF
 
@@ -463,64 +591,104 @@ END_VAR]]></Declaration>
 			FB_CAM_TWO_CONTROL.Execute := TRUE;
 			IF FB_CAM_TWO_CONTROL.Done THEN
 				IF FB_CAM_TWO_CONTROL.StemFound = 1 THEN
-					IF FB_CAM_TWO_CONTROL.X > 350 OR FB_CAM_TWO_CONTROL.X < 200 OR FB_CAM_TWO_CONTROL.Y > 350 OR FB_CAM_TWO_CONTROL.Y < 200 THEN
+					IF FB_GET_CUT_COORD.Execute = FALSE THEN
 						IF FB_CAM_TWO_CONTROL.Zone <> 0 THEN
 							iImageZone := FB_CAM_TWO_CONTROL.Zone;
 						END_IF
-						IF FB_CAM_TWO_CONTROL.JointFound = 1 THEN
-							GviPick := FB_CAM_TWO_CONTROL.PickAngle;
-
-							getCutCoords := TRUE;
-							IF bPosSentToPcCom AND FB_GET_CUT_COORD.Execute = FALSE THEN
-								bPosSentToPcCom := FALSE;
-								FB_CAM_TWO_CONTROL.Execute := FALSE;
-								gResetPcCom := TRUE;
-								NewState := 305;
-							END_IF
-						ELSE
-							GviX := 320;
-							GviY := 320;
-							GviZ := FB_CAM_TWO_CONTROL.Z;
-
-							GviA 	:= 0;
-							GviE 	:= 0;
-							GviR 	:= 40;
-
-							FB_CAM_TWO_CONTROL.Execute := FALSE;
-							gResetPcCom := TRUE;
-							NewState := 310;
-						END_IF
-					ELSE
-						IF FB_CAM_TWO_CONTROL.Zone <> 0 THEN
-							iImageZone := FB_CAM_TWO_CONTROL.Zone;
-						END_IF
-						IF FB_CAM_TWO_CONTROL.JointFound = 1 THEN
-							GviPick := FB_CAM_TWO_CONTROL.PickAngle;
+						IF distCutJoint = 0 THEN
 							(* Get Cut coord *)
-							getCutCoords := TRUE;
-							IF bPosSentToPcCom AND FB_GET_CUT_COORD.Execute = FALSE THEN
-								bPosSentToPcCom := FALSE;
-								FB_CAM_TWO_CONTROL.Execute := FALSE;
-								gResetPcCom := TRUE;
-								NewState := 305;
-							END_IF
-						ELSE
-							GviX := (FB_CAM_TWO_CONTROL.X + 320) / 2;
-							GviY := (FB_CAM_TWO_CONTROL.Y + 320) / 2;
-							GviZ := FB_CAM_TWO_CONTROL.Z;
-							GviA 	:= 0;
-							GviE 	:= 0;
-							GviR 	:= 40;
-
-							FB_CAM_TWO_CONTROL.Execute := FALSE;
 							gResetPcCom := TRUE;
-							NewState := 310;
+							getCutCoords := TRUE;
+							bGetCutCoordDone:= FALSE;
+							cutMin := 15;	(* Max lenght from top of cut head to joint*)
+						END_IF
+						IF FB_CAM_TWO_CONTROL.X > 350 OR FB_CAM_TWO_CONTROL.X < 200 OR FB_CAM_TWO_CONTROL.Y > 350 OR FB_CAM_TWO_CONTROL.Y < 200 THEN
+							usiImageLog := usiImageLog + 1;
+							NewState := 302;							
+						ELSE
+							usiImageLog := usiImageLog + 1;
+							NewState := 303;
 						END_IF
 					END_IF
 				ELSE
 					FB_CAM_TWO_CONTROL.Execute := FALSE;
 					gResetPcCom := TRUE;
+					usiImageLog := usiImageLog + 1;
 					NewState := 345;
+				END_IF
+			END_IF
+		END_IF
+		
+	302:
+		IF bGetCutCoordDone THEN
+			bGetCutCoordDone:= FALSE;
+			distCutJoint := stDataFromVision.ResultPar3 - (currentRobotZ / 10);
+		
+			IF distCutJoint <> 0 OR ((stDataFromVision.ResultPar3 = (currentRobotZ/10)) AND (currentRobotZ <> 0)) THEN
+				IF FB_CAM_TWO_CONTROL.JointFound = 1 AND distCutJoint <= cutMin THEN
+					GviPick := FB_CAM_TWO_CONTROL.PickAngle;
+
+					getCutCoords := TRUE;
+					IF FB_CAM_TWO_CONTROL.TrussFound = 1 THEN
+						iCnfgChange := 0;
+					END_IF
+					IF bPosSentToPcCom AND FB_GET_CUT_COORD.Execute = FALSE THEN
+						bPosSentToPcCom := FALSE;
+						FB_CAM_TWO_CONTROL.Execute := FALSE;
+						gResetPcCom := TRUE;
+						NewState := 305;
+					END_IF
+				ELSE
+					GviX := 320;
+					GviY := 320;
+					GviZ := FB_CAM_TWO_CONTROL.Z;
+
+					GviA 	:= 0;
+					GviE 	:= 0;
+					GviR 	:= 40;
+
+					FB_CAM_TWO_CONTROL.Execute := FALSE;
+					gResetPcCom := TRUE;
+					iCnfgChange := 0;
+					NewState := 310;
+				END_IF
+			END_IF
+		END_IF
+		
+	303:
+		IF bGetCutCoordDone THEN
+			bGetCutCoordDone:= FALSE;
+			distCutJoint := stDataFromVision.ResultPar3 - (currentRobotZ / 10);
+		
+			IF distCutJoint <> 0 OR ((stDataFromVision.ResultPar3 = (currentRobotZ/10)) AND (currentRobotZ <> 0)) THEN
+				IF FB_CAM_TWO_CONTROL.JointFound = 1 AND distCutJoint <= cutMin THEN
+					GviPick := FB_CAM_TWO_CONTROL.PickAngle;
+					IF FB_CAM_TWO_CONTROL.TrussFound = 1 THEN
+						iCnfgChange := 0;
+					END_IF
+					IF bPosSentToPcCom THEN
+						bPosSentToPcCom := FALSE;
+						FB_CAM_TWO_CONTROL.Execute := FALSE;
+						NewState := 305;
+					END_IF
+				ELSIF distCutJoint > cutMin THEN
+					IF FB_CAM_TWO_CONTROL.JointFound = 1 THEN
+						GviZ := FB_CAM_TWO_CONTROL.Z - 10;
+						iCnfgChange := 0;
+					ELSE
+						GviZ := FB_CAM_TWO_CONTROL.Z;
+					END_IF
+					GviX := (FB_CAM_TWO_CONTROL.X + 320) / 2;
+					GviY := (FB_CAM_TWO_CONTROL.Y + 320) / 2;
+					GviA 	:= 0;
+					GviE 	:= 0;
+					GviR 	:= 40;
+
+					FB_CAM_TWO_CONTROL.Execute := FALSE;
+					gResetPcCom := TRUE;
+					NewState := 310;
+				ELSE
+					bBackToZero := TRUE;
 				END_IF
 			END_IF
 		END_IF
@@ -537,38 +705,57 @@ END_VAR]]></Declaration>
 	310:		(* Send pos *)
 		(* GsendCoord			-->	Starter SendCoordinates sekvensen							-	Sender koordinater til robotterne 		*)
 		(* uiSignalOutShared.06	-->	Bekræftelse på at koordinaterne er sendt til udgangene i box 10	-	Acknowledge fra SendCoordinates	*)
-		GsendCoord := TRUE;
-		IF uiSignalOutShared.06 THEN
-			(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
-			uiSignalOutControl := Send_pos;
-		END_IF
-		IF uiSignalInAck = Send_pos THEN
-			uiSignalOutControl := 0;
-			(*uiCalibImgCount := uiCalibImgCount + 1;*)
+		IF (FB_CAM_TWO_CONTROL.TomatoFound = 1) AND (FB_CAM_TWO_CONTROL.JointFound <> 1) THEN
 			NewState := 315;
+		ELSE
+			GsendCoord := TRUE;
+			IF uiSignalOutShared.06 THEN
+				(* Send_pos	-->	Kommando der fortæller robot cut at nogle nye positioner er sendt *)
+				uiSignalOutControl := Send_pos;
+			END_IF
+			IF uiSignalInAck = Send_pos THEN
+				uiSignalOutControl := 0;
+				(*uiCalibImgCount := uiCalibImgCount + 1;*)
+				NewState := 315;
+			END_IF
 		END_IF
 
 	315:
 		IF uiSignalInAck = 0 THEN
-			IF FB_CAM_TWO_CONTROL.JointFound = 1 AND stDataFromVision.ResultPar3 > iBunchPosZ THEN
+			IF FB_CAM_TWO_CONTROL.JointFound = 1 AND stDataFromVision.ResultPar3 > iBunchPosZ AND (currentRobotZ/10) > iBunchPosZ AND distCutJoint < cutMin THEN
 				NewState := 345;
+			ELSIF (FB_CAM_TWO_CONTROL.TomatoFound = 1) AND (FB_CAM_TWO_CONTROL.JointFound <> 1) AND (stDataFromVision.ResultPar3 > iBunchPosZ) AND iCnfgChange < 6 THEN
+				iCnfgChange := iCnfgChange + 1;
+				usiImageRetry := usiImageRetry + 1;
+				IF uiCalibImgCount < 50 THEN
+					uiCalibImgCount := 50;
+				END_IF
+				IF uiCalibImgCount >= 50 AND uiCalibImgCount <= 200 THEN
+					NewState := 350;
+				ELSIF uiCalibImgCount = 250 THEN
+					NewState := 450;
+				END_IF
 			ELSE
 				NewState := 320;
 			END_IF
 		END_IF
-
 	320:
 		FB_COMOVE_IMAGE.Execute := TRUE;
 		uiSignalOutControl := FB_COMOVE_IMAGE.OutQ;
 		IF FB_COMOVE_IMAGE.Done THEN
 			FB_COMOVE_IMAGE.Execute := FALSE;
-			IF bRobotFail THEN
-				NewState := 3000;
+			IF uiSignalInRobotFail.00 AND testFail THEN
+				NewState := 1000;
+				bBackToZero := TRUE;
 			ELSE
-				IF FB_CAM_TWO_CONTROL.JointFound = 1 THEN
-					NewState := 325;
+				IF bRobotFail THEN
+					NewState := 3000;
 				ELSE
-					NewState := 330;
+					IF FB_CAM_TWO_CONTROL.JointFound = 1 AND distCutJoint > cutMin AND stDataFromVision.ResultPar3 < iBunchPosZ AND FB_CAM_TWO_CONTROL.TrussFound = 0 THEN
+						NewState := 325;
+					ELSE
+						NewState := 330;
+					END_IF
 				END_IF
 			END_IF
 		END_IF
@@ -576,6 +763,7 @@ END_VAR]]></Declaration>
 	325:
 		FB_RELEASE_CUT.Execute := TRUE;
 		IF FB_RELEASE_CUT.Done THEN
+			usiStickoutCutLog := usiStickoutCutLog + 1;
 			FB_RELEASE_CUT.Execute := FALSE;
 			NewState := 327;
 		END_IF
@@ -598,7 +786,7 @@ END_VAR]]></Declaration>
 
 	345:
 		IF uiSignalInAck = 0 THEN
-			IF stDataFromVision.gJointFound = 1 AND stDataFromVision.ResultPar3 >  iBunchPosZ AND FB_CAM_TWO_CONTROL.StemFound = 1 THEN
+			IF stDataFromVision.gJointFound = 1 (*AND stDataFromVision.ResultPar3 > iBunchPosZ*) AND FB_CAM_TWO_CONTROL.StemFound = 1 AND distCutJoint < cutMin AND FB_CAM_TWO_CONTROL.TrussFound = 1 (*AND FB_CAM_TWO_CONTROL.TomatoFound = 1*) THEN
 				(* Grabbing sequence *)
 				gResetPcCom := TRUE;
 				IF uimodeNo <= 1 THEN
@@ -606,12 +794,17 @@ END_VAR]]></Declaration>
 				ELSE
 					NewState := 420;
 				END_IF
+			ELSIF stDataFromVision.gJointFound = 1 AND stDataFromVision.ResultPar3 > iBunchPosZ AND FB_CAM_TWO_CONTROL.StemFound = 1 AND distCutJoint < cutMin AND FB_CAM_TWO_CONTROL.TrussFound = 0 (*AND FB_CAM_TWO_CONTROL.TomatoFound = 1*) THEN
+				iCnfgChange := iCnfgChange + 1;
+				usiImageRetry := usiImageRetry + 1;
+				NewState := 350;
 			ELSIF stDataFromVision.gStemFound = 1 AND iMoved < 2 THEN
 				(* Move further Along stem *)
-				NewState := 300;
+				NewState := 360;
 			ELSIF stDataFromVision.gStemFound = 0 OR iMoved >= 2 THEN
 				(* Change configuration *)
 				iCnfgChange := iCnfgChange + 1;
+				usiImageRetry := usiImageRetry + 1;
 				IF uiCalibImgCount >= 50 AND uiCalibImgCount <= 200 THEN
 					NewState := 350;
 				ELSIF uiCalibImgCount = 250 THEN
@@ -623,6 +816,7 @@ END_VAR]]></Declaration>
 				bBackToZero := TRUE;
 			END_IF
 		END_IF
+		distCutJoint := 0;
 
 	(* ------------------------------------------ Change configuration ------------------------------------------ *)
 	350:
@@ -635,8 +829,13 @@ END_VAR]]></Declaration>
 		FB_PICK_TRUNK_IMAGE.Execute := TRUE;
 		uiSignalOutControl := FB_PICK_TRUNK_IMAGE.OutQ;
 		IF FB_PICK_TRUNK_IMAGE.Done THEN
-			FB_PICK_TRUNK_IMAGE.Execute := FALSE;
-			NewState := 360;
+			IF uiSignalInRobotFail.00 AND testFail THEN
+				NewState := 1000;
+				bBackToZero := TRUE;
+			ELSE
+				FB_PICK_TRUNK_IMAGE.Execute := FALSE;
+				NewState := 360;
+			END_IF
 		END_IF
 
 	360:		(* Send Pick coordinate *)
@@ -654,16 +853,23 @@ END_VAR]]></Declaration>
 		uiSignalOutControl := FB_PICK_GRAB.OutQ;
 		IF FB_PICK_GRAB.Done THEN
 			FB_PICK_GRAB.Execute := FALSE;
-			IF NOT bRobotFail THEN
-				bRetry := 0;
-				NewState := 420;
+			IF uiSignalInRobotFail.00 AND testFail THEN
+				NewState := 2000;
+				(*NewState := 1000;
+				bBackToZero := TRUE;*)
 			ELSE
-				IF bRetry = 0 THEN
-					(* Take a new picture *)
-					bRetry := 1;
-					NewState := 350;
+				IF NOT bRobotFail THEN
+					bRetry := 0;
+					NewState := 420;
 				ELSE
-					bBackToZero := TRUE;
+					IF bRetry = 0 THEN
+						(* Take a new picture *)
+						bRetry := 1;
+						usiRetryLog := usiRetryLog + 1;
+						NewState := 350;
+					ELSE
+						bBackToZero := TRUE;
+					END_IF
 				END_IF
 			END_IF
 		END_IF
@@ -691,13 +897,21 @@ END_VAR]]></Declaration>
 		uiSignalOutControl := FB_PICK_MOVE_FROM_PICK.OutQ;
 		IF FB_PICK_MOVE_FROM_PICK.Done THEN
 			FB_PICK_MOVE_FROM_PICK.Execute := FALSE;
-			iMoved := 1;
-			IF uimodeNo = 1 THEN
-				NewState := 540;
+			IF uiSignalInRobotFail.00 AND testFail THEN
+				NewState := 1000;
+				bBackToZero := TRUE;
 			ELSE
-				NewState := 500;
+				iMoved := 1;
+				IF uimodeNo = 1 THEN
+					NewState := 500;
+				ELSE
+					NewState := 540;
+				END_IF
 			END_IF
 		END_IF
+	
+	450:
+		bBackToZero := TRUE;
 
 	(* --------------------------------- DELEAFING ------------------------------------ *)
 	500:		(* Image of LEAFS *)
@@ -855,9 +1069,14 @@ END_VAR]]></Declaration>
 		FB_MOVE_TO_IDLE.Execute := TRUE;
 		uiSignalOutControl := FB_MOVE_TO_IDLE.OutQ;
 		IF FB_MOVE_TO_IDLE.Done THEN
-			FB_MOVE_TO_IDLE.Execute := FALSE;
-			uiStatus := 0;
-			NewState := 640;
+			IF uiSignalInRobotFail.00 AND testFail THEN
+				NewState := 1000;
+				bBackToZero := TRUE;
+			ELSE
+				FB_MOVE_TO_IDLE.Execute := FALSE;
+				uiStatus := 0;
+				NewState := 640;
+			END_IF
 		END_IF
 
 	640:		(* Deload *)
@@ -865,9 +1084,18 @@ END_VAR]]></Declaration>
 		FB_DELOAD_CUT.Execute := TRUE;
 		IF FB_DELOAD_CUT.Done THEN
 			FB_DELOAD_CUT.Execute := FALSE;
-			NewState := 0;
+			NewState := 650;
 		END_IF
 
+	650:
+		FB_CLOSE_GRIP.Execute := TRUE;
+		IF FB_CLOSE_GRIP.Done THEN
+			bLogSucces := 1;
+			FB_CLOSE_GRIP.Execute := FALSE;
+			FB_BRAKE.Execute := FALSE;
+			gStopped := TRUE;
+			NewState := 0;
+		END_IF
 
 
 
@@ -943,7 +1171,248 @@ bRobotFail := uiSignalIn2.07;
 FB_PLACE(Offset := 140,		Box_length := uiBoxLength, 		Box_width := uiBoxWidth,	Box_height := uiBoxHeight,		Stem_length := 200,	Mode := uiPackingModeNo);]]></ST>
     </Implementation>
     <LineIds Name="Control">
-      <LineId Id="45" Count="892" />
+      <LineId Id="45" Count="4" />
+      <LineId Id="2175" Count="0" />
+      <LineId Id="50" Count="10" />
+      <LineId Id="1833" Count="0" />
+      <LineId Id="61" Count="10" />
+      <LineId Id="2098" Count="0" />
+      <LineId Id="2100" Count="0" />
+      <LineId Id="72" Count="25" />
+      <LineId Id="1223" Count="1" />
+      <LineId Id="2229" Count="0" />
+      <LineId Id="1225" Count="0" />
+      <LineId Id="1227" Count="2" />
+      <LineId Id="1226" Count="0" />
+      <LineId Id="98" Count="17" />
+      <LineId Id="2102" Count="0" />
+      <LineId Id="116" Count="8" />
+      <LineId Id="2106" Count="0" />
+      <LineId Id="125" Count="18" />
+      <LineId Id="992" Count="0" />
+      <LineId Id="145" Count="0" />
+      <LineId Id="990" Count="0" />
+      <LineId Id="146" Count="0" />
+      <LineId Id="1138" Count="0" />
+      <LineId Id="1013" Count="0" />
+      <LineId Id="2103" Count="0" />
+      <LineId Id="147" Count="1" />
+      <LineId Id="1139" Count="0" />
+      <LineId Id="1014" Count="0" />
+      <LineId Id="2105" Count="0" />
+      <LineId Id="1016" Count="0" />
+      <LineId Id="1018" Count="0" />
+      <LineId Id="1140" Count="0" />
+      <LineId Id="1026" Count="0" />
+      <LineId Id="1141" Count="0" />
+      <LineId Id="1027" Count="0" />
+      <LineId Id="1143" Count="1" />
+      <LineId Id="1147" Count="0" />
+      <LineId Id="1146" Count="0" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="1199" Count="1" />
+      <LineId Id="152" Count="1" />
+      <LineId Id="983" Count="1" />
+      <LineId Id="1023" Count="0" />
+      <LineId Id="1079" Count="1" />
+      <LineId Id="1089" Count="0" />
+      <LineId Id="1088" Count="0" />
+      <LineId Id="1083" Count="1" />
+      <LineId Id="1090" Count="0" />
+      <LineId Id="1087" Count="0" />
+      <LineId Id="1081" Count="0" />
+      <LineId Id="1012" Count="0" />
+      <LineId Id="1021" Count="1" />
+      <LineId Id="995" Count="0" />
+      <LineId Id="1001" Count="1" />
+      <LineId Id="1085" Count="0" />
+      <LineId Id="2107" Count="0" />
+      <LineId Id="1004" Count="1" />
+      <LineId Id="1086" Count="0" />
+      <LineId Id="1007" Count="1" />
+      <LineId Id="985" Count="0" />
+      <LineId Id="154" Count="15" />
+      <LineId Id="2364" Count="0" />
+      <LineId Id="2429" Count="0" />
+      <LineId Id="2434" Count="0" />
+      <LineId Id="2430" Count="0" />
+      <LineId Id="2435" Count="2" />
+      <LineId Id="2431" Count="1" />
+      <LineId Id="2425" Count="0" />
+      <LineId Id="2433" Count="0" />
+      <LineId Id="2424" Count="0" />
+      <LineId Id="2359" Count="0" />
+      <LineId Id="2366" Count="1" />
+      <LineId Id="2365" Count="0" />
+      <LineId Id="2360" Count="0" />
+      <LineId Id="170" Count="1" />
+      <LineId Id="2043" Count="3" />
+      <LineId Id="172" Count="0" />
+      <LineId Id="1715" Count="1" />
+      <LineId Id="1714" Count="0" />
+      <LineId Id="2042" Count="0" />
+      <LineId Id="176" Count="34" />
+      <LineId Id="2108" Count="0" />
+      <LineId Id="211" Count="5" />
+      <LineId Id="1280" Count="0" />
+      <LineId Id="1278" Count="0" />
+      <LineId Id="218" Count="0" />
+      <LineId Id="2443" Count="0" />
+      <LineId Id="2420" Count="0" />
+      <LineId Id="219" Count="0" />
+      <LineId Id="2422" Count="0" />
+      <LineId Id="2421" Count="0" />
+      <LineId Id="2423" Count="0" />
+      <LineId Id="2442" Count="0" />
+      <LineId Id="2439" Count="2" />
+      <LineId Id="2512" Count="2" />
+      <LineId Id="220" Count="5" />
+      <LineId Id="1502" Count="0" />
+      <LineId Id="226" Count="2" />
+      <LineId Id="2110" Count="0" />
+      <LineId Id="229" Count="0" />
+      <LineId Id="1279" Count="0" />
+      <LineId Id="230" Count="3" />
+      <LineId Id="2111" Count="0" />
+      <LineId Id="234" Count="2" />
+      <LineId Id="1718" Count="0" />
+      <LineId Id="237" Count="12" />
+      <LineId Id="2112" Count="0" />
+      <LineId Id="250" Count="10" />
+      <LineId Id="1205" Count="9" />
+      <LineId Id="1203" Count="0" />
+      <LineId Id="271" Count="10" />
+      <LineId Id="2038" Count="3" />
+      <LineId Id="282" Count="2" />
+      <LineId Id="2037" Count="0" />
+      <LineId Id="285" Count="21" />
+      <LineId Id="2113" Count="0" />
+      <LineId Id="307" Count="67" />
+      <LineId Id="2574" Count="0" />
+      <LineId Id="375" Count="0" />
+      <LineId Id="2577" Count="1" />
+      <LineId Id="2576" Count="0" />
+      <LineId Id="376" Count="5" />
+      <LineId Id="2579" Count="3" />
+      <LineId Id="382" Count="10" />
+      <LineId Id="2114" Count="0" />
+      <LineId Id="393" Count="3" />
+      <LineId Id="2115" Count="0" />
+      <LineId Id="1333" Count="0" />
+      <LineId Id="398" Count="28" />
+      <LineId Id="1914" Count="2" />
+      <LineId Id="1913" Count="0" />
+      <LineId Id="427" Count="3" />
+      <LineId Id="1221" Count="0" />
+      <LineId Id="432" Count="0" />
+      <LineId Id="1917" Count="0" />
+      <LineId Id="433" Count="30" />
+      <LineId Id="1507" Count="3" />
+      <LineId Id="1524" Count="0" />
+      <LineId Id="1511" Count="0" />
+      <LineId Id="1506" Count="0" />
+      <LineId Id="1513" Count="0" />
+      <LineId Id="2116" Count="0" />
+      <LineId Id="1514" Count="0" />
+      <LineId Id="1428" Count="0" />
+      <LineId Id="2117" Count="0" />
+      <LineId Id="1522" Count="0" />
+      <LineId Id="1433" Count="0" />
+      <LineId Id="513" Count="3" />
+      <LineId Id="2118" Count="0" />
+      <LineId Id="517" Count="3" />
+      <LineId Id="1571" Count="2" />
+      <LineId Id="1576" Count="6" />
+      <LineId Id="2295" Count="0" />
+      <LineId Id="2299" Count="1" />
+      <LineId Id="2298" Count="0" />
+      <LineId Id="1584" Count="16" />
+      <LineId Id="2301" Count="0" />
+      <LineId Id="1601" Count="1" />
+      <LineId Id="1574" Count="1" />
+      <LineId Id="1527" Count="1" />
+      <LineId Id="1531" Count="0" />
+      <LineId Id="1534" Count="5" />
+      <LineId Id="2304" Count="1" />
+      <LineId Id="2303" Count="0" />
+      <LineId Id="1540" Count="6" />
+      <LineId Id="1655" Count="0" />
+      <LineId Id="2459" Count="0" />
+      <LineId Id="1658" Count="1" />
+      <LineId Id="1656" Count="1" />
+      <LineId Id="1547" Count="0" />
+      <LineId Id="1549" Count="6" />
+      <LineId Id="1567" Count="2" />
+      <LineId Id="1532" Count="0" />
+      <LineId Id="1604" Count="0" />
+      <LineId Id="521" Count="12" />
+      <LineId Id="2444" Count="0" />
+      <LineId Id="2456" Count="1" />
+      <LineId Id="2455" Count="0" />
+      <LineId Id="535" Count="8" />
+      <LineId Id="2458" Count="0" />
+      <LineId Id="544" Count="4" />
+      <LineId Id="2451" Count="2" />
+      <LineId Id="2571" Count="2" />
+      <LineId Id="2515" Count="3" />
+      <LineId Id="2454" Count="0" />
+      <LineId Id="2450" Count="0" />
+      <LineId Id="550" Count="2" />
+      <LineId Id="554" Count="4" />
+      <LineId Id="1919" Count="2" />
+      <LineId Id="1918" Count="0" />
+      <LineId Id="559" Count="8" />
+      <LineId Id="1922" Count="0" />
+      <LineId Id="568" Count="4" />
+      <LineId Id="2120" Count="0" />
+      <LineId Id="573" Count="29" />
+      <LineId Id="2282" Count="1" />
+      <LineId Id="2285" Count="0" />
+      <LineId Id="2284" Count="0" />
+      <LineId Id="603" Count="5" />
+      <LineId Id="2121" Count="0" />
+      <LineId Id="609" Count="10" />
+      <LineId Id="1449" Count="0" />
+      <LineId Id="620" Count="11" />
+      <LineId Id="1775" Count="2" />
+      <LineId Id="1774" Count="0" />
+      <LineId Id="632" Count="1" />
+      <LineId Id="1778" Count="0" />
+      <LineId Id="634" Count="16" />
+      <LineId Id="1886" Count="0" />
+      <LineId Id="1901" Count="0" />
+      <LineId Id="1887" Count="1" />
+      <LineId Id="651" Count="0" />
+      <LineId Id="1889" Count="6" />
+      <LineId Id="2122" Count="0" />
+      <LineId Id="1896" Count="3" />
+      <LineId Id="662" Count="0" />
+      <LineId Id="1900" Count="0" />
+      <LineId Id="663" Count="24" />
+      <LineId Id="1904" Count="2" />
+      <LineId Id="1903" Count="0" />
+      <LineId Id="688" Count="0" />
+      <LineId Id="1902" Count="0" />
+      <LineId Id="690" Count="3" />
+      <LineId Id="1907" Count="0" />
+      <LineId Id="694" Count="0" />
+      <LineId Id="2583" Count="2" />
+      <LineId Id="695" Count="156" />
+      <LineId Id="1909" Count="2" />
+      <LineId Id="1908" Count="0" />
+      <LineId Id="852" Count="2" />
+      <LineId Id="1912" Count="0" />
+      <LineId Id="855" Count="8" />
+      <LineId Id="1973" Count="0" />
+      <LineId Id="864" Count="0" />
+      <LineId Id="1979" Count="1" />
+      <LineId Id="2123" Count="0" />
+      <LineId Id="1981" Count="0" />
+      <LineId Id="2176" Count="0" />
+      <LineId Id="1983" Count="0" />
+      <LineId Id="1982" Count="0" />
+      <LineId Id="1974" Count="0" />
+      <LineId Id="865" Count="72" />
     </LineIds>
   </POU>
 </TcPlcObject>

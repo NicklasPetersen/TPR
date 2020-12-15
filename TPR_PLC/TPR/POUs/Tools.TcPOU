@@ -25,8 +25,8 @@ VAR
 	(*Outputs*)
 	bValve1Control : BOOL;
 	qValve1 AT %Q*: BOOL := FALSE;		(* Ventil 1 --> Load Cutter 			*)
-	qValve2	AT %Q*:BOOL := FALSE;		(* Ventil 2 --> Åben / Luk Cutter		*)
-	qValve3	AT %Q*:BOOL := FALSE;		(* Ventil 3 --> Lås Cutter 				*)
+	qValve2	AT %Q*:BOOL := FALSE;		(* Ventil 2 --> Kører stempel i cut op		*)
+	qValve3	AT %Q*:BOOL := FALSE;		(* Ventil 3 --> Brake 				*)
 	qValve4	AT %Q*:BOOL := FALSE;		(* Ventil 4 --> Luk Gripper			*)
 	qValve5 AT %Q*:BOOL := FALSE;		(* Ventil 5 --> Picker  				*)
 
@@ -79,6 +79,8 @@ VAR
 	resetCount: UINT := 0;
 	
 	tempTime : STRING(255);
+	brakeOn: BOOL;
+	TEST: BOOL;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[CASE State OF
@@ -102,7 +104,7 @@ END_VAR]]></Declaration>
 			NewState	:= 150;
 		END_IF
 
-		IF GbHomeGripStem THEN
+		IF GbHomeGripStem OR (sToolControl = 'grip-home') THEN
 			GbHomeGripStem	:= FALSE;
 			bAck := TRUE;
 			NewState	:= 200;
@@ -136,6 +138,7 @@ END_VAR]]></Declaration>
 			NewState 	:=120;
 		END_IF
 
+		
 	120:
 		(* stepValue		-->	Offset der blev skabt da der kørtes ud *)
 		IF NOT qMotorRun THEN
@@ -234,22 +237,22 @@ END_VAR]]></Declaration>
 
 		(* Først Åben Pick *)
 		IF resetCount = 0 THEN
-			GbOpenPick := TRUE;
+			FB_OPEN_PICK.Execute := TRUE;
 			resetCount := resetCount + 1;
 		END_IF
 		IF FB_OPEN_PICK.Done THEN
 			bPickOpened := TRUE;
-			GbOpenPick := FALSE;
+			FB_OPEN_PICK.Execute := FALSE;
 		END_IF
 
 		(* Åben Cut *)
 		IF resetCount = 1 THEN
-			GbOpenCut := TRUE;
+			FB_OPEN_CUT.Execute := TRUE;
 			resetCount := resetCount + 1;
 		END_IF
 		IF FB_OPEN_CUT.Done THEN
 			bCutOpened := TRUE;
-			GbOpenCut := FALSE;
+			FB_OPEN_CUT.Execute := FALSE;
 		END_IF
 
 		(* Deload Cut *)
@@ -288,30 +291,30 @@ END_VAR]]></Declaration>
 		IF bPickOpened AND bCutOpened AND bCutDeloaded AND bGripOpened AND bGripHome AND NOT bAck THEN
 			FB_OPEN_CUT.		Execute := FALSE;
 			FB_CLOSE_CUT.		Execute := FALSE;
-			FB_RELEASE_CUT.	Execute := FALSE;
+			FB_RELEASE_CUT.		Execute := FALSE;
 			FB_OPEN_PICK.		Execute := FALSE;
 			FB_CLOSE_PICK.		Execute := FALSE;
 			FB_LOAD_CUT.		Execute := FALSE;
-			FB_DELOAD_CUT.	Execute := FALSE;
+			FB_DELOAD_CUT.		Execute := FALSE;
 			FB_OPEN_GRIP.		Execute := FALSE;
 			FB_CLOSE_GRIP.		Execute := FALSE;
 
 
-			GbDeloadCut := FALSE;
-			GbOpenCut := FALSE;
-			GbOpenPick := FALSE;
+			GbDeloadCut 	:= FALSE;
+			GbOpenCut 		:= FALSE;
+			GbOpenPick 		:= FALSE;
 
-			bLoadReleased := FALSE;
-			bBladesDown := FALSE;
+			bLoadReleased 	:= FALSE;
+			bBladesDown 	:= FALSE;
 
-			bPickOpened := FALSE;
-			bCutOpened := FALSE;
-			bCutDeloaded := FALSE;
-			bGripOpened := FALSE;
-			bGripHome := FALSE;
-			bAck := FALSE;
-			bbFlag := FALSE;
-			NewState := 0;
+			bPickOpened 	:= FALSE;
+			bCutOpened 		:= FALSE;
+			bCutDeloaded 	:= FALSE;
+			bGripOpened 	:= FALSE;
+			bGripHome 		:= FALSE;
+			bAck 			:= FALSE;
+			bbFlag 			:= FALSE;
+			NewState 		:= 0;
 		END_IF
 
 	2000:
@@ -413,29 +416,37 @@ uiStepsToMove := INT_TO_UINT(24 * uiDistToGrab);
 
 FB_OPEN_CUT		(ExecuteHmi := (sToolControl = 'cut-open') OR GbOpenCut, 	ControlType := 1,	Ack := uiSignalInToolAck.02, 	OutQ => uiSignalOutTool.02);
 FB_CLOSE_CUT	(ExecuteHmi := (sToolControl = 'cut-close'),	ControlType := 1,	Ack := uiSignalInToolAck.03, 	OutQ => uiSignalOutTool.03);
-FB_RELEASE_CUT	(ExecuteHmi := GbReleaseCut OR FB_RELEASE_CUT.Execute,	ControlType := 1,	Ack := uiSignalInToolAck.01, 	OutQ => );
+FB_RELEASE_CUT	(ExecuteHmi := GbReleaseCut OR FB_RELEASE_CUT.Execute,	ControlType := 1,	Ack := uiSignalInToolAck.01, 	OutQ =>);
 FB_OPEN_PICK	(ExecuteHmi := (sToolControl = 'pick-open') OR GbOpenPick,	ControlType := 1,	Ack := uiSignalInToolAck.04, 	OutQ => uiSignalOutTool.04);
 FB_CLOSE_PICK	(ExecuteHmi := (sToolControl = 'pick-close'),	ControlType := 1,	Ack := uiSignalInToolAck.05, 	OutQ => uiSignalOutTool.05);
 
-FB_LOAD_CUT		(ExecuteHmi := (sToolControl = 'cut-load'),		ControlType := 2, 	Ack := uiSignalInToolAck.00,	OutQ => uiSignalOutTool.00, 	OutQ2 => qValve1);
-FB_DELOAD_CUT	(ExecuteHmi := (sToolControl = 'cut-deload') OR GbDeloadCut,	ControlType := 2, 	Ack := uiSignalInToolAck.01,	OutQ => , 						OutQ2 => bValve1Control);
+FB_LOAD_CUT		(ExecuteHmi := (sToolControl = 'cut-load'),		ControlType := 5, 	Ack := uiSignalInToolAck.00,	OutQ => uiSignalOutTool.00, 	OutQ2 => qValve1, 	OutQ3 => qValve2);
+FB_DELOAD_CUT	(ExecuteHmi := (sToolControl = 'cut-deload') OR GbDeloadCut,	ControlType := 2, 	Ack := uiSignalInToolAck.01,	OutQ => , 	OutQ2 =>bValve1Control);
 
 FB_OPEN_GRIP	(ExecuteHmi := (sToolControl = 'grip-open'),	ControlType := 4,	OutQ =>,);
 FB_CLOSE_GRIP	(ExecuteHmi := (sToolControl = 'grip-close'),	ControlType := 3, 	OutQ => ,);
 
-IF (FB_RELEASE_CUT.Execute AND FB_RELEASE_CUT.State = 10) OR (FB_DELOAD_CUT.Execute AND FB_DELOAD_CUT.State = 110) THEN
+FB_BRAKE		(ControlType := 1, Ack := NOT FB_BRAKE.Execute, 	OutQ => qValve3);
+
+IF (FB_RELEASE_CUT.Execute AND FB_RELEASE_CUT.State = 10) OR (FB_DELOAD_CUT.State = 110) THEN
 	uiSignalOutTool.01 := TRUE;
 ELSE
 	uiSignalOutTool.01 := FALSE;
 END_IF
 
+IF (sToolControl = 'brake-activate') THEN
+	FB_BRAKE.Execute := TRUE;
+ELSIF (sToolControl = 'brake-deactivate') THEN
+	FB_BRAKE.Execute := FALSE;
+END_IF
 
-IF GbCloseGrip OR FB_CLOSE_GRIP.Execute THEN
+
+IF GbCloseGrip OR FB_CLOSE_GRIP.Execute OR FB_CLOSE_GRIP.ExecuteHmi THEN
 	FB_OPEN_GRIP.Execute := FALSE;
 	qValve4 := FB_CLOSE_GRIP.OutQ;
 	testing := FALSE;
 END_IF
-IF GbOpenGrip OR FB_OPEN_GRIP.Execute THEN
+IF GbOpenGrip OR FB_OPEN_GRIP.Execute OR FB_OPEN_GRIP.ExecuteHmi THEN
 	testing := TRUE;
 	FB_CLOSE_GRIP.Execute := FALSE;
 	qValve4 := NOT FB_OPEN_GRIP.OutQ;
@@ -454,7 +465,9 @@ ELSE
 END_IF]]></ST>
     </Implementation>
     <LineIds Name="Tools">
-      <LineId Id="76" Count="147" />
+      <LineId Id="76" Count="53" />
+      <LineId Id="961" Count="0" />
+      <LineId Id="130" Count="93" />
       <LineId Id="698" Count="0" />
       <LineId Id="224" Count="2" />
       <LineId Id="707" Count="2" />
@@ -470,8 +483,16 @@ END_IF]]></ST>
       <LineId Id="242" Count="2" />
       <LineId Id="701" Count="0" />
       <LineId Id="245" Count="160" />
+      <LineId Id="795" Count="0" />
+      <LineId Id="794" Count="0" />
       <LineId Id="518" Count="0" />
-      <LineId Id="406" Count="21" />
+      <LineId Id="406" Count="4" />
+      <LineId Id="875" Count="0" />
+      <LineId Id="874" Count="0" />
+      <LineId Id="876" Count="0" />
+      <LineId Id="879" Count="1" />
+      <LineId Id="877" Count="0" />
+      <LineId Id="411" Count="16" />
       <LineId Id="603" Count="5" />
       <LineId Id="599" Count="0" />
     </LineIds>

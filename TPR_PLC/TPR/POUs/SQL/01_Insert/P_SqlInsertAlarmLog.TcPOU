@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="P_SqlInsertAlarmLog" Id="{d9b042de-d73f-49b9-bc2a-97c1ee95b8b8}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_SqlInsertAlarmLog
+VAR_INPUT
+	bInsert : BOOL; //Execute command
+END_VAR
+VAR
+	
+	fbSql : FB_EasySql;
+	sSql : STRING(1000);
+		
+	iId : INT; //Insert data
+	sCustomer : STRING; //Insert data
+	rValue : REAL; //Insert data
+		
+	
+	bDone : BOOL; //Command done
+	bError : BOOL; //Command error
+	sError : STRING(255);
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Insert new items to database
+sSql := 'INSERT INTO tpr_db.alarmLog (alarmId, deviceWhich) VALUES (¤1¤, "¤2¤");';
+
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤1¤', sReplace:= TO_STRING(robotAlarmId)); //Replace placeholder
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤2¤', sReplace:= TO_STRING(sDeviceWhich)); //Replace placeholder
+//F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤3¤', sReplace:= TO_STRING(rValue)); //Replace placeholder
+
+fbSql(
+	bExecute:= bInsert, 
+	wDBID:= 1, 
+	pSql:= ADR(sSql), 
+	cbSql:= SIZEOF(sSql), 
+	pData:= 0, 
+	cbData:= 0, 
+	udiMaxOfRecord:= 0, 
+	udiNoOfRecords=> , 
+	bDone=> bDone, 
+	bBusy=> , 
+	bError=> bError, 
+	sError=> sError);]]></ST>
+    </Implementation>
+    <LineIds Name="P_SqlInsertAlarmLog">
+      <LineId Id="289" Count="4" />
+      <LineId Id="324" Count="0" />
+      <LineId Id="295" Count="12" />
+      <LineId Id="25" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

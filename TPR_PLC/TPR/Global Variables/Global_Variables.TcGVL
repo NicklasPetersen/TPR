@@ -36,6 +36,8 @@
 	ROBOT_SERVICE:				BYTE := 29;
 	CUT_BACK_TO_ZERO:			BYTE := 30;
 	PICK_BACK_TO_ZERO:			BYTE := 31;
+	CUT_TO_IDLE:				BYTE := 32;
+	PICK_TO_IDLE:				BYTE := 33;
 
 	FB_SEND_POS: 				RobotControl_1;
 	FB_MOVE_TO_IDLE:			RobotControl_1;
@@ -59,11 +61,11 @@
 	FB_SEND_TWO_POS:			RobotControl_1;
 	FB_IMAGE_GRAB:				RobotControl_1;
 	FB_RETRY_GRAB_STEM:			RobotControl_1;
-
 	FB_CUT_TO_ZERO:				RobotControl_1;
 	FB_PICK_TO_ZERO:			RobotControl_1;
-
 	FB_ROBOT_SERVICE:			RobotControl_1;
+	FB_CUT_TO_IDLE:				RobotControl_1;
+	FB_PICK_TO_IDLE:				RobotControl_1;
 
 	(* -------------------------Modbus to HMI------------------------- *)
 	(* Control *)
@@ -146,16 +148,18 @@
 	FB_DELEAF_PLACE:	DeleafPlace;
 
 	FB_OPEN_CUT : 		ValveControl_1;
-	FB_CLOSE_CUT : 	ValveControl_1;
+	FB_CLOSE_CUT : 		ValveControl_1;
 	FB_RELEASE_CUT :	ValveControl_1;
 	FB_OPEN_PICK : 		ValveControl_1;
 	FB_CLOSE_PICK : 	ValveControl_1;
 
 	FB_LOAD_CUT: 		ValveControl_1;
-	FB_DELOAD_CUT: 	ValveControl_1;
+	FB_DELOAD_CUT: 		ValveControl_1;
 
 	FB_OPEN_GRIP: 		ValveControl_1;
-	FB_CLOSE_GRIP: 	ValveControl_1;
+	FB_CLOSE_GRIP: 		ValveControl_1;
+	
+	FB_BRAKE: 			ValveControl_1;
 
 	(* --------------------------------------------------Shared variables-------------------------------------------------- *)
 
@@ -164,21 +168,38 @@
 	(* INTEGERS *)
 	uiTrunkPos: 		UINT;				(* Stamme position	-->	Afstand i mm.															*)
 	iBunchPosZ: 		UINT;
-	iStemAngle:		INT;
+	iStemAngle:			INT;
 
 	uiCutCoordX: 		UINT;
 	uiCutCoordY: 		UINT;
 	uiCutCoordZ: 		UINT;
 
-	iStemPosX: 		UINT;				(* *)
-	iStemPosY: 		UINT;				(* *)
-	iStemPosZ: 		UINT;
-	iRoll: 			INT;
+	iStemPosX: 			UINT;				(* *)
+	iStemPosY: 			UINT;				(* *)
+	iStemPosZ: 			UINT;
+	iRoll: 				INT;
 	iPitch: 			UINT;
-	iYaw:			INT;
+	iYaw:				INT;
 	iPickAngle: 		INT;
 
 	ImageRetryHeight:	INT;
+	
+	robotAlarmId:		UDINT;
+	
+	bAlarm:				BOOL;
+	bAlarmAck:			BOOL;
+	sDeviceWhich:		STRING;
+	
+	bLog:				BOOL;		// For logging of data
+	tLogTime:			TON;		// Time for one sequence
+	uiElapsedTime:		UINT;
+	usiImageLog:		USINT;		// Counting number of images taken in a sequence
+	usiStickoutCutLog:	USINT;		// For counting number of stick-outs
+	usiRetryLog:		USINT;		// Number of retries in on control sequence
+	usiImageRetry:		USINT;		// How many times to change image cnfg
+	bLogSucces:			USINT;		// TRUE if success	-	FALSE if not
+	
+	
 
 
 	(* --------------------------------------------------Tool parameters-------------------------------------------------- *)
@@ -221,6 +242,7 @@
 	(* Sent to Robot Cut *)
 	gStemFound AT %Q* 	: BYTE;
 	gJointFound AT %Q* 	: BYTE;
+	gTomatoHeading AT %Q* 	: BYTE;
 
 
 
@@ -252,6 +274,8 @@
 	sNewCalib 			: STRING(45);
 	sCalib 				: STRING(45);
 	usiVisionCmd		: USINT;
+	calibContinue 		: BOOL;
+	allZero 			: BOOL;
 
 	(* --------------------------------------------------OnOffRobotCut parameters-------------------------------------------------- *)
 	bRobotConnect		: BOOL;
@@ -356,6 +380,11 @@
 	PROGRAM_DATA 	: PrgData;
 	FRAME_DATA		: frameData;
 
+	bGetCutCoordDone: BOOL;
+	gStopped: BOOL;
+	
+	uiSignalInRobotFail AT %I*: BYTE;
+	
 END_VAR
 
 

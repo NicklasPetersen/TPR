@@ -1,0 +1,6 @@
+{
+    "require": {
+        "php-mqtt/client": "^0.2.1",
+        "spatie/async": "^1.5"
+    }
+}

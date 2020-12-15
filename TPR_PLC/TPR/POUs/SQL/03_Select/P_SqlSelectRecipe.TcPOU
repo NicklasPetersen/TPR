@@ -24,7 +24,7 @@ END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[//Select data from database
-sSql := 'SELECT * from recipe WHERE recipe_id =¤1¤';
+sSql := 'SELECT * from tpr_db.recipe WHERE recipe_id =¤1¤';
 
 F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤1¤', sReplace:= TO_STRING(PROGRAM_DATA.usiRecipe)); //Replace placeholder
 

@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <DUT Name="ST_SelectAlarmStruct" Id="{bf629c17-54b6-4b28-9278-0d7d292fbe3d}">
+    <Declaration><![CDATA[TYPE ST_SelectAlarmStruct :
+STRUCT
+	alarmId				: DINT;
+	alarmDesc			: STRING(200);
+	alarmCause			: STRING(500);
+	alarmRemedy			: STRING(500);
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

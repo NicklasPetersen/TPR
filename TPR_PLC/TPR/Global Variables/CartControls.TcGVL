@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <GVL Name="CartControls" Id="{b1b28d33-57c8-4051-a57c-80b215697c76}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	CartUp 			AT %Q*: BOOL := FALSE;		(* Lift kører op *)
+	CartDown 		AT %Q*: BOOL := FALSE;		(* Lift kører ned *)
+	CartForward 	AT %Q*: BOOL := FALSE;		(* Vogn kører fremad *)
+	CartBackward 	AT %Q*: BOOL := FALSE;		(* Vogn kører bagud*)
+	WheelsChange 	AT %Q*: BOOL := FALSE;		(* Hjul til sidelæns kørsel kører op/ned*)
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

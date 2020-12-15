@@ -1,0 +1,15 @@
+<?php
+
+class ToolController extends Controller {
+
+	public function index () {
+		$this->view('tool/control.view');
+	}
+
+	public function sendCommand () {
+		$this->model('publish')->sendCommand($_POST);
+		$_SESSION['testest'] = $_POST;
+	}
+
+
+}

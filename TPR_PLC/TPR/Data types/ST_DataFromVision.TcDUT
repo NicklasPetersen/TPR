@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
   <DUT Name="ST_DataFromVision" Id="{73ac31bd-81a2-4788-a0df-d647187e4e79}">
     <Declaration><![CDATA[TYPE ST_DataFromVision :
 STRUCT
@@ -14,8 +14,7 @@ STRUCT
 	ResultPar5 		: INT;		(*														P Y   rotation									*)	(* ResultPar5 Byte  15 	& 	16 	*)
 	ResultPar6 		: INT;		(*														P Z1 rotation									*)	(* ResultPar6 Byte  17 	& 	18 	*)
 	ResultPar7 		: INT;		(*														P2 rotation around Z							*)	(* ResultPar7 Byte  19 	& 	20 	*)
-	ResultPar8 		: INT;		(*														??											*)	(* ResultPar8 Byte  21 	& 	22 	*)
-	ResultPar9 		: INT;		(*														??											*)	(* ResultPar9 Byte  23 	& 	24 	*)
+	(* ResultPar9 Byte  23 	& 	24 	*)
 
 	(*				Cam 1 information																Cam 2 information
 		ResultPar1:	Stem pos Low 	X															Pos 		X
@@ -27,8 +26,10 @@ STRUCT
 		ResultPar7:	Rotation around Z	-	Angle between vector from stem to lowest tomato and X-axis		P2 rotation around Z						
 	*)
 
-	gStemFound	 	: BYTE; 		(*0: Not found 1: Found 255: timeout  Byte 5*)	(* Byte 5 *)
+	gStemFound	 	: BYTE; 	(*0: Not found 1: Found 255: timeout  Byte 5*)	(* Byte 5 *)
 	gJointFound		: BYTE;		(*0: Not found 1: Found 255: timeout  Byte 6 *)	(* Byte 6 *)
+	gTrussFound		: BYTE; 	(*0: Not found 1: Found 255: timeout  Byte 6 *)	(* Byte 7 *)
+	gTomatoFound	: BYTE;		(*0: Not found 1: Found 255: timeout  Byte 6 *)	(* Byte 8 *)
 
 	CmdInProcess	: BYTE;     	(*ECHO of current CMD Byte 0*)
 END_STRUCT

@@ -29,12 +29,21 @@
 			</ArrayInfo>
 		</DataType>
 		<DataType>
-			<Name GUID="{18071995-0000-0000-0000-002000000007}" IecBaseType="true" AutoDeleteType="true" HideSubItems="true">ARRAY [0..6] OF BIT</Name>
-			<BitSize>7</BitSize>
+			<Name GUID="{18071995-0000-0000-0000-002000000040}" IecBaseType="true" AutoDeleteType="true" HideSubItems="true">ARRAY [0..7] OF BYTE</Name>
+			<BitSize>64</BitSize>
+			<BaseType GUID="{18071995-0000-0000-0000-000000000001}">BYTE</BaseType>
+			<ArrayInfo>
+				<LBound>0</LBound>
+				<Elements>8</Elements>
+			</ArrayInfo>
+		</DataType>
+		<DataType>
+			<Name GUID="{18071995-0000-0000-0000-002000000006}" IecBaseType="true" AutoDeleteType="true" HideSubItems="true">ARRAY [0..5] OF BIT</Name>
+			<BitSize>6</BitSize>
 			<BaseType GUID="{18071995-0000-0000-0000-000000000010}">BIT</BaseType>
 			<ArrayInfo>
 				<LBound>0</LBound>
-				<Elements>7</Elements>
+				<Elements>6</Elements>
 			</ArrayInfo>
 		</DataType>
 	</DataTypes>
@@ -46,7 +55,7 @@
 		<ImageData Id="1004">424dd6020000000000003600000028000000100000000e0000000100180000000000a0020000c40e0000c40e00000000000000000000ff00ffff00ffff00ffff00ffff00ffff00ff808080808080808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffff00ffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ff007fff007fff007fff007fff007fff007fffc0c0c0c0c0c0808080ff00ffff00ffff00ffff00ffff00ffff00ffff00ff</ImageData>
 		<ImageData Id="1005">424da2070000000000007600000028000000460000003300000001000400000000002c070000c30e0000c30e000000000000000000000000000000008000008000000080800080000000800080008080000080808000c0c0c0000000ff0000ff000000ffff00ff000000ff00ff00ffff0000ffffff00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff88888f00ff88888888888888888888888888888888888888888888888888888888888888fff8ff00ff8fffffffffffffffff7ffffffffffff9999ffffffffffffffffffffffffff877877800ff8f000000000ff000ff7ffffffffffff9999ffffffffffffffffffffffffff877877800ff8f0fffffff0fffffff7ffffffffffff9ff9ffffffffffffffffffffffffff888888800ff8f0fff000f0fffffff7ffffffffffff9ff9ffffffffffffffffffffffffff877877800ff8f0fffffff0ff000ff777777777ffff9ff9ff00000000000000000000000f877877800ff8f0fff000f0ff000ff7f8ff7887ffff9ff9ff00fffffffffffffffffff00f888888800ff8f0ff0000f0ff000ff7ffff7887ffff9ff9ff00fffffffffffffffff8f00f833833800ff8f0f00000f0ff000ff7ffff7887ffff9ff9ff00fffffffffffffffff8f00f833833800ff8f0f00000f0ff000ff7ffff7887ffff9ff9ff00fffffffffffffffff8f00f888888800ff8f0f00000f0ff000ff7ffff7887ffff9ff9ff00fffffffffffffffff8f00f877877800ff8f0f00000f0ff000ff7ffff7887ffff9ff9ff00fffffffffffffffff8f00f877877800ff8f0f00000f0fffffff7ffff7887ffff9ff9ff00fffffffffffffffffff00f888888800ff8f0f00000f0fffffff7ffff7887ffff9ff9ff00fffffffffffffffffff00f877877800ff8f0f00000f0fffffff7ffff7887ffff9999ff00fffffffffffffffffff00f877877800ff8f0f00000f0ff000ff7ffff7887ffff9999ff00fffffffffffffffffff00f888888800ff8f0f00000f0fff0fff7ffff7887ffff9999ff00fffffffffffffffffff00f8cc8cc800ff8f0ff0000f0fff0fff7ffff7887ffff9999ff00fffffffffffffffffff00f8cc8cc800ff8f0fff000f0fffffff7ffff7887ffff9999ff00fffffffffffffffffff00f888888800ff8f0fffffff0fffffff7ffff7887ffff9999ff00fffffffffffffffffff00f877877800ff8f0fff000f0fffffff7ffff7887ffff9999ff00fffffffffffffffffff00f877877800ff8f0fffffff0fffffff777777777ffff9999ff00000000000000000000000f888888800ff8f000000000ff000ff7ffffffffffff9999ffffffffffffffffffffffffff877877800ff8f0fffffff0fffffff7ffffffffffff9999ffffffffffffffffffffffffff877877800ff8f00f0f0f00fffffff7ffffffffffff9999ffffffffffffffffffffffffff888888800ff8f000000000fffffff7ffffffffffff9999ffffffffffffffffffffffffff899899800ff8fffffffffffffffff7ffffffffffff9999ffffffffffffffffffffffffff899899800ff8fffffffffffffffff7ffffffffffff9999ffffffffffffffffffffffffff888888800ff8fb0000ff000f000ff7fffffffaaaff9999ffffffffffffffffffffffffff877877800ff8fb0000ff0f0f0f0ff7ffffffffffff9999ffffffffffffffffffffffffff877877800ff8f00000ff0f0f0f0ff7ffffffffffff9999ffffffffffffffffffffffffff888888800ff8f00000ff0f0f0f0ff7fffffffaaaff9999ffffffffffffffffffffffffff877877800ff8f00000ff0f0f0f0ff7ffffffffffff9999ffffffffffffffffffffffffff877877800ff8fa0000ff0f0f0f0ff7ffffffffffff9999ffffffffffffffffffffffffff888888800ff8fa0000ff000f000ff7fffffffaaaff9999ffffffffffffffffffffffffff8998cc800ff8fffffffffffffffff7ffffffffffff9999ffffffffffffffffffffffffff8998cc800ff8fffffffffffffffff7ffffffffffff9999ffffffffffffffffffffffffff888888800ff8fb0000ff000f000ff7fffffffaaaff9999ffffffffffffffffffffffffff877877800ff8fb0000ff0f0f0f0ff7ffffffffffff9999ffffffffffffffffffffffffff877877800ff8f00000ff0f0f0f0ff7ffffffffffff9999ffffffffffffffffffffffffff888888800ff8f00000ff0f0f0f0ff7fffffffaaaff9999ffffffffffffffffffffffffff8aa8aa800ff8f00000ff0f0f0f0ff7ffffffffffff9999ffffffffffffffffffffffffff8aa8aa800ff8fa0000ff0f0f0f0ff7ff0f00f0f0ff9999ffffffffffffffffffffffffff888888800ff8fa0000ff000f000ff7f0f0ff0f0f0f9999ffffffffffffffffffffffffff88bbbb800ff8fffffffffffffffff7ff00000f00ff9999ffffffffffffffffffffffffff899999800ff88888888888888888888888888888888888888888888888888888888888888bbbbb800fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8ffff00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff88888f00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff00</ImageData>
 	</ImageDatas>
-	<Project ProjectGUID="{48868F7F-D03A-4FDD-9B08-424D6C4547C1}" Target64Bit="true" ShowHideConfigurations="#x306">
+	<Project ProjectGUID="{48868F7F-D03A-4FDD-9B08-424D6C4547C1}" ShowHideConfigurations="#x306">
 		<System>
 			<Licenses>
 				<Target>
@@ -60,7 +69,7 @@
 			</Tasks>
 		</System>
 		<Plc>
-			<Project GUID="{A2C953E3-3D3D-45B5-A6E6-7D5DAA7D7B56}" Name="TPR" PrjFilePath="TPR\TPR.plcproj" TmcFilePath="TPR\TPR.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
+			<Project GUID="{A31F2CC2-B168-4215-9208-620CF1D650FF}" Name="TPR" PrjFilePath="TPR\TPR.plcproj" TmcFilePath="TPR\TPR.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
 				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="TPR\TPR.tmc">
 					<Name>TPR Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
@@ -82,12 +91,14 @@
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>ErrorHandle.uiSignalInAlarmCode</Name>
-							<Type>UDINT</Type>
+							<Name>ErrorVar.WhichRobot</Name>
+							<Comment><![CDATA[ 1:Cut 2:Pick ]]></Comment>
+							<Type>BYTE</Type>
 						</Var>
 						<Var>
-							<Name>ErrorHandle.uiSignalInAlarm</Name>
-							<Type>BYTE</Type>
+							<Name>ErrorVar.ErrorNum</Name>
+							<Comment><![CDATA[ Error/warning received from the robots ]]></Comment>
+							<Type>DWORD</Type>
 						</Var>
 						<Var>
 							<Name>Global_Variables.uiSignalIn4</Name>
@@ -151,6 +162,10 @@ Tcp Coord Input - Getcoord]]></Comment>
 							<Name>Global_Variables.uiSignalInEncoderCount</Name>
 							<Type>UDINT</Type>
 						</Var>
+						<Var>
+							<Name>Global_Variables.uiSignalInRobotFail</Name>
+							<Type>BYTE</Type>
+						</Var>
 					</Vars>
 					<Vars VarGrpType="2">
 						<Name>PLC Outputs</Name>
@@ -161,12 +176,12 @@ Tcp Coord Input - Getcoord]]></Comment>
 						</Var>
 						<Var>
 							<Name>Tools.qValve2</Name>
-							<Comment><![CDATA[ Ventil 2 --> Åben / Luk Cutter		]]></Comment>
+							<Comment><![CDATA[ Ventil 2 --> Kører stempel i cut op		]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>Tools.qValve3</Name>
-							<Comment><![CDATA[ Ventil 3 --> Lås Cutter 				]]></Comment>
+							<Comment><![CDATA[ Ventil 3 --> Brake 				]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -190,7 +205,38 @@ Tcp Coord Input - Getcoord]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>ErrorHandle.uiSignalOutAlarm</Name>
+							<Name>CartControls.CartUp</Name>
+							<Comment><![CDATA[ Lift kører op ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>CartControls.CartDown</Name>
+							<Comment><![CDATA[ Lift kører ned ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>CartControls.CartForward</Name>
+							<Comment><![CDATA[ Vogn kører fremad ]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>CartControls.CartBackward</Name>
+							<Comment><![CDATA[ Vogn kører bagud]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>CartControls.WheelsChange</Name>
+							<Comment><![CDATA[ Hjul til sidelæns kørsel kører op/ned]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>ErrorVar.CancelAlarm</Name>
+							<Comment><![CDATA[ 0:Waiting for cancel alarm 1:Cancel Alarm]]></Comment>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>ErrorVar.gSeverity</Name>
+							<Comment><![CDATA[ 0:No Alarm 1:Warning 2:Error ]]></Comment>
 							<Type>BYTE</Type>
 						</Var>
 						<Var>
@@ -204,6 +250,10 @@ Tcp Coord Input - Getcoord]]></Comment>
 						</Var>
 						<Var>
 							<Name>Global_Variables.gJointFound</Name>
+							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>Global_Variables.gTomatoHeading</Name>
 							<Type>BYTE</Type>
 						</Var>
 						<Var>
@@ -401,7 +451,7 @@ Tcp Coord Input - Getcoord]]></Comment>
 			</Project>
 		</Plc>
 		<Io>
-			<Device Id="1" Disabled="true" DevType="124" DevFlags="#x0004">
+			<Device Id="1" DevType="124" DevFlags="#x0004">
 				<Name>Device 1 (Beckhoff CCAT)</Name>
 				<ImageId>230</ImageId>
 				<AddressInfo>
@@ -445,7 +495,7 @@ Tcp Coord Input - Getcoord]]></Comment>
 					</Slot>
 				</CCat>
 			</Device>
-			<Device Id="2" Disabled="true" DevType="111" DevFlags="#x0003" AmsPort="28674" AmsNetId="192.168.56.1.3.1" RemoteName="Device 2 (EtherCAT)">
+			<Device Id="2" DevType="111" DevFlags="#x0003" AmsPort="28674" AmsNetId="192.168.56.1.3.1" RemoteName="Device 2 (EtherCAT)">
 				<Name>Device 2 (EtherCAT)</Name>
 				<AddressInfo>
 					<Ccat>
@@ -840,11 +890,11 @@ Tcp Coord Input - Getcoord]]></Comment>
 					<Box Id="5" BoxType="9094" BoxFlags="#x00000020">
 						<Name>Term 5 (EL6751)</Name>
 						<ImageId>1003</ImageId>
-						<EtherCAT SlaveType="5" AdsServerAddress="c0a8380103060000" PdiType="#x0408" ExecIo="true" MboxDataLinkLayer="true" StateMBoxPolling="true" CycleMBoxPollingTime="0" CoeType="35" FoeType="1" VendorId="#x00000002" ProductCode="#x1a5f3052" RevisionNo="#x00150000" InfoDataAddr="true" InfoDataNetId="true" TimeoutStateChange1="5000" TimeoutStateChange3="10000" TimeoutStateChange4="1000" TimeoutMailbox2="2000" GenerateOwnNetId="true" InitializeOwnNetId="true" PortPhys="51" MaxSlotCount="126" SlotPdoIncrement="1" SlotIndexIncrement="16" Type="EL6751 CANopen Master" Desc="EL6751" PortABoxInfo="#x01000004">
+						<EtherCAT SlaveType="5" AdsServerAddress="055474bf04010000" PdiType="#x0408" ExecIo="true" MboxDataLinkLayer="true" StateMBoxPolling="true" CycleMBoxPollingTime="0" CoeType="35" FoeType="1" VendorId="#x00000002" ProductCode="#x1a5f3052" RevisionNo="#x00150000" InfoDataAddr="true" InfoDataNetId="true" OwnAddrExtern="true" TimeoutStateChange1="5000" TimeoutStateChange3="10000" TimeoutStateChange4="1000" TimeoutMailbox2="2000" GenerateOwnNetId="true" InitializeOwnNetId="true" PortPhys="51" MaxSlotCount="126" SlotPdoIncrement="1" SlotIndexIncrement="16" Type="EL6751 CANopen Master" Desc="EL6751" PortABoxInfo="#x01000004">
 							<SyncMan>001000042600010001000000500000040004001026010000</SyncMan>
 							<SyncMan>001400042200010002000000500000040004001422010000</SyncMan>
-							<SyncMan>001800002600000003000000000000000000001826010000</SyncMan>
-							<SyncMan>002402002200010004000000000000000000002422010000</SyncMan>
+							<SyncMan>001820002600010003000000000000000000001826010000</SyncMan>
+							<SyncMan>002427002200010004000000000000000000002422010000</SyncMan>
 							<Fmmu>0000000000000000001800020100000001000000000000000000000000000000</Fmmu>
 							<Fmmu>0000000000000000002400010100000002000000000000000000000000000000</Fmmu>
 							<Fmmu>00000000000000000d0800010100000003000000000000000000000000000000</Fmmu>
@@ -852,15 +902,59 @@ Tcp Coord Input - Getcoord]]></Comment>
 							<SuName>Term 5 (EL6751)</SuName>
 							<DcMode>53796e6368726f6e0000000000000000534d2d53796e6368726f6e000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000</DcMode>
 							<DcMode>444353594e430000000000000000000044432d53796e6368726f6e000000000000000000000000000000000000000000000000000000000090d00300000000070100000000000000000000000000000000000000000000000000000000000000</DcMode>
-							<Pdo Name="Device" Index="#x1a80" Flags="#x0011" SyncMan="3">
-								<Entry Name="Error" Index="#xf100" Sub="#x01" Flags="#x00000100">
+							<Pdo Name="Box 7 (CX2xxx CANopen Slave)_IN" Index="#x1a00" Flags="#x0011" SyncMan="3">
+								<Entry Name="TxPDO_1" Index="#x6000" Sub="#x01" Flags="#x00000100">
+									<Type GUID="{18071995-0000-0000-0000-002000000040}">ARRAY [0..7] OF BYTE</Type>
+								</Entry>
+								<Entry Name="TxPDO_2" Index="#x6000" Sub="#x02" Flags="#x00000100">
+									<Type GUID="{18071995-0000-0000-0000-002000000040}">ARRAY [0..7] OF BYTE</Type>
+								</Entry>
+								<Entry Name="TxPDO_3" Index="#x6000" Sub="#x03" Flags="#x00000100">
+									<Type GUID="{18071995-0000-0000-0000-002000000040}">ARRAY [0..7] OF BYTE</Type>
+								</Entry>
+								<Entry Name="TxPDO_4" Index="#x6000" Sub="#x04" Flags="#x00000100">
+									<Type GUID="{18071995-0000-0000-0000-002000000040}">ARRAY [0..7] OF BYTE</Type>
+								</Entry>
+							</Pdo>
+							<Pdo Name="Box 7 (CX2xxx CANopen Slave)_OUT" Index="#x1600" InOut="1" Flags="#x0011" SyncMan="2">
+								<Entry Name="RxPDO_1" Index="#x7000" Sub="#x01" Flags="#x00000100">
+									<Type GUID="{18071995-0000-0000-0000-002000000040}">ARRAY [0..7] OF BYTE</Type>
+								</Entry>
+								<Entry Name="RxPDO_2" Index="#x7000" Sub="#x02" Flags="#x00000100">
+									<Type GUID="{18071995-0000-0000-0000-002000000040}">ARRAY [0..7] OF BYTE</Type>
+								</Entry>
+								<Entry Name="RxPDO_3" Index="#x7000" Sub="#x03" Flags="#x00000100">
+									<Type GUID="{18071995-0000-0000-0000-002000000040}">ARRAY [0..7] OF BYTE</Type>
+								</Entry>
+								<Entry Name="RxPDO_4" Index="#x7000" Sub="#x04" Flags="#x00000100">
+									<Type GUID="{18071995-0000-0000-0000-002000000040}">ARRAY [0..7] OF BYTE</Type>
+								</Entry>
+							</Pdo>
+							<Pdo Name="Device 3 (EL6751)" Index="#x1a80" Flags="#x0011" SyncMan="3">
+								<Entry Name="Box 7 (CX2xxx CANopen Slave)_NodeState" Index="#xa000" Sub="#x01" Flags="#x00000100">
+									<DefaultDataMask>1f1f</DefaultDataMask>
 									<Type>USINT</Type>
 								</Entry>
-								<Entry Name="DiagFlag" Index="#xf100" Sub="#x02" Flags="#x00000100">
+								<Entry Name="Device 3 (EL6751)_Error" Index="#xf100" Sub="#x01" Flags="#x00000100">
+									<Type>USINT</Type>
+								</Entry>
+								<Entry Name="Device 3 (EL6751)_CanState" Index="#xf100" Sub="#x03" Flags="#x00000100">
+									<Type>UINT</Type>
+								</Entry>
+								<Entry Name="Device 3 (EL6751)_RxErrorCounter" Index="#xf100" Sub="#x05" Flags="#x00000100">
+									<Type>USINT</Type>
+								</Entry>
+								<Entry Name="Device 3 (EL6751)_TxErrorCounter" Index="#xf100" Sub="#x04" Flags="#x00000100">
+									<Type>USINT</Type>
+								</Entry>
+								<Entry Name="Device 3 (EL6751)_DiagFlag" Index="#xf100" Sub="#x02" Flags="#x00000100">
+									<Type>BIT</Type>
+								</Entry>
+								<Entry Name="Box 7 (CX2xxx CANopen Slave)_DiagFlag" Index="#xa000" Sub="#x02" Flags="#x00000100">
 									<Type>BIT</Type>
 								</Entry>
 								<Entry>
-									<Type GUID="{18071995-0000-0000-0000-002000000007}">ARRAY [0..6] OF BIT</Type>
+									<Type GUID="{18071995-0000-0000-0000-002000000006}">ARRAY [0..5] OF BIT</Type>
 								</Entry>
 							</Pdo>
 							<CoeProfile ProfileNo="5001"/>
@@ -878,7 +972,7 @@ Tcp Coord Input - Getcoord]]></Comment>
 				</Box>
 				<EtherCAT/>
 			</Device>
-			<Device Id="3" Disabled="true" DevType="87" AmsPort="28675" AmsNetId="192.168.56.1.4.1" RemoteName="Device 3 (EL6751)">
+			<Device Id="3" DevType="87" AmsPort="28675" AmsNetId="192.168.56.1.4.1" RemoteName="Device 3 (EL6751)">
 				<Name>Device 3 (EL6751)</Name>
 				<AddressInfo>
 					<Ecat>
@@ -1383,7 +1477,7 @@ Slave-Mode:
 				</Box>
 				<CanOpen>
 					<Fcxxxx>
-						<DevSettings BusyIntEnabled="true" DisableSlots="true" NetId="c0a838010401" EquiCycleTime="100000" FifoSize="5" CycleDivider="1"/>
+						<DevSettings BusyIntEnabled="true" DisableSlots="true" NetId="055474bf0401" EquiCycleTime="100000" FifoSize="5" CycleDivider="1"/>
 						<DevParameter CycleTime="100000" InputShift="60"/>
 						<EquiParameter RelationShiftCycle="0"/>
 					</Fcxxxx>
@@ -1393,6 +1487,8 @@ Slave-Mode:
 		</Io>
 	</Project>
 	<Mappings>
+		<MappingInfo Identifier="{00000000-2001-0850-0020-500810000403}" Id="#x02030020"/>
+		<MappingInfo Identifier="{00000000-2001-0850-0020-500830000403}" Id="#x02030010"/>
 		<OwnerA Name="TIPC^TPR^TPR Instance">
 			<OwnerB Name="TIID^Device 2 (EtherCAT)^Term 1 (EK1200)^Term 2 (EL1859)">
 				<Link VarA="PLC Inputs^Global_Variables.bGripSensorStop" VarB="Channel 2^Input"/>
@@ -1404,6 +1500,11 @@ Slave-Mode:
 				<Link VarA="PLC Outputs^Tools.qValve5" VarB="Channel 12^Output"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 2 (EtherCAT)^Term 1 (EK1200)^Term 3 (EL2809)">
+				<Link VarA="PLC Outputs^CartControls.CartBackward" VarB="Channel 8^Output"/>
+				<Link VarA="PLC Outputs^CartControls.CartDown" VarB="Channel 6^Output"/>
+				<Link VarA="PLC Outputs^CartControls.CartForward" VarB="Channel 7^Output"/>
+				<Link VarA="PLC Outputs^CartControls.CartUp" VarB="Channel 5^Output"/>
+				<Link VarA="PLC Outputs^CartControls.WheelsChange" VarB="Channel 10^Output"/>
 				<Link VarA="PLC Outputs^Tools.qMotorDirection" VarB="Channel 2^Output"/>
 				<Link VarA="PLC Outputs^Tools.qMotorRun" VarB="Channel 1^Output"/>
 			</OwnerB>
@@ -1413,6 +1514,10 @@ Slave-Mode:
 				<Link VarA="PLC Outputs^Global_Variables.uiSetCounterValue" VarB="ENC Outputs^Set counter value"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 3 (EL6751)^Box 7 (CX2xxx CANopen Slave)">
+				<Link VarA="PLC Inputs^ErrorVar.ErrorNum" VarB="TxPDO 4^Inputs^Byte_Input_30"/>
+				<Link VarA="PLC Inputs^ErrorVar.ErrorNum" VarB="TxPDO 4^Inputs^Byte_Input_31" Size="8" OffsA="8"/>
+				<Link VarA="PLC Inputs^ErrorVar.ErrorNum" VarB="TxPDO 4^Inputs^Byte_Input_32" Size="8" OffsA="16"/>
+				<Link VarA="PLC Inputs^ErrorVar.WhichRobot" VarB="TxPDO 4^Inputs^Byte_Input_29"/>
 				<Link VarA="PLC Inputs^Global_Variables.uiSignalIn2" VarB="TxPDO 1^Inputs^Byte_Input_2"/>
 				<Link VarA="PLC Inputs^Global_Variables.uiSignalIn4" VarB="TxPDO 1^Inputs^Byte_Input_4"/>
 				<Link VarA="PLC Inputs^Global_Variables.uiSignalInA" VarB="TxPDO 2^Inputs^Byte_Input_13"/>
@@ -1423,6 +1528,7 @@ Slave-Mode:
 				<Link VarA="PLC Inputs^Global_Variables.uiSignalInOrientation" VarB="TxPDO 3^Inputs^Byte_Input_19"/>
 				<Link VarA="PLC Inputs^Global_Variables.uiSignalInR" VarB="TxPDO 3^Inputs^Byte_Input_17"/>
 				<Link VarA="PLC Inputs^Global_Variables.uiSignalInR" VarB="TxPDO 3^Inputs^Byte_Input_18" Size="8" OffsA="8"/>
+				<Link VarA="PLC Inputs^Global_Variables.uiSignalInRobotFail" VarB="TxPDO 4^Inputs^Byte_Input_27"/>
 				<Link VarA="PLC Inputs^Global_Variables.uiSignalInShared" VarB="TxPDO 2^Inputs^Byte_Input_12"/>
 				<Link VarA="PLC Inputs^Global_Variables.uiSignalInToolAck" VarB="TxPDO 3^Inputs^Byte_Input_20"/>
 				<Link VarA="PLC Inputs^Global_Variables.uiSignalInX" VarB="TxPDO 3^Inputs^Byte_Input_21"/>
@@ -1433,7 +1539,10 @@ Slave-Mode:
 				<Link VarA="PLC Inputs^Global_Variables.uiSignalInZ" VarB="TxPDO 4^Inputs^Byte_Input_26" Size="8" OffsA="8"/>
 				<Link VarA="PLC Inputs^OnOffRobotCut.uiSignalIn1" VarB="TxPDO 1^Inputs^Byte_Input_1"/>
 				<Link VarA="PLC Inputs^OnOffRobotCut.uiSignalIn3" VarB="TxPDO 1^Inputs^Byte_Input_3"/>
+				<Link VarA="PLC Outputs^ErrorVar.CancelAlarm" VarB="RxPDO 4^Outputs^Byte_Output_32"/>
+				<Link VarA="PLC Outputs^ErrorVar.gSeverity" VarB="RxPDO 4^Outputs^Byte_Output_31"/>
 				<Link VarA="PLC Outputs^Global_Variables.gJointFound" VarB="RxPDO 3^Outputs^Byte_Output_18"/>
+				<Link VarA="PLC Outputs^Global_Variables.gTomatoHeading" VarB="RxPDO 4^Outputs^Byte_Output_29"/>
 				<Link VarA="PLC Outputs^Global_Variables.iImageZone" VarB="RxPDO 2^Outputs^Byte_Output_16"/>
 				<Link VarA="PLC Outputs^Global_Variables.uiCalibImgCount" VarB="RxPDO 2^Outputs^Byte_Output_14"/>
 				<Link VarA="PLC Outputs^Global_Variables.uiSignalOut1" VarB="RxPDO 1^Outputs^Byte_Output_1"/>

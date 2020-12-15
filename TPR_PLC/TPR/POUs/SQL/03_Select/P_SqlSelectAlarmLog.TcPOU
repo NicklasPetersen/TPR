@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="P_SqlSelectAlarmLog" Id="{de1adf32-0e69-4459-99cc-1a7043c87d5c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_SqlSelectAlarmLog
+VAR_INPUT
+	bRead : BOOL; //Execute command
+END_VAR
+VAR
+	
+	fbSq : FB_EasySql;
+	sSql : STRING(1000);
+	
+	iGE : INT:=1; //Select value
+	
+	astData : ARRAY[0..9] OF ST_SelectAlarmLogStruct; //Data array for recieved data
+	
+	bDone : BOOL; //Command done
+	bError : BOOL; //Command error
+	sError : STRING(255);
+	
+	udiNoOfRecords : UDINT; //Numbers of returned recoreds
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Select data from database
+sSql := 'SELECT * from alarmLog ORDER BY time DESC LIMIT 1;';
+
+//F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤1¤', sReplace:= TO_STRING(robotAlarmId)); //Replace placeholder
+
+fbSq(
+	bExecute:= bRead, 
+	wDBID:= 1, 
+	pSql:= ADR(sSql), 
+	cbSql:= SIZEOF(sSql), 
+	pData:= ADR(astData), 
+	cbData:= SIZEOF(astData), 
+	udiMaxOfRecord:= 3, //Max number of recieved records
+	udiNoOfRecords=> udiNoOfRecords, 
+	bDone=> bDone, 
+	bBusy=> , 
+	bError=> bError, 
+	sError=> sError
+);]]></ST>
+    </Implementation>
+    <LineIds Name="P_SqlSelectAlarmLog">
+      <LineId Id="200" Count="1" />
+      <LineId Id="237" Count="0" />
+      <LineId Id="202" Count="0" />
+      <LineId Id="300" Count="0" />
+      <LineId Id="204" Count="11" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="256" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

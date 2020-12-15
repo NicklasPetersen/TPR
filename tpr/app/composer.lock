@@ -1,0 +1,375 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "a14f7cbce4dc3021daf2d69119f88a80",
+    "packages": [
+        {
+            "name": "opis/closure",
+            "version": "3.6.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/opis/closure.git",
+                "reference": "c547f8262a5fa9ff507bd06cc394067b83a75085"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/opis/closure/zipball/c547f8262a5fa9ff507bd06cc394067b83a75085",
+                "reference": "c547f8262a5fa9ff507bd06cc394067b83a75085",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^5.4 || ^7.0 || ^8.0"
+            },
+            "require-dev": {
+                "jeremeamia/superclosure": "^2.0",
+                "phpunit/phpunit": "^4.0 || ^5.0 || ^6.0 || ^7.0 || ^8.0 || ^9.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.6.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Opis\\Closure\\": "src/"
+                },
+                "files": [
+                    "functions.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Marius Sarca",
+                    "email": "marius.sarca@gmail.com"
+                },
+                {
+                    "name": "Sorin Sarca",
+                    "email": "sarca_sorin@hotmail.com"
+                }
+            ],
+            "description": "A library that can be used to serialize closures (anonymous functions) and arbitrary objects.",
+            "homepage": "https://opis.io/closure",
+            "keywords": [
+                "anonymous functions",
+                "closure",
+                "function",
+                "serializable",
+                "serialization",
+                "serialize"
+            ],
+            "time": "2020-10-11T21:42:15+00:00"
+        },
+        {
+            "name": "php-mqtt/client",
+            "version": "v0.2.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-mqtt/client.git",
+                "reference": "79b3b9917c5087b99c42e804f8e3e9ff327086aa"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-mqtt/client/zipball/79b3b9917c5087b99c42e804f8e3e9ff327086aa",
+                "reference": "79b3b9917c5087b99c42e804f8e3e9ff327086aa",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.2",
+                "psr/log": "^1.1"
+            },
+            "require-dev": {
+                "phpunit/php-invoker": "^3.0",
+                "phpunit/phpunit": "^8.0",
+                "squizlabs/php_codesniffer": "^3.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PhpMqtt\\Client\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Namoshek",
+                    "email": "namoshek@gmx.at",
+                    "role": "developer"
+                }
+            ],
+            "description": "An MQTT client written in and for PHP.",
+            "keywords": [
+                "client",
+                "mqtt",
+                "publish",
+                "subscribe"
+            ],
+            "time": "2020-08-19T12:19:46+00:00"
+        },
+        {
+            "name": "psr/log",
+            "version": "1.1.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/log.git",
+                "reference": "0f73288fd15629204f9d42b7055f72dacbe811fc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/log/zipball/0f73288fd15629204f9d42b7055f72dacbe811fc",
+                "reference": "0f73288fd15629204f9d42b7055f72dacbe811fc",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Psr\\Log\\": "Psr/Log/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interface for logging libraries",
+            "homepage": "https://github.com/php-fig/log",
+            "keywords": [
+                "log",
+                "psr",
+                "psr-3"
+            ],
+            "support": {
+                "source": "https://github.com/php-fig/log/tree/1.1.3"
+            },
+            "time": "2020-03-23T09:12:05+00:00"
+        },
+        {
+            "name": "spatie/async",
+            "version": "1.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/spatie/async.git",
+                "reference": "460eab39cff180141e052db8e68617278d571d97"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/spatie/async/zipball/460eab39cff180141e052db8e68617278d571d97",
+                "reference": "460eab39cff180141e052db8e68617278d571d97",
+                "shasum": ""
+            },
+            "require": {
+                "opis/closure": "^3.4.2",
+                "php": "^7.1",
+                "symfony/process": "^3.3 || ^4.0 || ^5.0"
+            },
+            "require-dev": {
+                "larapack/dd": "^1.1",
+                "phpunit/phpunit": "^6.5",
+                "symfony/stopwatch": "^4.0 || ^5.0"
+            },
+            "suggest": {
+                "ext-pcntl": "Required to use async processes",
+                "ext-posix": "Required to use async processes"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "Spatie\\Async\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Brent Roose",
+                    "email": "brent@spatie.be",
+                    "homepage": "https://spatie.be",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Asynchronous and parallel PHP with the PCNTL extension",
+            "homepage": "https://github.com/spatie/async",
+            "keywords": [
+                "async",
+                "spatie"
+            ],
+            "time": "2020-09-18T08:36:28+00:00"
+        },
+        {
+            "name": "symfony/polyfill-php80",
+            "version": "v1.20.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/polyfill-php80.git",
+                "reference": "e70aa8b064c5b72d3df2abd5ab1e90464ad009de"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/polyfill-php80/zipball/e70aa8b064c5b72d3df2abd5ab1e90464ad009de",
+                "reference": "e70aa8b064c5b72d3df2abd5ab1e90464ad009de",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.20-dev"
+                },
+                "thanks": {
+                    "name": "symfony/polyfill",
+                    "url": "https://github.com/symfony/polyfill"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Polyfill\\Php80\\": ""
+                },
+                "files": [
+                    "bootstrap.php"
+                ],
+                "classmap": [
+                    "Resources/stubs"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ion Bazan",
+                    "email": "ion.bazan@gmail.com"
+                },
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony polyfill backporting some PHP 8.0+ features to lower PHP versions",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "compatibility",
+                "polyfill",
+                "portable",
+                "shim"
+            ],
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2020-10-23T14:02:19+00:00"
+        },
+        {
+            "name": "symfony/process",
+            "version": "v5.1.8",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/process.git",
+                "reference": "f00872c3f6804150d6a0f73b4151daab96248101"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/process/zipball/f00872c3f6804150d6a0f73b4151daab96248101",
+                "reference": "f00872c3f6804150d6a0f73b4151daab96248101",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.2.5",
+                "symfony/polyfill-php80": "^1.15"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Component\\Process\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony Process Component",
+            "homepage": "https://symfony.com",
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2020-10-24T12:01:57+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": [],
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": [],
+    "platform-dev": [],
+    "plugin-api-version": "1.1.0"
+}

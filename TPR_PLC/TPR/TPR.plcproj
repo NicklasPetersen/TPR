@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{a2c953e3-3d3d-45b5-a6e6-7d5daa7d7b56}</ProjectGuid>
+    <ProjectGuid>{a31f2cc2-b168-4215-9208-620cf1d650ff}</ProjectGuid>
     <Name>TPR</Name>
     <Application>{cb0510de-256c-4826-9cf3-6da0ae272896}</Application>
     <TypeSystem>{d369f08f-68eb-4439-b990-ae848a86c4bc}</TypeSystem>
@@ -44,6 +44,14 @@
     <Compile Include="Data types\ST_AdsTest.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Global Variables\CartControls.TcGVL">
+      <SubType>Code</SubType>
+      <LinkAlways>true</LinkAlways>
+    </Compile>
+    <Compile Include="Global Variables\ErrorVar.TcGVL">
+      <SubType>Code</SubType>
+      <LinkAlways>true</LinkAlways>
+    </Compile>
     <Compile Include="Global Variables\Global_Variables.TcGVL" />
     <Compile Include="PLC.TcTTO">
       <SubType>Code</SubType>
@@ -72,6 +80,9 @@
     <Compile Include="POUs\FUNCTIONs\RobotControl_1.TcPOU" />
     <Compile Include="POUs\FUNCTIONs\ValveControl_1.TcPOU" />
     <Compile Include="POUs\GetCoordinates.TcPOU" />
+    <Compile Include="POUs\LogProgram.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\MAIN.TcPOU" />
     <Compile Include="POUs\OnOffRobotCut.TcPOU" />
     <Compile Include="POUs\PcCom.TcPOU" />
@@ -92,16 +103,31 @@
     <Compile Include="POUs\SQL\01_Insert\P_SqlInsert.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\SQL\01_Insert\P_SqlInsertLog.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\SQL\01_Insert\P_SqlInsertRowConstructor.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\SQL\01_Insert\P_SqlInsertUnionAll.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\SQL\01_Insert\P_SqlInsertAlarmLog.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\SQL\02_Delete\P_SqlDelete.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\SQL\03_Select\P_SqlSelect.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\SQL\03_Select\P_SqlSelectAlarmLog.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\SQL\03_Select\P_SqlSelectCurrent.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\SQL\03_Select\P_SqlSelectAlarm.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\SQL\03_Select\P_SqlSelectTop.TcPOU">
@@ -113,7 +139,16 @@
     <Compile Include="POUs\SQL\03_Select\P_SqlSelectFrame.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\SQL\03_Select\ST_SelectAlarmStruct.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\SQL\03_Select\ST_SelectAlarmLogStruct.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\SQL\03_Select\ST_SelectFrameStruct.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\SQL\03_Select\ST_SelectCurrentStruct.TcDUT">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\SQL\03_Select\ST_SelectStruct.TcDUT">
@@ -123,6 +158,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\SQL\04_Update\P_SqlUpdate.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\SQL\04_Update\P_SqlUpdateAlarmLog.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\SQL\05_Count\P_SqlCount.TcPOU">

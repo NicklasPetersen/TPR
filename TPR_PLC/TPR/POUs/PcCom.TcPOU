@@ -18,6 +18,14 @@ VAR
 	setToNull: BOOL;
 
 	bCut: BOOL;
+	Wait: TON;
+	bWait: BOOL;
+	CollectImages: BOOL;
+	bWait1: BOOL;
+	Wait1: TON;
+	CutCam: BOOL;
+	PickCam: BOOL;
+	imgCount: INT;
 END_VAR
 VAR_OUTPUT
 	bPick: BOOL;
@@ -134,13 +142,10 @@ ELSIF bGetPlantDataCamTwo THEN
 ELSIF bRestart THEN
 	stDataToVision.CmdByte := 14;
 ELSIF bShutdown THEN
-
 	stDataToVision.CmdByte := 15;
 ELSIF bTestCamPointCam2 THEN
-
 	stDataToVision.CmdByte := 13;
 ELSIF bTestCamPointCam1 THEN
-
 	stDataToVision.CmdByte := 11;
 ELSIF usiVisionCmd <> 0 THEN
 	stDataToVision.CmdByte := usiVisionCmd;
@@ -148,16 +153,70 @@ ELSIF usiVisionCmd = 0 THEN
 	stDataToVision.CmdByte := 0;
 END_IF
 
+IF CollectImages THEN
+	IF stDataToVision.CmdByte = 0 AND NOT bGetPlantDataCamOne AND NOT bGetPlantDataCamTwo AND Wait1.Q THEN
+		IF CutCam THEN
+			bGetPlantDataCamOne := TRUE;
+		ELSIF PickCam THEN
+			bGetPlantDataCamTwo := TRUE;
+		END_IF
+		bWait := TRUE;
+		bWait1 := FALSE;
+	END_IF
+	
+	IF Wait.Q THEN
+		bWait1 := TRUE;
+		bWait := FALSE;
+		imgCount := imgCount + 1;
+		bGetPlantDataCamOne := FALSE;
+		bGetPlantDataCamTwo := FALSE;
+	END_IF
+END_IF
+
 FB_CAM_ONE_CONTROL(ControlType := 1,			Command => bTestCamPointCam1,	CommandNo := stDataFromVision.CmdInProcess, 	Ack := stDataToVision.CmdByte, 	TrunkPosY := stDataFromVision.ResultPar2,
 							BunchPosX := stDataFromVision.ResultPar4,		BunchPosY := stDataFromVision.ResultPar5,		BunchPosZ := stDataFromVision.ResultPar6,		StemAngle := stDataFromVision.ResultPar7);
 FB_CAM_TWO_CONTROL(ControlType := 1,			Command => bTestCamPointCam2,	CommandNo := stDataFromVision.CmdInProcess,	Ack := stDataToVision.CmdByte,	X := stDataFromVision.ResultPar1, 	Y := stDataFromVision.ResultPar2, 	Z := stDataFromVision.ResultPar3,
-							RotZ0 := stDataFromVision.ResultPar4,	RotY := stDataFromVision.ResultPar5,	RotZ1 := stDataFromVision.ResultPar6, 	StemHeading := stDataFromVision.ResultPar7,	StemFound :=stDataFromVision.gStemFound,	JointFound := stDataFromVision.gJointFound);]]></ST>
+							RotZ0 := stDataFromVision.ResultPar4,	RotY := stDataFromVision.ResultPar5,	RotZ1 := stDataFromVision.ResultPar6, StemHeading := stDataFromVision.ResultPar7,	StemFound :=stDataFromVision.gStemFound, JointFound := stDataFromVision.gJointFound,
+							TomatoFound := stDataFromVision.gTomatoFound, TrussFound := stDataFromVision.gTrussFound);
+							
+Wait			(IN:=  bWait			, PT:=T#500MS, Q=>, ET=>);
+Wait1			(IN:=  bWait1			, PT:=T#500MS, Q=>, ET=>);
+]]></ST>
     </Implementation>
     <LineIds Name="PcCom">
-      <LineId Id="21" Count="118" />
+      <LineId Id="21" Count="110" />
+      <LineId Id="133" Count="1" />
+      <LineId Id="136" Count="1" />
+      <LineId Id="139" Count="0" />
       <LineId Id="168" Count="0" />
       <LineId Id="170" Count="0" />
-      <LineId Id="140" Count="7" />
+      <LineId Id="140" Count="2" />
+      <LineId Id="275" Count="0" />
+      <LineId Id="225" Count="0" />
+      <LineId Id="265" Count="0" />
+      <LineId Id="288" Count="0" />
+      <LineId Id="266" Count="0" />
+      <LineId Id="269" Count="0" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="267" Count="0" />
+      <LineId Id="283" Count="0" />
+      <LineId Id="299" Count="0" />
+      <LineId Id="284" Count="0" />
+      <LineId Id="287" Count="0" />
+      <LineId Id="233" Count="0" />
+      <LineId Id="293" Count="0" />
+      <LineId Id="234" Count="0" />
+      <LineId Id="298" Count="0" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="272" Count="0" />
+      <LineId Id="230" Count="0" />
+      <LineId Id="228" Count="0" />
+      <LineId Id="143" Count="4" />
+      <LineId Id="191" Count="0" />
+      <LineId Id="212" Count="0" />
+      <LineId Id="214" Count="0" />
+      <LineId Id="238" Count="0" />
+      <LineId Id="217" Count="0" />
     </LineIds>
   </POU>
 </TcPlcObject>

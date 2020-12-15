@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="P_SqlUpdateAlarmLog" Id="{b8033ce6-add3-4271-aaaa-7421a9b23a91}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM P_SqlUpdateAlarmLog
+VAR_INPUT
+	bUpdate : BOOL; //Execute command
+END_VAR
+VAR
+	
+	fbSql : FB_EasySql;
+	sSql : STRING(1000);
+		
+	iId : INT; //Record to update
+	sCustomer : STRING; //Data to update
+	rValue : REAL; //Data to update
+		
+	bDone : BOOL; //Command done
+	bError : BOOL; //Command error
+	sError : STRING(255);
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Update record i database.
+sSql := 'UPDATE alarmLog SET alarmId = ¤1¤ WHERE time = (SELECT MAX( time ) FROM alarmLog );';
+
+F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤1¤', sReplace:= TO_STRING(P_SqlSelectAlarmLog.astData[0].alarmId));  //Replace placeholder
+//F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤2¤', sReplace:= TO_STRING(rValue)); //Replace placeholder
+//F_Replace(pString:= ADR(sSql), cbStringLen:= SIZEOF(sSql), sSearch:= '¤3¤', sReplace:= TO_STRING(iId)); //Replace placeholder
+
+
+
+fbSql(
+	bExecute:= bUpdate, 
+	wDBID:= 1, 
+	pSql:= ADR(sSql), 
+	cbSql:= SIZEOF(sSql), 
+	pData:= 0, 
+	cbData:= 0, 
+	udiMaxOfRecord:= 0, 
+	udiNoOfRecords=> , 
+	bDone=> bDone, 
+	bBusy=> , 
+	bError=> bError, 
+	sError=> sError);]]></ST>
+    </Implementation>
+    <LineIds Name="P_SqlUpdateAlarmLog">
+      <LineId Id="405" Count="0" />
+      <LineId Id="410" Count="0" />
+      <LineId Id="407" Count="2" />
+      <LineId Id="354" Count="15" />
+      <LineId Id="25" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

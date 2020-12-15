@@ -20,11 +20,18 @@ VAR
 	bStopped: BOOL;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[CASE State OF
+      <ST><![CDATA[IF sNewCalib = 'he-cut-start' THEN
+	startCalibCam1 := TRUE;
+ELSE
+	startCalibCam1 := FALSE;
+END_IF
+
+CASE State OF
 
 	0:		(* Wait for start of Calib cam 1 *)
-		IF uiprogNo = 1 AND startCalibCam1 AND State <> 2000  AND NOT bAlarmState THEN
+		IF (uiprogNo = 1 OR allZero) AND startCalibCam1 AND State <> 2000  AND NOT bAlarmState THEN
 			uiCalibImgCount := 0;
+			uiSignalOutTool.06 := TRUE;
 			startCalibCam1 := FALSE;
 			GbCloseCut := TRUE;									(* When calibrating Cam 1, the cutter most be closed *)
 			NewState := 10;
@@ -41,12 +48,9 @@ END_VAR]]></Declaration>
 
 	15:
 		IF uiSignalInAck = 0 THEN
-			IF sNewCalib = 'he_cut-start' THEN
-				NewState := 20;
-			END_IF
+			NewState := 20;
 		END_IF
 
-		
 	20:		(* Move to idle *)
 		uiSignalOutControl := Move_to_idle;
 		IF uiSignalInAck = Move_to_idle THEN
@@ -64,87 +68,93 @@ END_VAR]]></Declaration>
 
 		IF stDataFromVision.CmdInProcess =  stDataToVision.CmdByte AND stDataToVision.CmdByte <> 0 THEN							(* When PC recieve command, it sends acknowledge *)
 			bCalibCamOneStart := FALSE;
+			NewState := 35;
+		END_IF
+		
+	35:
+		FB_CLOSE_CUT.Execute := TRUE;
+		IF FB_CLOSE_CUT.Done THEN
+			FB_CLOSE_CUT.Execute := FALSE;
+			NewState := 37;
+		END_IF
+		
+	37:
+		IF sNewCalib = 'calib-mounted' THEN
 			NewState := 40;
 		END_IF
 		
-	40:	(* Move to Mount calib plate *)
-		NewState := 45;
-		
-	45:	(* When mounting is done *)
-		IF uiSignalInAck = 0 THEN
-			IF sNewCalib = 'calib-mounted' THEN
-				NewState := 50;
-			END_IF
-		END_IF
 
-	50:		(* Call CALIB_CAM1 on robot Cut. Robot Cut move to a pos to take a picture *)
+	40:		(* Call CALIB_CAM1 on robot Cut. Robot Cut move to a pos to take a picture *)
 		uiSignalOutControl := CalibCamOne;
 		IF uiSignalInAck = CalibCamOne THEN
+			uiSignalOutControl := 0;
+			NewState := 45;
+		END_IF
+
+	45:
+		IF uiSignalInAck = 0 THEN
+			NewState := 50;
+		END_IF
+
+	50:		(* Before the picture is taken, call get cut coord *)
+		getCutCoords := TRUE;										(* Get coord from robot Cut *)
+		IF uiSignalInAck = getCurrentCutCoords THEN
 			uiSignalOutControl := 0;
 			NewState := 55;
 		END_IF
 
 	55:
 		IF uiSignalInAck = 0 THEN
-			NewState := 60;
-		END_IF
-
-	60:		(* Before the picture is taken, call get cut coord *)
-		getCutCoords := TRUE;										(* Get coord from robot Cut *)
-		IF uiSignalInAck = getCurrentCutCoords THEN
-			uiSignalOutControl := 0;
-			NewState := 65;
-		END_IF
-
-	65:
-		IF uiSignalInAck = 0 THEN
 			bWait := TRUE;
 			IF Wait.Q THEN
 				bWait := FALSE;
-				NewState := 70;
+				NewState := 60;
 			END_IF
 		END_IF
 
-	70:		(* CmdByte 3 means that we want to take a picture *)
+	60:		(* CmdByte 3 means that we want to take a picture *)
 		bNewPosCalibCamOne := TRUE;
 		IF stDataFromVision.CmdInProcess =  stDataToVision.CmdByte AND stDataToVision.CmdByte <> 0 THEN
 			bNewPosCalibCamOne := FALSE;
-			NewState := 80;
+			NewState := 70;
 		END_IF
 
-	80:		(* If there has not been taken enough pictures go to state 40 in order to take more picture. Else send CmdByte 4 to tell PC to stop calib *)
+	70:		(* If there has not been taken enough pictures go to state 40 in order to take more picture. Else send CmdByte 4 to tell PC to stop calib *)
 		uiCalibImgCount := uiCalibImgCount + 1;
 		IF uiCalibImgCount < 8 THEN
-			NewState := 50;
+			NewState := 40;
 		ELSE
 			uiCalibImgCount := 0;
 			bEndCalibCamOne := TRUE;
-			NewState := 90;
-		END_IF
-		
-	90:	(* When calib is finished -> Unmount plate *)
-		NewState := 95;
-		
-	95:
-		IF uiSignalInAck = 0 THEN
-			IF sNewCalib = 'calib-unmounted' THEN
-				NewState := 100;
-			END_IF
+			NewState := 80;
 		END_IF
 
-	100:		(* Reset CmdByte and go to init state *)
+	80:		(* Reset CmdByte and go to init state *)
 		uiSignalOutControl := Move_to_idle;
 		IF uiSignalInAck = Move_to_idle THEN
 			uiSignalOutControl := 0;
-			NewState := 105;
+			NewState := 82;
+		END_IF
+	
+	82:		
+		IF sNewCalib = 'calib-unmounted' THEN
+			uiSignalOutTool.06 := FALSE;
+			NewState := 84;
+		END_IF	
+		
+	84:
+		uiSignalOutControl := Move_to_idle;
+		IF uiSignalInAck = Move_to_idle THEN
+			uiSignalOutControl := 0;
+			NewState := 90;
 		END_IF
 
-	105:
+	85:
 		IF uiSignalInAck = 0 THEN
-			NewState := 110;
+			NewState := 90;
 		END_IF
 
-	110:
+	90:
 		IF stDataFromVision.CmdInProcess = stDataToVision.CmdByte AND stDataToVision.CmdByte <>0 THEN
 			bEndCalibCamOne := FALSE;
 			GbCloseCut := FALSE;
@@ -153,6 +163,7 @@ END_VAR]]></Declaration>
 		END_IF
 
 	1000:		(* RESET *)
+		uiSignalOutTool.06 := FALSE;
 		startCalibCam1 			:= FALSE;
 		uiSignalOutControl 		:= 0;
 		bCalibCamOneStart 		:= FALSE;
@@ -183,20 +194,35 @@ Wait2	(IN:=  bWait2		, PT:=t#2000ms, Q=>, ET=>); 	(*Timer*)
 Wait3	(IN:=  bWait3		, PT:=t#2000ms, Q=>, ET=>); 	(*Timer*)]]></ST>
     </Implementation>
     <LineIds Name="CalibCam1">
-      <LineId Id="18" Count="20" />
-      <LineId Id="173" Count="2" />
-      <LineId Id="40" Count="0" />
+      <LineId Id="213" Count="0" />
+      <LineId Id="215" Count="0" />
+      <LineId Id="218" Count="1" />
+      <LineId Id="216" Count="0" />
+      <LineId Id="214" Count="0" />
+      <LineId Id="18" Count="4" />
+      <LineId Id="206" Count="0" />
+      <LineId Id="23" Count="37" />
+      <LineId Id="175" Count="1" />
+      <LineId Id="178" Count="0" />
+      <LineId Id="182" Count="0" />
       <LineId Id="184" Count="0" />
-      <LineId Id="179" Count="0" />
-      <LineId Id="42" Count="18" />
-      <LineId Id="187" Count="0" />
-      <LineId Id="189" Count="7" />
-      <LineId Id="188" Count="0" />
-      <LineId Id="61" Count="44" />
-      <LineId Id="197" Count="2" />
-      <LineId Id="206" Count="5" />
-      <LineId Id="203" Count="0" />
-      <LineId Id="106" Count="49" />
+      <LineId Id="186" Count="0" />
+      <LineId Id="177" Count="0" />
+      <LineId Id="209" Count="1" />
+      <LineId Id="220" Count="2" />
+      <LineId Id="211" Count="0" />
+      <LineId Id="61" Count="51" />
+      <LineId Id="229" Count="1" />
+      <LineId Id="227" Count="0" />
+      <LineId Id="239" Count="0" />
+      <LineId Id="228" Count="0" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="232" Count="1" />
+      <LineId Id="235" Count="3" />
+      <LineId Id="234" Count="0" />
+      <LineId Id="113" Count="14" />
+      <LineId Id="204" Count="0" />
+      <LineId Id="128" Count="27" />
     </LineIds>
   </POU>
 </TcPlcObject>

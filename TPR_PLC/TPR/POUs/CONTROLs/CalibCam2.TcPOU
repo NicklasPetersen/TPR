@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
   <POU Name="CalibCam2" Id="{89c5e521-11bc-4229-80b2-4cc22f9e2e73}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM CalibCam2
 VAR_INPUT
@@ -20,15 +20,22 @@ VAR
 	bStopped: BOOL;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[CASE State OF
+      <ST><![CDATA[IF sNewCalib = 'he-pick-start' THEN
+	startCalibCam2 := TRUE;
+ELSE
+	startCalibCam2 := FALSE;
+END_IF
+
+CASE State OF
 
 	0:		(* Init State - Wait for Calibration of camera 2 *)
 		uiSignalOut3.01 := FALSE;
-		IF uiprogNo = 2 AND startCalibCam2 AND State <> 2000  AND NOT bAlarmState THEN
+		IF (uiprogNo = 2 OR allZero) AND startCalibCam2 AND State <> 2000  AND NOT bAlarmState THEN
 			bWait2 := FALSE;
 			uiCalibImgCount := 0;
 			uiSignalOut3.01 := TRUE;								(* Tells robot Cut to move to Calib cam 2 pos *)
 			startCalibCam2 := FALSE;
+			uiSignalOutTool.06 := TRUE;
 			flag := FALSE;
 			NewState := 10;
 		END_IF
@@ -55,6 +62,18 @@ END_VAR]]></Declaration>
 
 	25:
 		IF uiSignalInAck = 0 THEN
+			NewState := 27;
+		END_IF
+		
+	27: 		
+		FB_CLOSE_CUT.Execute := TRUE;
+		IF FB_CLOSE_CUT.Done THEN
+			FB_CLOSE_CUT.Execute := FALSE;
+			NewState := 29;
+		END_IF
+	
+	29:
+		IF sNewCalib = 'calib-mounted' THEN
 			NewState := 30;
 		END_IF
 
@@ -164,10 +183,38 @@ END_VAR]]></Declaration>
 		ELSE
 			uiCalibImgCount := 0;
 			bEndCalibCamTwo := TRUE;
-			NewState := 90;
+			NewState := 86;
 		END_IF
+		
+	86:
+		FB_PICK_TO_IDLE.Execute := TRUE;
+		uiSignalOutControl := FB_PICK_TO_IDLE.OutQ;
+		IF FB_PICK_TO_IDLE.Done THEN
+			FB_PICK_TO_IDLE.Execute := FALSE;
+			NewState := 87;
+		END_IF
+		
+	87:
+		FB_CUT_TO_IDLE.Execute := TRUE;
+		uiSignalOutControl := FB_CUT_TO_IDLE.OutQ;
+		IF FB_CUT_TO_IDLE.Done THEN
+			IF stDataFromVision.CmdInProcess = stDataToVision.CmdByte  AND stDataToVision.CmdByte <> 0 THEN
+				FB_CUT_TO_IDLE.Execute := FALSE;
+				bEndCalibCamTwo := FALSE;
+				uiStatus := 0;
+				uiSignalOutTool.06 := FALSE;
+				NewState := 88;
+			END_IF
+		END_IF
+		
+	88:
+		IF sNewCalib = 'calib-unmounted' THEN
+			NewState := 90;
+		END_IF	
+		
 
 	90:		(* Reset CmdByte and go to init state *)
+		//bBackToZero := TRUE;
 		uiSignalOutControl := Move_to_idle;
 		IF uiSignalInAck = Move_to_idle AND NOT bAck THEN
 			uiSignalOutControl := 0;
@@ -177,13 +224,15 @@ END_VAR]]></Declaration>
 				NewState := 95;
 			END_IF
 		END_IF
-
+		
 	95:
 		IF uiSignalInAck = 0 THEN
+			PcCom.state := 0;
 			NewState := 0;
 		END_IF
 
 	1000: 		(* RESET *)
+		uiSignalOutTool.06 		:= FALSE;
 		uiSignalOut3.01 			:= FALSE;
 		startCalibCam2 			:= FALSE;
 		flag 						:= FALSE;
@@ -221,7 +270,49 @@ Wait2	(IN:=  bWait2		, PT:=t#2000ms, Q=>, ET=>); 	(*Timer*)
 Wait3	(IN:=  bWait3		, PT:=t#2000ms, Q=>, ET=>); 	(*Timer*)]]></ST>
     </Implementation>
     <LineIds Name="CalibCam2">
-      <LineId Id="18" Count="198" />
+      <LineId Id="316" Count="3" />
+      <LineId Id="314" Count="1" />
+      <LineId Id="18" Count="8" />
+      <LineId Id="300" Count="0" />
+      <LineId Id="27" Count="27" />
+      <LineId Id="234" Count="0" />
+      <LineId Id="236" Count="0" />
+      <LineId Id="240" Count="0" />
+      <LineId Id="237" Count="2" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="292" Count="1" />
+      <LineId Id="295" Count="0" />
+      <LineId Id="297" Count="0" />
+      <LineId Id="294" Count="0" />
+      <LineId Id="55" Count="108" />
+      <LineId Id="249" Count="1" />
+      <LineId Id="252" Count="0" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="253" Count="2" />
+      <LineId Id="251" Count="0" />
+      <LineId Id="256" Count="0" />
+      <LineId Id="259" Count="1" />
+      <LineId Id="272" Count="0" />
+      <LineId Id="261" Count="0" />
+      <LineId Id="265" Count="0" />
+      <LineId Id="270" Count="0" />
+      <LineId Id="266" Count="1" />
+      <LineId Id="303" Count="0" />
+      <LineId Id="268" Count="0" />
+      <LineId Id="264" Count="0" />
+      <LineId Id="269" Count="0" />
+      <LineId Id="306" Count="0" />
+      <LineId Id="308" Count="0" />
+      <LineId Id="312" Count="1" />
+      <LineId Id="311" Count="0" />
+      <LineId Id="302" Count="0" />
+      <LineId Id="164" Count="1" />
+      <LineId Id="241" Count="0" />
+      <LineId Id="166" Count="11" />
+      <LineId Id="274" Count="0" />
+      <LineId Id="178" Count="3" />
+      <LineId Id="298" Count="0" />
+      <LineId Id="182" Count="34" />
     </LineIds>
   </POU>
 </TcPlcObject>

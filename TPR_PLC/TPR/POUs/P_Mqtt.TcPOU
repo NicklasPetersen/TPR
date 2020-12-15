@@ -23,6 +23,7 @@ VAR
 	sRecipeTopicPub		: STRING(255);
 	sVelocityTopicPub	: STRING(255);
 	sProgramTopicPub	: STRING(255);
+	sAlarmTopicPub		: STRING(255);
 	
 	sPayloadPub     : STRING(255);
 	
@@ -97,7 +98,7 @@ fbAdapterInfo(
 	nGet=> );
 	
 IF NOT fbAdapterInfo.bBusy THEN
-	IF fbAdapterInfo.arrAdapters[1].sIpAddr <> '0.0.0.0' THEN
+	IF fbAdapterInfo.arrAdapters[0].sIpAddr <> '0.0.0.0' THEN
 		bHaveNetwork:=TRUE;
 	ELSE
 		bHaveNetwork:=FALSE;
@@ -121,7 +122,7 @@ bError:= fbMqttClient.bError;
         <ST><![CDATA[
 IF bSetParameter THEN
 
-	fbMqttClient.sHostName:='192.168.29.55';
+	fbMqttClient.sHostName:='192.168.29.56';
 	fbMqttClient.nHostPort:=1883;
 	
 	fbMqttClient.nKeepAlive := 60;
@@ -138,6 +139,7 @@ IF bSetParameter THEN
 	sRecipeTopicPub		:= 'mqtt/plc2hmi/recipe';
 	sVelocityTopicPub 	:= 'mqtt/plc2hmi/velocity';
 	sProgramTopicPub 	:= 'mqtt/plc2hmi/program';
+	sAlarmTopicPub 		:= 'mqtt/plc2hmi/alarm';
 	
 	sTopicSub 			:= 'php-mqtt/hmi2plc/#';
 	
@@ -181,12 +183,13 @@ IF fbMqttClient.bConnected AND bHaveNetwork THEN
 	END_IF
 
 	////////////////////////////////// MAIN page HMI ////////////////////////////////////
-	IF PROGRAM_DATA.usiProgram <> PROGRAM_DATA.usiNewProgram THEN
+	(*IF PROGRAM_DATA.usiProgram <> PROGRAM_DATA.usiNewProgram THEN*)
+	IF PROGRAM_DATA.usiNewProgram <> 0 THEN
 		PROGRAM_DATA.usiProgram := PROGRAM_DATA.usiNewProgram;
 		
 		sPayloadPub := USINT_TO_STRING(PROGRAM_DATA.usiProgram);
 		bstatus := fbMqttClient.Publish(sTopic:= sProgramTopicPub, pPayload:= ADR(sPayloadPub), nPayloadSize:= LEN2(ADR(sPayloadPub)), eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= TRUE, bQueue:= TRUE );
-		udiSentMessages := udiSentMessages + 1; 
+		(*udiSentMessages := udiSentMessages + 1; *)
 	END_IF
 	
 	IF PROGRAM_DATA.usiVelocity <> PROGRAM_DATA.usiNewVelocity THEN
@@ -203,11 +206,16 @@ IF fbMqttClient.bConnected AND bHaveNetwork THEN
 		sPayloadPub := 'start';
 		bstatus := fbMqttClient.Publish(sTopic:= sOpStateTopicPub, pPayload:= ADR(sPayloadPub), nPayloadSize:= LEN2(ADR(sPayloadPub)), eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= TRUE, bQueue:= TRUE );
 		udiSentMessages := udiSentMessages + 1; 
-	ELSIF (bStop OR NOT bStart) AND iFlag <> 2 THEN
+	ELSIF ((bStop) OR (gStopped = TRUE)) AND iFlag <> 2 THEN
 		iFlag := 2;
 		// When stopped, publish stop
 		sPayloadPub := 'stop';
 		bstatus := fbMqttClient.Publish(sTopic:= sOpStateTopicPub, pPayload:= ADR(sPayloadPub), nPayloadSize:= LEN2(ADR(sPayloadPub)), eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= TRUE, bQueue:= TRUE );
+		udiSentMessages := udiSentMessages + 1; 
+	ELSIF (bAlarm OR bAlarmAck) AND iFlag <> 3 THEN
+		iFlag := 3;
+		sPayloadPub := TO_STRING(robotAlarmId);
+		bstatus := fbMqttClient.Publish(sTopic:= sAlarmTopicPub, pPayload:= ADR(sPayloadPub), nPayloadSize:= LEN2(ADR(sPayloadPub)), eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= TRUE, bQueue:= TRUE );
 		udiSentMessages := udiSentMessages + 1; 
 	END_IF
 	
@@ -257,7 +265,7 @@ IF fbMessageQueue.nQueuedMessages > 0 THEN
 		
 		IF sTopicRcv = 'php-mqtt/hmi2plc/program' THEN
 			PROGRAM_DATA.usiNewProgram := STRING_TO_USINT(sPayloadRcv);
-			P_SqlSelectRecipe.bRead := TRUE;
+			//P_SqlSelectRecipe.bRead := TRUE;
 		END_IF
 		
 		IF sTopicRcv = 'php-mqtt/hmi2plc/setup' THEN
@@ -271,7 +279,6 @@ IF fbMessageQueue.nQueuedMessages > 0 THEN
 		END_IF
 		
 		IF sTopicRcv = 'php-mqtt/hmi2plc/calib' THEN
-			startCalibCam1 := TRUE;
 			sNewCalib := sPayloadRcv;
 		END_IF
 		
@@ -289,6 +296,12 @@ IF fbMessageQueue.nQueuedMessages > 0 THEN
 		
 		IF sTopicRcv = 'php-mqtt/hmi2plc/frameUpdate' THEN
 			P_SqlSelectFrame.bRead := TRUE;
+		END_IF
+		
+		IF sTopicRcv = 'php-mqtt/hmi2plc/alarm' THEN
+			IF (sPayloadRcv = 'Acknowledge') THEN
+				bAlarm := FALSE;
+			END_IF
 		END_IF
 		
 		IF sTopicRcv = 'php-mqtt/hmi2plc/opState' THEN
@@ -380,7 +393,7 @@ tonMomOn(PT:= T#100MS, Q=> , ET=> );]]></ST>
       <LineId Id="50" Count="0" />
       <LineId Id="59" Count="0" />
       <LineId Id="51" Count="0" />
-      <LineId Id="68" Count="3" />
+      <LineId Id="68" Count="4" />
       <LineId Id="67" Count="0" />
       <LineId Id="49" Count="0" />
       <LineId Id="44" Count="0" />
@@ -415,6 +428,7 @@ tonMomOn(PT:= T#100MS, Q=> , ET=> );]]></ST>
       <LineId Id="77" Count="0" />
       <LineId Id="121" Count="0" />
       <LineId Id="43" Count="0" />
+      <LineId Id="140" Count="0" />
       <LineId Id="124" Count="0" />
       <LineId Id="126" Count="0" />
       <LineId Id="128" Count="0" />
@@ -436,6 +450,7 @@ tonMomOn(PT:= T#100MS, Q=> , ET=> );]]></ST>
       <LineId Id="56" Count="0" />
       <LineId Id="53" Count="1" />
       <LineId Id="49" Count="0" />
+      <LineId Id="141" Count="4" />
       <LineId Id="47" Count="0" />
       <LineId Id="122" Count="0" />
       <LineId Id="45" Count="0" />
@@ -460,9 +475,9 @@ tonMomOn(PT:= T#100MS, Q=> , ET=> );]]></ST>
       <LineId Id="175" Count="0" />
       <LineId Id="177" Count="0" />
       <LineId Id="176" Count="0" />
+      <LineId Id="252" Count="0" />
+      <LineId Id="254" Count="2" />
       <LineId Id="253" Count="0" />
-      <LineId Id="255" Count="2" />
-      <LineId Id="254" Count="0" />
       <LineId Id="214" Count="0" />
       <LineId Id="216" Count="0" />
       <LineId Id="219" Count="0" />
@@ -472,7 +487,6 @@ tonMomOn(PT:= T#100MS, Q=> , ET=> );]]></ST>
       <LineId Id="215" Count="0" />
       <LineId Id="226" Count="0" />
       <LineId Id="228" Count="0" />
-      <LineId Id="252" Count="0" />
       <LineId Id="235" Count="0" />
       <LineId Id="227" Count="0" />
       <LineId Id="236" Count="0" />
@@ -488,6 +502,9 @@ tonMomOn(PT:= T#100MS, Q=> , ET=> );]]></ST>
       <LineId Id="242" Count="0" />
       <LineId Id="244" Count="1" />
       <LineId Id="243" Count="0" />
+      <LineId Id="257" Count="0" />
+      <LineId Id="259" Count="3" />
+      <LineId Id="258" Count="0" />
       <LineId Id="174" Count="0" />
       <LineId Id="36" Count="0" />
       <LineId Id="38" Count="0" />

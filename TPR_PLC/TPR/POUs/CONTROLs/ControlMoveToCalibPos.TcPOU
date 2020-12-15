@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
   <POU Name="ControlMoveToCalibPos" Id="{eb38343d-5253-4d4f-a5f9-34c7ea1d78d0}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM ControlMoveToCalibPos
 VAR_INPUT
@@ -105,7 +105,7 @@ END_VAR]]></Declaration>
 
 		IF stDataToVision.CoordXR2G <> 0 AND stDataToVision.CoordYR2G <> 0 AND stDataToVision.CoordZR2G <> 0 THEN
 			IF Cam THEN
-				bTestCamPointCam2 := TRUE;										(* Sends CmdByte 14 to PC *)
+				bTestCamPointCam1 := TRUE;										(* Sends CmdByte 14 to PC *)
 			ELSE
 				bTestCamPointCam2 := TRUE;
 			END_IF
@@ -113,7 +113,8 @@ END_VAR]]></Declaration>
 				iBottomPosX 	:= stDataFromVision.ResultPar1;
 				iBottomPosY 	:= stDataFromVision.ResultPar2;
 				iBottomPosZ 	:= stDataFromVision.ResultPar3;
-
+				
+				bTestCamPointCam1 := FALSE;
 				bTestCamPointCam2 := FALSE;
 				NewState := 25;
 			END_IF
@@ -127,7 +128,7 @@ END_VAR]]></Declaration>
 	30:		(* Take Top Image *)
 		IF stDataToVision.CoordXR2G <> 0 AND stDataToVision.CoordYR2G <> 0 AND stDataToVision.CoordZR2G <> 0 THEN
 			IF Cam THEN
-				bTestCamPointCam2 := TRUE;										(* Sends CmdByte 14 to PC *)
+				bTestCamPointCam1 := TRUE;										(* Sends CmdByte 14 to PC *)
 			ELSE
 				bTestCamPointCam2 := TRUE;
 			END_IF									(* Send CmdByte 14 to PC *)
@@ -139,6 +140,7 @@ END_VAR]]></Declaration>
 				iPitch		:= stDataFromVision.ResultPar5;
 				iYaw		:= stDataFromVision.ResultPar6;
 
+				bTestCamPointCam1 := FALSE;
 				bTestCamPointCam2 := FALSE;
 				NewState := 35;
 			END_IF
@@ -285,7 +287,11 @@ Wait2	(IN:=  bWait2		, PT:=t#2000ms, Q=>, ET=>); 		(*Timer*)
 Wait3	(IN:=  bWait3		, PT:=t#500ms, Q=>, ET=>); 		(*Timer*)]]></ST>
     </Implementation>
     <LineIds Name="ControlMoveToCalibPos">
-      <LineId Id="50" Count="230" />
+      <LineId Id="50" Count="60" />
+      <LineId Id="330" Count="0" />
+      <LineId Id="111" Count="24" />
+      <LineId Id="331" Count="0" />
+      <LineId Id="136" Count="144" />
     </LineIds>
   </POU>
 </TcPlcObject>
